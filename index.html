@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="鳥育成">
+  <meta name="theme-color" content="#8b6914">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
+  <title>🐦 鳥育成ゲーム</title>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="day">
+  <div class="stars" id="stars"></div>
+  <div class="toast" id="toast"></div>
+  <div class="install-banner" id="installBanner">
+    <h3>📱 ホーム画面に追加</h3>
+    <p>追加すると寝ている間も元気が回復！</p>
+    <button class="install-btn" onclick="showInstallGuide()">方法を見る</button>
+    <button class="close-btn" onclick="hideInstallBanner()">後で</button>
+  </div>
+  <header class="header">
+    <div class="header-content">
+      <div class="bird-info">
+        <span class="bird-icon" id="headerIcon">🐦</span>
+        <div>
+          <div class="bird-name"><span id="birdName">文鳥</span><button class="edit-btn" onclick="showModal('nameModal')">✏️</button></div>
+          <div class="bird-stats-mini">Lv.<span id="level">1</span> | <span id="age">0分</span> | <span id="mood">😊</span></div>
+        </div>
+      </div>
+      <div class="currency">
+        <div class="coins">💰 <span id="coins">100</span></div>
+        <div class="gems">💎 <span id="gems">5</span></div>
+        <div class="exp-bar"><div class="exp-fill" id="expBar"></div></div>
+      </div>
+    </div>
+  </header>
+  <div class="modal" id="nameModal">
+    <div class="modal-content">
+      <div class="modal-title">🐦 名前を変更</div>
+      <input type="text" id="nameInput" maxlength="12" placeholder="新しい名前">
+      <div class="modal-buttons">
+        <button class="modal-btn secondary" onclick="hideModal('nameModal')">キャンセル</button>
+        <button class="modal-btn primary" onclick="saveName()">決定</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="birdModal">
+    <div class="modal-content">
+      <div class="modal-title">🐦 鳥を選ぶ</div>
+      <div class="bird-grid" id="birdGrid"></div>
+      <div class="modal-buttons">
+        <button class="modal-btn secondary" onclick="hideModal('birdModal')">閉じる</button>
+        <button class="modal-btn primary" id="buyBirdBtn" onclick="buyBird()">購入</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="installModal">
+    <div class="modal-content">
+      <div class="modal-title">📱 ホーム画面に追加</div>
+      <div style="text-align:left;font-size:0.8rem;line-height:1.5">
+        <p style="margin-bottom:10px"><b>iPhone/iPad:</b></p>
+        <ol style="margin-left:18px;margin-bottom:14px">
+          <li>共有ボタン（□↑）をタップ</li>
+          <li>「ホーム画面に追加」を選択</li>
+          <li>「追加」をタップ</li>
+        </ol>
+        <p style="margin-bottom:10px"><b>Android:</b></p>
+        <ol style="margin-left:18px">
+          <li>ブラウザのメニュー（⋮）を開く</li>
+          <li>「ホーム画面に追加」を選択</li>
+        </ol>
+        <p style="margin-top:14px;padding:8px;background:rgba(76,175,80,0.1);border-radius:6px">✨ <b>アプリを閉じても寝ている間は元気が回復</b>します！</p>
+      </div>
+      <div class="modal-buttons" style="margin-top:14px">
+        <button class="modal-btn primary" onclick="hideModal('installModal')">わかった</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="useItemModal">
+    <div class="modal-content">
+      <div class="modal-title" id="useItemTitle">アイテムを使う</div>
+      <p style="text-align:center;margin-bottom:14px" id="useItemDesc"></p>
+      <div class="modal-buttons">
+        <button class="modal-btn secondary" onclick="hideModal('useItemModal')">キャンセル</button>
+        <button class="modal-btn primary" onclick="confirmUseItem()">使う</button>
+      </div>
+    </div>
+  </div>
+  <div class="main-display" onclick="petBird()">
+    <div class="weather-effects" id="weatherEffects"></div>
+    <svg id="birdSvg" viewBox="0 0 200 220" width="220" height="242"></svg>
+  </div>
+  <div class="recovery-banner" id="recoveryBanner"></div>
+  <div class="message-bubble">
+    <div class="message-text">💬「<span id="message">鳥があなたを見ています...</span>」</div>
+  </div>
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="actions-grid">
+    <button class="action-btn feed" onclick="feedBird()">🍚えさ</button>
+    <button class="action-btn pet" onclick="petBird()">✋なでる</button>
+    <button class="action-btn play" onclick="playBird()">🎾遊ぶ</button>
+    <button class="action-btn bath" onclick="bathBird()">💦水浴び</button>
+    <button class="action-btn sleep" id="sleepBtn" onclick="toggleSleep()">💤寝かす</button>
+    <button class="action-btn treat" onclick="giveTreat()">🍬おやつ</button>
+    <button class="action-btn train" onclick="trainBird()">📚訓練</button>
+    <button class="action-btn sing" onclick="singBird()">🎵歌う</button>
+  </div>
+  <div class="quick-actions">
+    <button class="quick-btn birds" onclick="showModal('birdModal')">🐦鳥図鑑</button>
+    <button class="quick-btn shop" onclick="togglePanel('shop')">🛒ショップ</button>
+    <button class="quick-btn inventory" onclick="togglePanel('inventory')">🎒持ち物</button>
+    <button class="quick-btn minigame" onclick="togglePanel('minigame')">🎮ゲーム</button>
+  </div>
+  <div class="panel" id="shopPanel">
+    <div class="panel-title">🛒 ショップ</div>
+    <div class="shop-tabs">
+      <button class="shop-tab active" onclick="setShopTab('food')">食べ物</button>
+      <button class="shop-tab" onclick="setShopTab('items')">アイテム</button>
+      <button class="shop-tab" onclick="setShopTab('premium')">プレミアム</button>
+    </div>
+    <div class="shop-grid" id="shopGrid"></div>
+  </div>
+  <div class="panel" id="inventoryPanel">
+    <div class="panel-title">🎒 持ち物</div>
+    <div class="inventory-grid" id="inventoryGrid"></div>
+  </div>
+  <div class="panel" id="minigamePanel">
+    <div class="panel-title">🎮 シードキャッチ</div>
+    <div class="minigame-area" id="minigameArea">
+      <div class="minigame-score">スコア: <span id="mgScore">0</span></div>
+      <div>制限時間: <span id="mgTime">15</span>秒</div>
+      <button class="action-btn play" onclick="startMinigame()" id="startMgBtn">開始(10💰)</button>
+      <div class="minigame-target" id="mgTarget" style="display:none" onclick="catchSeed()">🌾</div>
+    </div>
+  </div>
+  <div class="panel" id="customizePanel">
+    <div class="customize-section">
+      <div class="customize-title">🌤️ 背景</div>
+      <div class="customize-options" id="themeOpts"></div>
+    </div>
+    <div class="customize-section">
+      <div class="customize-title">🌦️ 天気</div>
+      <div class="customize-options" id="weatherOpts"></div>
+    </div>
+  </div>
+  <div class="quick-actions">
+    <button class="quick-btn shop" onclick="togglePanel('customize')">🎨カスタマイズ</button>
+  </div>
+  <div class="footer-stats">
+    <div>🍚<span id="tFeeds">0</span> ✋<span id="tPets">0</span> 🎾<span id="tPlays">0</span> 💦<span id="tBaths">0</span></div>
+    <button class="reset-btn" onclick="resetGame()">🔄 リセット</button>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
