@@ -132,10 +132,75 @@
     .inventory-item-icon{font-size:1.2rem}
     .inventory-item-count{position:absolute;top:1px;right:1px;background:var(--accent);color:white;font-size:0.55rem;font-weight:700;padding:1px 4px;border-radius:6px}
     .inventory-item-name{font-size:0.5rem;margin-top:1px;opacity:0.8}
-    .minigame-area{min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;position:relative}
+    .minigame-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .minigame-card{padding:12px 8px;border-radius:12px;text-align:center;cursor:pointer;transition:all 0.2s;border:2px solid transparent}
+    body.day .minigame-card,body.sunset .minigame-card{background:rgba(0,0,0,0.05)}
+    body.night .minigame-card{background:rgba(255,255,255,0.08)}
+    .minigame-card:hover{transform:translateY(-2px);border-color:var(--primary)}
+    .minigame-card-icon{font-size:1.8rem}
+    .minigame-card-name{font-size:0.75rem;font-weight:600;margin-top:4px}
+    .minigame-card-desc{font-size:0.6rem;opacity:0.7;margin-top:2px}
+    .minigame-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .minigame-name{font-size:0.9rem;font-weight:700}
+    .back-btn{padding:5px 10px;border:none;border-radius:8px;font-size:0.7rem;font-family:inherit;cursor:pointer;background:rgba(0,0,0,0.1)}
+    body.night .back-btn{background:rgba(255,255,255,0.15);color:#fff}
+    .minigame-area{min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;position:relative}
     .minigame-score{font-size:1.2rem;font-weight:700}
     .minigame-target{width:50px;height:50px;background:var(--accent);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;animation:pulse 1s infinite;position:absolute}
     @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,107,0.4)}50%{box-shadow:0 0 0 10px rgba(255,107,107,0)}}
+    .minigame-content{width:100%;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
+    .timing-bar{width:90%;height:30px;background:rgba(0,0,0,0.1);border-radius:15px;position:relative;overflow:hidden}
+    body.night .timing-bar{background:rgba(255,255,255,0.1)}
+    .timing-zone{position:absolute;height:100%;background:rgba(76,175,80,0.5);border-radius:15px}
+    .timing-cursor{position:absolute;width:8px;height:100%;background:#ff6b6b;border-radius:4px;transition:none}
+    .memory-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+    .memory-card{width:50px;height:50px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.5rem;transition:transform 0.3s}
+    body.day .memory-card,body.sunset .memory-card{background:rgba(0,0,0,0.1)}
+    body.night .memory-card{background:rgba(255,255,255,0.15)}
+    .memory-card.flipped{transform:rotateY(180deg)}
+    .memory-card.matched{background:rgba(76,175,80,0.4);pointer-events:none}
+    .rhythm-lane{width:100%;height:120px;position:relative;overflow:hidden;border-radius:10px}
+    body.day .rhythm-lane,body.sunset .rhythm-lane{background:rgba(0,0,0,0.05)}
+    body.night .rhythm-lane{background:rgba(255,255,255,0.08)}
+    .rhythm-note{position:absolute;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;cursor:pointer}
+    .rhythm-target{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:60px;height:10px;background:rgba(255,107,107,0.5);border-radius:5px}
+    .tap-area{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;cursor:pointer;transition:transform 0.1s}
+    body.day .tap-area,body.sunset .tap-area{background:linear-gradient(135deg,#ff9800,#f57c00)}
+    body.night .tap-area{background:linear-gradient(135deg,#ff6b6b,#e91e63)}
+    .tap-area:active{transform:scale(0.95)}
+    .quiz-question{font-size:0.9rem;text-align:center;margin-bottom:10px;font-weight:600}
+    .quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+    .quiz-option{padding:10px;border-radius:10px;cursor:pointer;font-size:0.75rem;text-align:center;transition:all 0.2s}
+    body.day .quiz-option,body.sunset .quiz-option{background:rgba(0,0,0,0.05)}
+    body.night .quiz-option{background:rgba(255,255,255,0.1)}
+    .quiz-option:hover{transform:scale(1.02)}
+    .quiz-option.correct{background:rgba(76,175,80,0.5)}
+    .quiz-option.wrong{background:rgba(244,67,54,0.5)}
+    .fly-area{width:100%;height:150px;position:relative;overflow:hidden;border-radius:10px}
+    body.day .fly-area,body.sunset .fly-area{background:linear-gradient(180deg,#87ceeb,#98d8c8)}
+    body.night .fly-area{background:linear-gradient(180deg,#1a1a3e,#2a2a5e)}
+    .fly-bird{position:absolute;font-size:1.5rem;transition:top 0.15s}
+    .fly-obstacle{position:absolute;font-size:1.5rem}
+    .sing-notes{display:flex;gap:6px;justify-content:center}
+    .sing-note{width:40px;height:50px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:all 0.1s}
+    body.day .sing-note,body.sunset .sing-note{background:rgba(0,0,0,0.08)}
+    body.night .sing-note{background:rgba(255,255,255,0.12)}
+    .sing-note:active,.sing-note.active{transform:scale(0.95);background:rgba(255,107,107,0.4)}
+    .balance-bar{width:90%;height:20px;background:rgba(0,0,0,0.1);border-radius:10px;position:relative;overflow:hidden}
+    body.night .balance-bar{background:rgba(255,255,255,0.1)}
+    .balance-bird{position:absolute;font-size:1.2rem;transition:left 0.1s}
+    .balance-zone{position:absolute;height:100%;background:rgba(76,175,80,0.3);border-radius:10px}
+    .treasure-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+    .treasure-cell{width:40px;height:40px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:all 0.2s}
+    body.day .treasure-cell,body.sunset .treasure-cell{background:rgba(139,105,20,0.2)}
+    body.night .treasure-cell{background:rgba(255,255,255,0.1)}
+    .treasure-cell:hover{transform:scale(1.05)}
+    .treasure-cell.revealed{pointer-events:none}
+    .name-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;justify-content:center}
+    .name-suggestion{padding:6px 12px;border-radius:16px;font-size:0.75rem;cursor:pointer;transition:all 0.2s}
+    body.day .name-suggestion,body.sunset .name-suggestion{background:rgba(139,105,20,0.1);color:var(--primary)}
+    body.night .name-suggestion{background:rgba(255,255,255,0.1);color:#ffd700}
+    .name-suggestion:hover{transform:scale(1.05)}
     .customize-section{margin-bottom:12px}
     .customize-title{font-size:0.75rem;opacity:0.7;text-align:center;margin-bottom:5px}
     .customize-options{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}
