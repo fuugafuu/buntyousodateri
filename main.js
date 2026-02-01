@@ -1,14 +1,26 @@
 const birds={
-  buncho_sakura:{name:'桜文鳥',icon:'🐦',price:0,curr:'coins',colors:{head:'#1a1a1a',cheek:'#fff',body:'#7a7a7a',belly:'#e8d8d0',wing:'#5a5a5a',tail:'#2a2a2a',beak:'#ff6b6b',eyeRing:'#ff5555',feet:'#ffb8b8'},hasCheek:true},
-  buncho_white:{name:'白文鳥',icon:'🕊️',price:200,curr:'coins',colors:{head:'#fefefe',cheek:'#fefefe',body:'#faf8f5',belly:'#fff5f0',wing:'#f0f0f0',tail:'#e8e8e8',beak:'#ff7777',eyeRing:'#ff6666',feet:'#ffc0c0'},hasCheek:false},
-  buncho_cinnamon:{name:'シナモン',icon:'🐤',price:300,curr:'coins',colors:{head:'#8b6914',cheek:'#fff5e6',body:'#c9a070',belly:'#f0e0d0',wing:'#b08050',tail:'#7b5414',beak:'#ffa080',eyeRing:'#ff7755',feet:'#ffc8b0'},hasCheek:true},
-  buncho_silver:{name:'シルバー',icon:'🪿',price:400,curr:'coins',colors:{head:'#505050',cheek:'#f8f8f8',body:'#a8a8a8',belly:'#e0d8d0',wing:'#888',tail:'#404040',beak:'#ff8080',eyeRing:'#ff6060',feet:'#ffb0b0'},hasCheek:true},
-  canary:{name:'カナリア',icon:'🐥',price:500,curr:'coins',colors:{head:'#ffeb3b',cheek:'#fff59d',body:'#ffeb3b',belly:'#fff9c4',wing:'#fdd835',tail:'#f9a825',beak:'#ff8a65',eyeRing:'#ffab91',feet:'#ffcc80'},hasCheek:false},
-  inko_green:{name:'セキセイインコ',icon:'🦜',price:800,curr:'coins',colors:{head:'#c8e6c9',cheek:'#a5d6a7',body:'#66bb6a',belly:'#a5d6a7',wing:'#43a047',tail:'#2e7d32',beak:'#ffb74d',eyeRing:'#fff59d',feet:'#bcaaa4'},hasCheek:false},
-  inko_blue:{name:'青インコ',icon:'💙',price:800,curr:'coins',colors:{head:'#bbdefb',cheek:'#90caf9',body:'#42a5f5',belly:'#90caf9',wing:'#1e88e5',tail:'#1565c0',beak:'#ffb74d',eyeRing:'#fff59d',feet:'#bcaaa4'},hasCheek:false},
-  cockatiel:{name:'オカメインコ',icon:'🧡',price:5,curr:'gems',colors:{head:'#ffcc80',cheek:'#ff8a65',body:'#bdbdbd',belly:'#e0e0e0',wing:'#9e9e9e',tail:'#757575',beak:'#8d6e63',eyeRing:'#ffcc80',feet:'#bcaaa4'},hasCheek:true},
-  owl:{name:'フクロウ',icon:'🦉',price:15,curr:'gems',colors:{head:'#8d6e63',cheek:'#d7ccc8',body:'#6d4c41',belly:'#bcaaa4',wing:'#5d4037',tail:'#4e342e',beak:'#ffd54f',eyeRing:'#ffd54f',feet:'#a1887f'},hasCheek:false,isOwl:true}
+  buncho_sakura:{name:'桜文鳥',icon:'🐦',price:0,curr:'coins',colors:{head:'#1a1a1a',cheek:'#fff',body:'#7a7a7a',belly:'#e8d8d0',wing:'#5a5a5a',tail:'#2a2a2a',beak:'#ff6b6b',eyeRing:'#ff5555',feet:'#ffb8b8'},hasCheek:true,defaultNames:['さくら','ピーちゃん','ブンちゃん','チュン太','もち','おもち','ぴよ']},
+  buncho_white:{name:'白文鳥',icon:'🕊️',price:200,curr:'coins',colors:{head:'#fefefe',cheek:'#fefefe',body:'#faf8f5',belly:'#fff5f0',wing:'#f0f0f0',tail:'#e8e8e8',beak:'#ff7777',eyeRing:'#ff6666',feet:'#ffc0c0'},hasCheek:false,defaultNames:['しろ','ゆき','ましろ','ミルク','とうふ','しらたま','もふ']},
+  buncho_cinnamon:{name:'シナモン',icon:'🐤',price:300,curr:'coins',colors:{head:'#8b6914',cheek:'#fff5e6',body:'#c9a070',belly:'#f0e0d0',wing:'#b08050',tail:'#7b5414',beak:'#ffa080',eyeRing:'#ff7755',feet:'#ffc8b0'},hasCheek:true,defaultNames:['シナモン','きなこ','モカ','くるみ','あずき','ココア','チャイ']},
+  buncho_silver:{name:'シルバー',icon:'🪿',price:400,curr:'coins',colors:{head:'#505050',cheek:'#f8f8f8',body:'#a8a8a8',belly:'#e0d8d0',wing:'#888',tail:'#404040',beak:'#ff8080',eyeRing:'#ff6060',feet:'#ffb0b0'},hasCheek:true,defaultNames:['シルバー','ぎん','ルナ','プラチナ','しずく','ぺる','アッシュ']},
+  canary:{name:'カナリア',icon:'🐥',price:500,curr:'coins',colors:{head:'#ffeb3b',cheek:'#fff59d',body:'#ffeb3b',belly:'#fff9c4',wing:'#fdd835',tail:'#f9a825',beak:'#ff8a65',eyeRing:'#ffab91',feet:'#ffcc80'},hasCheek:false,defaultNames:['カナリア','ひまわり','レモン','こがね','ソレイユ','ひなた','サニー']},
+  inko_green:{name:'セキセイインコ',icon:'🦜',price:800,curr:'coins',colors:{head:'#c8e6c9',cheek:'#a5d6a7',body:'#66bb6a',belly:'#a5d6a7',wing:'#43a047',tail:'#2e7d32',beak:'#ffb74d',eyeRing:'#fff59d',feet:'#bcaaa4'},hasCheek:false,defaultNames:['みどり','わかば','リーフ','メロン','キウイ','ミント','モス']},
+  inko_blue:{name:'青インコ',icon:'💙',price:800,curr:'coins',colors:{head:'#bbdefb',cheek:'#90caf9',body:'#42a5f5',belly:'#90caf9',wing:'#1e88e5',tail:'#1565c0',beak:'#ffb74d',eyeRing:'#fff59d',feet:'#bcaaa4'},hasCheek:false,defaultNames:['そら','あお','スカイ','うみ','アクア','ブルー','セイラ']},
+  cockatiel:{name:'オカメインコ',icon:'🧡',price:5,curr:'gems',colors:{head:'#ffcc80',cheek:'#ff8a65',body:'#bdbdbd',belly:'#e0e0e0',wing:'#9e9e9e',tail:'#757575',beak:'#8d6e63',eyeRing:'#ffcc80',feet:'#bcaaa4'},hasCheek:true,defaultNames:['オカメ','ピーチ','サンセット','あかり','コーラル','もみじ','ルビー']},
+  owl:{name:'フクロウ',icon:'🦉',price:15,curr:'gems',colors:{head:'#8d6e63',cheek:'#d7ccc8',body:'#6d4c41',belly:'#bcaaa4',wing:'#5d4037',tail:'#4e342e',beak:'#ffd54f',eyeRing:'#ffd54f',feet:'#a1887f'},hasCheek:false,isOwl:true,defaultNames:['ふくろう','ホー太','ミミズク','よる','ウィズダム','アウル','ナイト']}
 };
+const minigames=[
+  {id:'catch',name:'シードキャッチ',icon:'🌾',desc:'落ちるシードをキャッチ！',cost:10},
+  {id:'timing',name:'タイミングバー',icon:'🎯',desc:'ぴったりタイミングで！',cost:10},
+  {id:'memory',name:'神経衰弱',icon:'🧠',desc:'絵柄を覚えてペアを探せ！',cost:15},
+  {id:'rhythm',name:'リズムゲーム',icon:'🎵',desc:'リズムに合わせてタップ！',cost:10},
+  {id:'tap',name:'連打チャレンジ',icon:'👆',desc:'とにかく連打！',cost:10},
+  {id:'quiz',name:'鳥クイズ',icon:'❓',desc:'鳥に関するクイズ！',cost:15},
+  {id:'fly',name:'フライトラン',icon:'🕊️',desc:'障害物を避けて飛べ！',cost:15},
+  {id:'sing',name:'音あてゲーム',icon:'🎹',desc:'鳴き声を覚えて再現！',cost:15},
+  {id:'balance',name:'バランス',icon:'⚖️',desc:'バランスを保って立て！',cost:10},
+  {id:'treasure',name:'宝探し',icon:'💎',desc:'隠れたシードを探せ！',cost:10}
+];
 const shopData={
   food:[
     {id:'seeds',name:'シード',desc:'基本のえさ×10',price:30,icon:'🌾',curr:'coins',amt:10},
@@ -47,6 +59,7 @@ const itemInfo={
 };
 let G={name:'文鳥',species:'buncho_sakura',unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0},isSleeping:false,bannerDismissed:false};
 let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBird=null,shopTab='food',selItem=null;
+let currentMg=null,mgData={},mgInterval=null;
 
 function setCookie(n,v){document.cookie=n+'='+encodeURIComponent(JSON.stringify(v))+';expires='+new Date(Date.now()+365*864e5).toUTCString()+';path=/;SameSite=Lax'}
 function getCookie(n){const v=document.cookie.split('; ').find(r=>r.startsWith(n+'='));if(v)try{return JSON.parse(decodeURIComponent(v.split('=')[1]))}catch(e){}return null}
@@ -78,11 +91,21 @@ function load(){
 function isStandalone(){return window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone===true}
 function showToast(m,t=''){const e=document.getElementById('toast');e.textContent=m;e.className='toast show '+t;setTimeout(()=>e.classList.remove('show'),2500)}
 function setMsg(m){document.getElementById('message').textContent=m}
-function showModal(id){document.getElementById(id).classList.add('show');if(id==='birdModal')renderBirdGrid()}
+function showModal(id){
+  document.getElementById(id).classList.add('show');
+  if(id==='birdModal')renderBirdGrid();
+  if(id==='nameModal')renderNameSuggestions();
+}
+function renderNameSuggestions(){
+  const b=birds[G.species];
+  const names=b.defaultNames||['ピーちゃん','とりちゃん','ぴよ'];
+  document.getElementById('nameSuggestions').innerHTML=names.map(n=>`<span class="name-suggestion" onclick="selectNameSuggestion('${n}')">${n}</span>`).join('');
+}
+function selectNameSuggestion(name){document.getElementById('nameInput').value=name;}
 function hideModal(id){document.getElementById(id).classList.remove('show')}
 function showInstallGuide(){hideInstallBanner();showModal('installModal')}
 function hideInstallBanner(){document.getElementById('installBanner').classList.remove('show');G.bannerDismissed=true;save()}
-function togglePanel(p){['shop','inventory','minigame','customize'].forEach(x=>{const el=document.getElementById(x+'Panel');el.classList.toggle('show',x===p&&!el.classList.contains('show'))});if(p==='shop')renderShop();if(p==='inventory')renderInv()}
+function togglePanel(p){['shop','inventory','minigame','customize'].forEach(x=>{const el=document.getElementById(x+'Panel');el.classList.toggle('show',x===p&&!el.classList.contains('show'))});if(p==='shop')renderShop();if(p==='inventory')renderInv();if(p==='minigame'){renderMinigameGrid();document.getElementById('minigameSelect').style.display='block';document.getElementById('minigamePlay').style.display='none';currentMg=null;}}
 
 function updateUI(){
   const b=birds[G.species];
@@ -126,10 +149,30 @@ function updateBuyBtn(){
 }
 function buyBird(){
   const b=birds[selBird],owned=G.unlocked.includes(selBird);
-  if(owned){if(selBird!==G.species){G.species=selBird;setMsg(b.name+'に変身！');save();updateUI()}hideModal('birdModal');return}
+  if(owned){
+    if(selBird!==G.species){
+      G.species=selBird;setMsg(b.name+'に変身！');save();updateUI();
+      showChangeNameModal();
+    }
+    hideModal('birdModal');return;
+  }
   if(G[b.curr]<b.price){showToast(b.curr==='gems'?'💎が足りません':'💰が足りません','warning');return}
   G[b.curr]-=b.price;G.unlocked.push(selBird);G.species=selBird;
   showToast('🎉'+b.name+'をゲット！','achievement');setMsg(b.name+'がやってきた！');save();updateUI();renderBirdGrid();
+  showChangeNameModal();
+}
+function showChangeNameModal(){
+  const b=birds[G.species];
+  document.getElementById('changeNameTitle').textContent=b.icon+' '+b.name+'の名前';
+  document.getElementById('newBirdNames').innerHTML=(b.defaultNames||[]).map(n=>`<span class="name-suggestion" onclick="document.getElementById('newNameInput').value='${n}'">${n}</span>`).join('');
+  document.getElementById('newNameInput').value='';
+  showModal('changeNameModal');
+}
+function skipNameChange(){hideModal('changeNameModal');}
+function confirmNameChange(){
+  const n=document.getElementById('newNameInput').value.trim();
+  if(n){G.name=n;setMsg(`名前が「${n}」になった！`);save();updateUI();}
+  hideModal('changeNameModal');
 }
 function setShopTab(t){shopTab=t;document.querySelectorAll('.shop-tab').forEach(e=>e.classList.toggle('active',e.textContent.includes(t==='food'?'食べ物':t==='items'?'アイテム':'プレミアム')));renderShop()}
 function renderShop(){document.getElementById('shopGrid').innerHTML=shopData[shopTab].map(i=>`<div class="shop-item" onclick="buyItem('${i.id}',${i.price},'${i.curr}',${i.amt})"><div class="shop-item-icon">${i.icon}</div><div class="shop-item-name">${i.name}</div><div class="shop-item-desc">${i.desc}</div><div class="shop-item-price">${i.price}${i.curr==='gems'?'💎':'💰'}</div></div>`).join('')}
@@ -215,10 +258,313 @@ function giveTreat(){if(G.inv.treats<=0){setMsg('おやつがない！');return}
 function trainBird(){if(G.energy<25){setMsg('疲れてる...訓練は無理...');return}doAction('train',()=>{G.energy=Math.max(0,G.energy-15);G.coins+=3;addExp(4);setMsg(['賢くなった！📚','新しいこと覚えた！'][Math.floor(Math.random()*2)]);save()})}
 function singBird(){if(G.energy<15){setMsg('疲れて歌えない...');return}doAction('sing',()=>{G.happiness=Math.min(100,G.happiness+12);G.energy=Math.max(0,G.energy-8);G.tSings++;G.coins+=2;addExp(3);setMsg(['チュンチュン〜♪🎵','上手に歌えた！','いい鳴き声でしょ？🎤'][Math.floor(Math.random()*3)]);save()})}
 function buyItem(id,price,curr,amt){if(G[curr]<price){showToast(curr==='gems'?'💎が足りません':'💰が足りません','warning');return}G[curr]-=price;G.inv[id]=(G.inv[id]||0)+amt;showToast('購入しました！');setMsg('お買い物ありがとう！🛒');save();updateUI();renderInv()}
-function startMinigame(){if(G.coins<10){setMsg('コインが足りない...');return}G.coins-=10;mgActive=true;mgScore=0;let t=15;document.getElementById('mgScore').textContent=mgScore;document.getElementById('mgTime').textContent=t;document.getElementById('startMgBtn').style.display='none';const tg=document.getElementById('mgTarget');tg.style.display='flex';moveTarget();mgTimer=setInterval(()=>{t--;document.getElementById('mgTime').textContent=t;if(t<=0)endMinigame()},1000);save();updateUI()}
+
+// Minigame System
+function renderMinigameGrid(){
+  document.getElementById('minigameGrid').innerHTML=minigames.map(mg=>`
+    <div class="minigame-card" onclick="selectMinigame('${mg.id}')">
+      <div class="minigame-card-icon">${mg.icon}</div>
+      <div class="minigame-card-name">${mg.name}</div>
+      <div class="minigame-card-desc">${mg.desc}</div>
+    </div>
+  `).join('');
+}
+function selectMinigame(id){
+  currentMg=minigames.find(m=>m.id===id);
+  document.getElementById('minigameSelect').style.display='none';
+  document.getElementById('minigamePlay').style.display='block';
+  document.getElementById('mgName').textContent=currentMg.name;
+  document.getElementById('startMgBtn').textContent=`開始(${currentMg.cost}💰)`;
+  document.getElementById('mgScore').textContent='0';
+  document.getElementById('mgTime').textContent='15';
+  document.getElementById('mgTarget').style.display='none';
+  document.getElementById('mgContent').innerHTML='';
+}
+function backToMinigameList(){
+  if(mgActive)endMinigame();
+  document.getElementById('minigameSelect').style.display='block';
+  document.getElementById('minigamePlay').style.display='none';
+  currentMg=null;
+}
+function startCurrentMinigame(){
+  if(!currentMg||G.coins<currentMg.cost){setMsg('コインが足りない...');return}
+  G.coins-=currentMg.cost;mgActive=true;mgScore=0;mgData={time:15};
+  document.getElementById('mgScore').textContent=0;document.getElementById('mgTime').textContent=15;
+  document.getElementById('startMgBtn').style.display='none';
+  save();updateUI();
+  switch(currentMg.id){
+    case'catch':startCatchGame();break;
+    case'timing':startTimingGame();break;
+    case'memory':startMemoryGame();break;
+    case'rhythm':startRhythmGame();break;
+    case'tap':startTapGame();break;
+    case'quiz':startQuizGame();break;
+    case'fly':startFlyGame();break;
+    case'sing':startSingGame();break;
+    case'balance':startBalanceGame();break;
+    case'treasure':startTreasureGame();break;
+  }
+  mgTimer=setInterval(()=>{mgData.time--;document.getElementById('mgTime').textContent=mgData.time;if(mgData.time<=0)endMinigame()},1000);
+}
+function endMinigame(){
+  mgActive=false;clearInterval(mgTimer);if(mgInterval)clearInterval(mgInterval);mgInterval=null;
+  document.removeEventListener('keydown',flyKeyHandler);
+  const r=Math.floor(mgScore*3);G.coins+=r;G.happiness=Math.min(100,G.happiness+Math.min(mgScore,10));
+  addExp(Math.floor(mgScore/2));
+  document.getElementById('startMgBtn').style.display='block';
+  document.getElementById('mgTarget').style.display='none';
+  document.getElementById('mgContent').innerHTML='';
+  showToast(`ゲーム終了！${r}コイン獲得！`,'achievement');
+  setMsg(`スコア${mgScore}！🎮`);save();updateUI();
+}
+
+// 1. Seed Catch Game
+function startCatchGame(){
+  const tg=document.getElementById('mgTarget');tg.style.display='flex';tg.textContent='🌾';moveTarget();
+}
 function moveTarget(){const tg=document.getElementById('mgTarget'),a=document.getElementById('minigameArea');tg.style.left=(15+Math.random()*(a.offsetWidth-80))+'px';tg.style.top=(25+Math.random()*90)+'px'}
-function catchSeed(){if(!mgActive)return;mgScore++;document.getElementById('mgScore').textContent=mgScore;moveTarget()}
-function endMinigame(){mgActive=false;clearInterval(mgTimer);const r=mgScore*3;G.coins+=r;G.happiness=Math.min(100,G.happiness+Math.min(mgScore,10));addExp(Math.floor(mgScore/2));document.getElementById('startMgBtn').style.display='block';document.getElementById('mgTarget').style.display='none';showToast(`ゲーム終了！${r}コイン獲得！`,'achievement');setMsg(`${mgScore}個キャッチ！🎮`);save();updateUI()}
+function catchSeed(){if(!mgActive||currentMg?.id!=='catch')return;mgScore++;document.getElementById('mgScore').textContent=mgScore;moveTarget()}
+
+// 2. Timing Game
+function startTimingGame(){
+  mgData.cursorPos=0;mgData.dir=1;mgData.zoneStart=35;mgData.zoneEnd=65;
+  document.getElementById('mgContent').innerHTML=`
+    <div class="timing-bar">
+      <div class="timing-zone" style="left:${mgData.zoneStart}%;width:${mgData.zoneEnd-mgData.zoneStart}%"></div>
+      <div class="timing-cursor" id="timingCursor" style="left:0%"></div>
+    </div>
+    <button class="action-btn play" onclick="hitTiming()" style="margin-top:15px">タップ！</button>
+  `;
+  mgInterval=setInterval(()=>{
+    mgData.cursorPos+=mgData.dir*3;
+    if(mgData.cursorPos>=100||mgData.cursorPos<=0)mgData.dir*=-1;
+    document.getElementById('timingCursor').style.left=mgData.cursorPos+'%';
+  },30);
+}
+function hitTiming(){
+  if(!mgActive)return;
+  const inZone=mgData.cursorPos>=mgData.zoneStart&&mgData.cursorPos<=mgData.zoneEnd;
+  if(inZone){mgScore+=2;showToast('ナイス！+2','achievement');}else{showToast('ミス...');}
+  document.getElementById('mgScore').textContent=mgScore;
+  mgData.zoneStart=Math.random()*60;mgData.zoneEnd=mgData.zoneStart+15+Math.random()*15;
+  document.querySelector('.timing-zone').style.left=mgData.zoneStart+'%';
+  document.querySelector('.timing-zone').style.width=(mgData.zoneEnd-mgData.zoneStart)+'%';
+}
+
+// 3. Memory Game
+function startMemoryGame(){
+  const emojis=['🌾','🍎','🌻','🐛','💧','🌿'];
+  const pairs=[...emojis,...emojis].sort(()=>Math.random()-0.5);
+  mgData.cards=pairs.map((e,i)=>({id:i,emoji:e,flipped:false,matched:false}));
+  mgData.flippedCards=[];mgData.time=30;document.getElementById('mgTime').textContent=30;
+  renderMemoryCards();
+}
+function renderMemoryCards(){
+  document.getElementById('mgContent').innerHTML=`<div class="memory-grid">${
+    mgData.cards.map((c,i)=>`<div class="memory-card${c.flipped||c.matched?' flipped':''}${c.matched?' matched':''}" onclick="flipCard(${i})">${c.flipped||c.matched?c.emoji:'❓'}</div>`).join('')
+  }</div>`;
+}
+function flipCard(i){
+  if(!mgActive||mgData.cards[i].flipped||mgData.cards[i].matched||mgData.flippedCards.length>=2)return;
+  mgData.cards[i].flipped=true;mgData.flippedCards.push(i);renderMemoryCards();
+  if(mgData.flippedCards.length===2){
+    const[a,b]=mgData.flippedCards;
+    if(mgData.cards[a].emoji===mgData.cards[b].emoji){
+      mgData.cards[a].matched=mgData.cards[b].matched=true;mgScore+=3;
+      document.getElementById('mgScore').textContent=mgScore;mgData.flippedCards=[];renderMemoryCards();
+      if(mgData.cards.every(c=>c.matched)){mgData.time=0;}
+    }else{
+      setTimeout(()=>{mgData.cards[a].flipped=mgData.cards[b].flipped=false;mgData.flippedCards=[];renderMemoryCards();},800);
+    }
+  }
+}
+
+// 4. Rhythm Game
+function startRhythmGame(){
+  mgData.notes=[];mgData.time=20;document.getElementById('mgTime').textContent=20;
+  document.getElementById('mgContent').innerHTML=`
+    <div class="rhythm-lane" id="rhythmLane" onclick="hitRhythm(event)">
+      <div class="rhythm-target"></div>
+    </div>
+  `;
+  mgInterval=setInterval(()=>{
+    if(Math.random()<0.3){
+      const note={x:20+Math.random()*60,y:-20,id:Date.now()};mgData.notes.push(note);
+    }
+    mgData.notes=mgData.notes.filter(n=>{n.y+=4;return n.y<150;});
+    renderRhythmNotes();
+  },50);
+}
+function renderRhythmNotes(){
+  const lane=document.getElementById('rhythmLane');if(!lane)return;
+  const target=lane.querySelector('.rhythm-target');
+  lane.innerHTML='';lane.appendChild(target);
+  mgData.notes.forEach(n=>{
+    const el=document.createElement('div');el.className='rhythm-note';el.style.left=n.x+'%';el.style.top=n.y+'px';
+    el.style.background=n.y>90&&n.y<120?'rgba(76,175,80,0.7)':'rgba(255,107,107,0.7)';el.textContent='🎵';
+    el.onclick=(e)=>{e.stopPropagation();hitNote(n.id);};lane.appendChild(el);
+  });
+}
+function hitNote(id){
+  const note=mgData.notes.find(n=>n.id===id);
+  if(note&&note.y>80&&note.y<130){mgScore+=2;showToast('ナイス！','achievement');mgData.notes=mgData.notes.filter(n=>n.id!==id);}
+  else if(note){mgData.notes=mgData.notes.filter(n=>n.id!==id);}
+  document.getElementById('mgScore').textContent=mgScore;
+}
+function hitRhythm(e){
+  const lane=document.getElementById('rhythmLane');const rect=lane.getBoundingClientRect();
+  const x=(e.clientX-rect.left)/rect.width*100;
+  const hit=mgData.notes.find(n=>Math.abs(n.x-x)<15&&n.y>80&&n.y<130);
+  if(hit){hitNote(hit.id);}
+}
+
+// 5. Tap Game
+function startTapGame(){
+  mgData.taps=0;mgData.time=10;document.getElementById('mgTime').textContent=10;
+  document.getElementById('mgContent').innerHTML=`
+    <div class="tap-area" id="tapArea" onclick="doTap()">👆</div>
+    <div style="margin-top:10px;font-size:0.8rem">タップ数: <span id="tapCount">0</span></div>
+  `;
+}
+function doTap(){
+  if(!mgActive)return;mgData.taps++;document.getElementById('tapCount').textContent=mgData.taps;
+  mgScore=Math.floor(mgData.taps/5);document.getElementById('mgScore').textContent=mgScore;
+  const area=document.getElementById('tapArea');area.style.transform='scale(0.9)';
+  setTimeout(()=>area.style.transform='scale(1)',50);
+}
+
+// 6. Quiz Game
+const quizQuestions=[
+  {q:'文鳥の原産地は？',a:['インドネシア','ブラジル','オーストラリア','日本'],c:0},
+  {q:'カナリアは何で有名？',a:['歌声','飛行距離','寿命','大きさ'],c:0},
+  {q:'インコの仲間で最も小さいのは？',a:['セキセイインコ','オカメインコ','コンゴウインコ','ヨウム'],c:0},
+  {q:'フクロウは何目？',a:['フクロウ目','タカ目','スズメ目','ハト目'],c:0},
+  {q:'鳥の体温は人間より？',a:['高い','低い','同じ','種類による'],c:0},
+  {q:'文鳥の寿命は約何年？',a:['7-8年','2-3年','15-20年','30年以上'],c:0},
+  {q:'鳥が持っていない器官は？',a:['歯','翼','くちばし','羽毛'],c:0},
+  {q:'セキセイインコの「セキセイ」の意味は？',a:['背黄青','積青','石青','昔青'],c:0},
+];
+function startQuizGame(){
+  mgData.qIdx=0;mgData.answered=0;mgData.time=30;document.getElementById('mgTime').textContent=30;
+  showQuiz();
+}
+function showQuiz(){
+  if(mgData.qIdx>=quizQuestions.length){mgData.qIdx=0;}
+  const q=quizQuestions[mgData.qIdx];
+  const shuffled=q.a.map((a,i)=>({a,i})).sort(()=>Math.random()-0.5);
+  document.getElementById('mgContent').innerHTML=`
+    <div class="quiz-question">${q.q}</div>
+    <div class="quiz-options">${shuffled.map(o=>`<div class="quiz-option" onclick="answerQuiz(${o.i})">${o.a}</div>`).join('')}</div>
+  `;
+}
+function answerQuiz(i){
+  if(!mgActive)return;
+  const q=quizQuestions[mgData.qIdx];const opts=document.querySelectorAll('.quiz-option');
+  opts.forEach(o=>o.style.pointerEvents='none');
+  if(i===q.c){mgScore+=3;showToast('正解！+3','achievement');opts.forEach((o,idx)=>{if(o.textContent===q.a[q.c])o.classList.add('correct');});}
+  else{showToast('不正解...');opts.forEach((o,idx)=>{if(o.textContent===q.a[q.c])o.classList.add('correct');if(o.textContent===q.a[i])o.classList.add('wrong');});}
+  document.getElementById('mgScore').textContent=mgScore;mgData.qIdx++;
+  setTimeout(()=>{if(mgActive)showQuiz();},1000);
+}
+
+// 7. Fly Game
+function startFlyGame(){
+  mgData.birdY=50;mgData.obstacles=[];mgData.time=20;document.getElementById('mgTime').textContent=20;
+  document.getElementById('mgContent').innerHTML=`<div class="fly-area" id="flyArea"><div class="fly-bird" id="flyBird">🐦</div></div>`;
+  document.addEventListener('keydown',flyKeyHandler);
+  document.getElementById('flyArea').addEventListener('touchstart',flyUp);
+  document.getElementById('flyArea').addEventListener('click',flyUp);
+  mgInterval=setInterval(flyTick,50);
+}
+function flyKeyHandler(e){if(e.code==='Space'||e.code==='ArrowUp')flyUp();}
+function flyUp(){if(!mgActive)return;mgData.birdY=Math.max(10,mgData.birdY-15);}
+function flyTick(){
+  if(!mgActive)return;
+  mgData.birdY=Math.min(90,mgData.birdY+2);
+  if(Math.random()<0.08){mgData.obstacles.push({x:100,y:20+Math.random()*60,emoji:['🌲','☁️','⛰️','🌸'][Math.floor(Math.random()*4)]});}
+  mgData.obstacles=mgData.obstacles.filter(o=>{o.x-=3;return o.x>-10;});
+  const bird=document.getElementById('flyBird');if(bird)bird.style.top=mgData.birdY+'%';
+  const area=document.getElementById('flyArea');if(!area)return;
+  area.querySelectorAll('.fly-obstacle').forEach(e=>e.remove());
+  mgData.obstacles.forEach(o=>{
+    const el=document.createElement('div');el.className='fly-obstacle';el.style.left=o.x+'%';el.style.top=o.y+'%';el.textContent=o.emoji;area.appendChild(el);
+    if(Math.abs(o.x-15)<8&&Math.abs(o.y-mgData.birdY)<15){mgData.obstacles=mgData.obstacles.filter(ob=>ob!==o);mgScore++;document.getElementById('mgScore').textContent=mgScore;}
+  });
+}
+
+// 8. Sing Game
+function startSingGame(){
+  const notes=['ド','レ','ミ','ファ','ソ'];
+  mgData.sequence=[];mgData.playerSeq=[];mgData.showing=true;mgData.time=30;document.getElementById('mgTime').textContent=30;
+  for(let i=0;i<3;i++)mgData.sequence.push(Math.floor(Math.random()*5));
+  document.getElementById('mgContent').innerHTML=`
+    <div style="margin-bottom:10px;font-size:0.8rem" id="singInstruction">覚えてね...</div>
+    <div class="sing-notes">${notes.map((n,i)=>`<div class="sing-note" id="note${i}" onclick="playNote(${i})">${n}</div>`).join('')}</div>
+  `;
+  showSequence();
+}
+function showSequence(){
+  let i=0;const int=setInterval(()=>{
+    document.querySelectorAll('.sing-note').forEach(n=>n.classList.remove('active'));
+    if(i<mgData.sequence.length){document.getElementById('note'+mgData.sequence[i]).classList.add('active');i++;}
+    else{clearInterval(int);mgData.showing=false;document.getElementById('singInstruction').textContent='同じ順番でタップ！';}
+  },600);
+}
+function playNote(n){
+  if(!mgActive||mgData.showing)return;
+  mgData.playerSeq.push(n);
+  const note=document.getElementById('note'+n);note.classList.add('active');setTimeout(()=>note.classList.remove('active'),200);
+  const idx=mgData.playerSeq.length-1;
+  if(mgData.playerSeq[idx]!==mgData.sequence[idx]){showToast('間違い！');mgData.playerSeq=[];mgData.sequence=[];for(let i=0;i<3;i++)mgData.sequence.push(Math.floor(Math.random()*5));mgData.showing=true;document.getElementById('singInstruction').textContent='覚えてね...';showSequence();return;}
+  if(mgData.playerSeq.length===mgData.sequence.length){
+    mgScore+=mgData.sequence.length;document.getElementById('mgScore').textContent=mgScore;showToast(`正解！+${mgData.sequence.length}`,'achievement');
+    mgData.playerSeq=[];mgData.sequence.push(Math.floor(Math.random()*5));mgData.showing=true;
+    document.getElementById('singInstruction').textContent='覚えてね...';setTimeout(showSequence,500);
+  }
+}
+
+// 9. Balance Game
+function startBalanceGame(){
+  mgData.pos=50;mgData.vel=0;mgData.time=15;document.getElementById('mgTime').textContent=15;mgData.balanceScore=0;
+  document.getElementById('mgContent').innerHTML=`
+    <div class="balance-bar">
+      <div class="balance-zone" style="left:35%;width:30%"></div>
+      <div class="balance-bird" id="balanceBird">🐦</div>
+    </div>
+    <div style="display:flex;gap:20px;margin-top:15px">
+      <button class="action-btn pet" onclick="nudgeBalance(-1)">← 左</button>
+      <button class="action-btn play" onclick="nudgeBalance(1)">右 →</button>
+    </div>
+  `;
+  mgInterval=setInterval(()=>{
+    if(!mgActive)return;
+    mgData.vel+=(Math.random()-0.5)*0.8;mgData.pos+=mgData.vel;mgData.pos=Math.max(5,Math.min(95,mgData.pos));mgData.vel*=0.95;
+    document.getElementById('balanceBird').style.left=mgData.pos+'%';
+    if(mgData.pos>35&&mgData.pos<65){mgData.balanceScore++;if(mgData.balanceScore%20===0){mgScore++;document.getElementById('mgScore').textContent=mgScore;}}
+  },50);
+}
+function nudgeBalance(dir){if(!mgActive)return;mgData.vel+=dir*2;}
+
+// 10. Treasure Game
+function startTreasureGame(){
+  mgData.grid=Array(16).fill(null);mgData.treasures=[];mgData.tries=0;mgData.time=20;document.getElementById('mgTime').textContent=20;
+  const tCount=4+Math.floor(Math.random()*3);
+  while(mgData.treasures.length<tCount){const p=Math.floor(Math.random()*16);if(!mgData.treasures.includes(p))mgData.treasures.push(p);}
+  renderTreasureGrid();
+}
+function renderTreasureGrid(){
+  document.getElementById('mgContent').innerHTML=`
+    <div style="font-size:0.75rem;margin-bottom:8px">残り発掘: ${8-mgData.tries}回</div>
+    <div class="treasure-grid">${mgData.grid.map((c,i)=>`<div class="treasure-cell${c!==null?' revealed':''}" onclick="digTreasure(${i})">${c===null?'🌿':c?'🌾':'💨'}</div>`).join('')}</div>
+  `;
+}
+function digTreasure(i){
+  if(!mgActive||mgData.grid[i]!==null||mgData.tries>=8)return;
+  mgData.tries++;mgData.grid[i]=mgData.treasures.includes(i);
+  if(mgData.grid[i]){mgScore+=2;showToast('発見！+2','achievement');}
+  document.getElementById('mgScore').textContent=mgScore;renderTreasureGrid();
+  if(mgData.tries>=8||mgData.treasures.every(t=>mgData.grid[t])){setTimeout(()=>{if(mgActive)endMinigame();},500);}
+}
 function setTheme(t){G.theme=t;document.body.className=t;save();renderCustomize()}
 function setWeather(w){G.weather=w;save();renderCustomize();renderWeather()}
 function addExp(a){G.exp+=a;const need=G.level*50;if(G.exp>=need){G.exp-=need;G.level++;G.coins+=G.level*10;G.gems++;showToast(`レベルアップ！Lv.${G.level}`,'levelup')}}

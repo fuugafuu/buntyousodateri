@@ -41,6 +41,7 @@
     <div class="modal-content">
       <div class="modal-title">🐦 名前を変更</div>
       <input type="text" id="nameInput" maxlength="12" placeholder="新しい名前">
+      <div class="name-suggestions" id="nameSuggestions"></div>
       <div class="modal-buttons">
         <button class="modal-btn secondary" onclick="hideModal('nameModal')">キャンセル</button>
         <button class="modal-btn primary" onclick="saveName()">決定</button>
@@ -89,6 +90,18 @@
       </div>
     </div>
   </div>
+  <div class="modal" id="changeNameModal">
+    <div class="modal-content">
+      <div class="modal-title" id="changeNameTitle">🐦 名前も変える？</div>
+      <p style="text-align:center;margin-bottom:14px" id="changeNameDesc">新しい鳥になりました！名前も変えますか？</p>
+      <div class="name-suggestions" id="newBirdNames"></div>
+      <input type="text" id="newNameInput" maxlength="12" placeholder="新しい名前">
+      <div class="modal-buttons">
+        <button class="modal-btn secondary" onclick="skipNameChange()">そのまま</button>
+        <button class="modal-btn primary" onclick="confirmNameChange()">変更</button>
+      </div>
+    </div>
+  </div>
   <div class="main-display" onclick="petBird()">
     <div class="weather-effects" id="weatherEffects"></div>
     <svg id="birdSvg" viewBox="0 0 200 220" width="220" height="242"></svg>
@@ -128,12 +141,22 @@
     <div class="inventory-grid" id="inventoryGrid"></div>
   </div>
   <div class="panel" id="minigamePanel">
-    <div class="panel-title">🎮 シードキャッチ</div>
-    <div class="minigame-area" id="minigameArea">
-      <div class="minigame-score">スコア: <span id="mgScore">0</span></div>
-      <div>制限時間: <span id="mgTime">15</span>秒</div>
-      <button class="action-btn play" onclick="startMinigame()" id="startMgBtn">開始(10💰)</button>
-      <div class="minigame-target" id="mgTarget" style="display:none" onclick="catchSeed()">🌾</div>
+    <div class="panel-title">🎮 ミニゲーム</div>
+    <div class="minigame-select" id="minigameSelect">
+      <div class="minigame-grid" id="minigameGrid"></div>
+    </div>
+    <div class="minigame-play" id="minigamePlay" style="display:none">
+      <div class="minigame-header">
+        <span class="minigame-name" id="mgName">シードキャッチ</span>
+        <button class="back-btn" onclick="backToMinigameList()">← 戻る</button>
+      </div>
+      <div class="minigame-area" id="minigameArea">
+        <div class="minigame-score">スコア: <span id="mgScore">0</span></div>
+        <div>制限時間: <span id="mgTime">15</span>秒</div>
+        <button class="action-btn play" onclick="startCurrentMinigame()" id="startMgBtn">開始(10💰)</button>
+        <div class="minigame-target" id="mgTarget" style="display:none" onclick="catchSeed()">🌾</div>
+        <div class="minigame-content" id="mgContent"></div>
+      </div>
     </div>
   </div>
   <div class="panel" id="customizePanel">
