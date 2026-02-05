@@ -21,6 +21,8 @@ const minigames=[
   {id:'balance',name:'バランス',icon:'⚖️',desc:'バランスを保って立て！',cost:10},
   {id:'treasure',name:'宝探し',icon:'💎',desc:'隠れたシードを探せ！',cost:10}
 ];
+const extraMinigameThemes=['スターラッシュ','スカイグライド','トリックループ','ソウルダッシュ','フォーカス','スパーク','ダイブ','ノヴァ','パルス','ミラージュ'];
+for(let i=1;i<=30;i++){const t=extraMinigameThemes[i%extraMinigameThemes.length];minigames.push({id:`extra_${i}`,name:`${t} ${i}`,icon:['✨','🌀','⚡','🎯','🧩'][i%5],desc:'追加チャレンジモード',cost:10+(i%4)*2});}
 const shopData={
   food:[
     {id:'seeds',name:'シード',desc:'基本のえさ×10',price:30,icon:'🌾',curr:'coins',amt:10},
@@ -128,17 +130,19 @@ function playBirdSound(type='action'){
   try{
     audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
     const t=audioCtx.currentTime;
-    const osc=audioCtx.createOscillator();
-    const gain=audioCtx.createGain();
-    osc.type=G.soundMode==='bell'?'triangle':'sine';
-    const base=type==='sing'?920:type==='feed'?700:type==='play'?800:650;
-    osc.frequency.setValueAtTime(base,t);
-    osc.frequency.exponentialRampToValueAtTime(base*1.35,t+0.12);
-    gain.gain.setValueAtTime(0.0001,t);
-    gain.gain.exponentialRampToValueAtTime(0.08,t+0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001,t+0.2);
-    osc.connect(gain);gain.connect(audioCtx.destination);
-    osc.start(t);osc.stop(t+0.21);
+    const base=type==='sing'?920:type==='feed'?700:type==='play'?800:type==='battle'?520:650;
+    const master=audioCtx.createGain();master.gain.value=G.soundMode==='bell'?0.10:0.08;master.connect(audioCtx.destination);
+    const partials=[1,2,3.01];
+    partials.forEach((p,idx)=>{
+      const o=audioCtx.createOscillator();const g=audioCtx.createGain();
+      o.type=G.soundMode==='bell'?(idx===0?'triangle':'sine'):(idx===0?'sine':'triangle');
+      o.frequency.setValueAtTime(base*p,t);
+      o.frequency.exponentialRampToValueAtTime((base*1.22)*(idx===0?1:0.98),t+0.12+idx*0.02);
+      g.gain.setValueAtTime(0.0001,t);
+      g.gain.exponentialRampToValueAtTime((0.07/(idx+1)),t+0.02+idx*0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.22+idx*0.03);
+      o.connect(g);g.connect(master);o.start(t);o.stop(t+0.25+idx*0.03);
+    });
   }catch(e){}
 }
 
@@ -384,9 +388,20 @@ function startCurrentMinigame(){
     case'sing':startSingGame();break;
     case'balance':startBalanceGame();break;
     case'treasure':startTreasureGame();break;
+    default:startExtraMinigame(currentMg.id);break;
   }
   mgTimer=setInterval(()=>{mgData.time--;document.getElementById('mgTime').textContent=mgData.time;if(mgData.time<=0)endMinigame()},1000);
 }
+
+function startExtraMinigame(id){
+  const type=Number(id.split('_')[1]||0)%5;
+  if(type===0){startTapGame();return;}
+  if(type===1){startTimingGame();return;}
+  if(type===2){startCatchGame();return;}
+  if(type===3){startBalanceGame();return;}
+  startRhythmGame();
+}
+
 function endMinigame(){
   mgActive=false;clearInterval(mgTimer);if(mgInterval)clearInterval(mgInterval);mgInterval=null;
   document.removeEventListener('keydown',flyKeyHandler);
@@ -716,12 +731,13 @@ function getGeoAndWeather(){
   },err=>{logError('geolocation',err.message||'geo error');showToast('位置情報が拒否されました','warning');});
 }
 const storyLines=[
-  '森の入口。冷たい風のなか、文鳥はあなたの肩で震えていた。',
-  '最初の門を守る迷いの精「ルーン」が道を塞ぐ。',
-  '「力だけでは、先へは進めない。」とルーンは呟く。',
-  '文鳥の冒険 第一章: すべての始まり。'
+  '星の落ちた夜、あなたと文鳥は忘れられた駅へ迷い込んだ。',
+  'そこは願いと後悔が交差する場所。名もなき旅が始まる。',
+  '門番ルーンは問いかける。「痛みを選ぶか、対話を選ぶか。」',
+  '文鳥の冒険 第一章: すべての始まり。ここからすべてが動き出す。'
 ];
 let joyState={active:false,cx:46,cy:46,dx:0,dy:0};
+let soulState={x:44,y:44,vx:0,vy:0,bullets:[]};
 let storyTickTimer=null;
 function renderStory(){
   const scene=document.getElementById('storyScene'),status=document.getElementById('storyStatus'),actions=document.getElementById('storyActions');
@@ -733,6 +749,7 @@ function renderStory(){
   scene.textContent=(st.state==='battle'?'ルーンと向き合っている。選択で未来が変わる。':storyLines[Math.min(st.step,storyLines.length-1)]);
   status.textContent=`章:${st.ep} / あなたHP:${st.hp} / ルーンHP:${st.enemyHp} / 信頼:${st.trust}`;
   battleUi.style.display=st.state==='battle'?'block':'none';
+  if(st.state==='battle')renderSoulBattle();
   actions.innerHTML=st.state==='battle'?`
     <button class="story-btn" data-kind="peace" onclick="storyAction('talk')">🗨️ 話す</button>
     <button class="story-btn" data-kind="peace" onclick="storyAction('mercy')">🤝 見逃す</button>
@@ -740,6 +757,20 @@ function renderStory(){
     <button class="story-btn" onclick="storyAction('guard')">🛡️ 身構える</button>
   `:'';
 }
+function renderSoulBattle(){
+  const box=document.getElementById('soulBox'),soul=document.getElementById('soulBird');
+  if(!box||!soul)return;
+  const r=box.getBoundingClientRect();
+  soulState.vx=joyState.dx*2.4;soulState.vy=joyState.dy*2.4;
+  soulState.x=Math.max(6,Math.min(r.width-26,soulState.x+soulState.vx));
+  soulState.y=Math.max(6,Math.min(r.height-26,soulState.y+soulState.vy));
+  soul.style.left=soulState.x+'px';soul.style.top=soulState.y+'px';
+  if(Math.random()<0.07&&G.story.state==='battle')soulState.bullets.push({x:Math.random()*(r.width-8),y:-8,vy:1.8+Math.random()*1.8});
+  soulState.bullets=soulState.bullets.filter(b=>b.y<r.height+10);
+  box.querySelectorAll('.bullet').forEach(e=>e.remove());
+  soulState.bullets.forEach(b=>{b.y+=b.vy;const d=document.createElement('div');d.className='bullet';d.style.left=b.x+'px';d.style.top=b.y+'px';box.appendChild(d);if(Math.abs((b.x+4)-(soulState.x+10))<10&&Math.abs((b.y+4)-(soulState.y+10))<10){G.story.hp=Math.max(1,G.story.hp-1);}});
+}
+
 function storyAction(type){
   const st=G.story;
   if(st.state!=='battle'){setMsg('まずルーンに近づこう。');return;}
@@ -913,7 +944,7 @@ function gameTick(){
   }else{G.energy=Math.min(100,G.energy+0.12);if(G.energy>=100){G.isSleeping=false;G.sleepStart=null;setMsg('ぐっすり眠れた！🌅')}}
   G.age++;if(G.age%30===0)save();updateUI();
 }
-function animLoop(){animF++;renderBird();requestAnimationFrame(animLoop)}
+function animLoop(){animF++;if(G.beta3d&&!joyState.active){G.threeDRotY+=(Math.sin(animF*0.02)*0.08);const svg=document.getElementById('birdSvg');if(svg)svg.style.setProperty('--ry',`${G.threeDRotY}deg`);}renderBird();requestAnimationFrame(animLoop)}
 function blinkLoop(){if(!G.isSleeping&&Math.random()<0.3){blink=true;setTimeout(()=>blink=false,150)}}
 function resetGame(){if(!confirm('本当にリセットしますか？'))return;delCookie('birdG3');location.reload()}
 function init(){

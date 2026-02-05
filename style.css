@@ -284,3 +284,11 @@ body.night .battle-ui{background:rgba(0,0,0,.25)}
 .story-btn{background:linear-gradient(135deg,#1e88e5,#1565c0);color:#fff;font-weight:700}
 .story-btn[data-kind='peace']{background:linear-gradient(135deg,#66bb6a,#2e7d32)}
 .story-btn[data-kind='fight']{background:linear-gradient(135deg,#ff7043,#d84315)}
+
+
+#birdSvg.bird-3d-real{will-change:transform;transition:none}
+.soul-box{position:relative;height:120px;border:4px solid #fff;background:#000;margin:8px 0;border-radius:2px;overflow:hidden}
+.soul-bird{position:absolute;left:44px;top:44px;font-size:1rem;filter:drop-shadow(0 0 3px #ff6b6b)}
+.bullet{position:absolute;width:8px;height:8px;border-radius:50%;background:#fff}
+.adventure-stage{border:2px solid rgba(255,255,255,.35)}
+.story-player,.story-enemy{image-rendering:pixelated}
