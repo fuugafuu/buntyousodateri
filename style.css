@@ -243,3 +243,20 @@ body.night .changelog,body.night .error-log{background:rgba(255,255,255,0.08)}
 .main-display{perspective:950px}
 
 .quick-btn.share{background:linear-gradient(135deg,#00acc1,#00838f);border:none;color:#fff}
+
+:root{--radius:14px}
+.header,.panel,.message-bubble,.stat-card,.shop-item,.inventory-item{backdrop-filter:blur(8px)}
+body.day .panel,body.sunset .panel,body.day .message-bubble,body.sunset .message-bubble{box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+.quick-btn.story{background:linear-gradient(135deg,#ff7043,#d84315);border:none;color:#fff}
+.story-scene{min-height:120px;border-radius:12px;padding:10px;line-height:1.5;font-size:.78rem}
+.story-status{margin-top:8px;font-size:.73rem;opacity:.9}
+.story-actions{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.story-btn{padding:9px;border:none;border-radius:10px;font-family:inherit;font-size:.75rem;cursor:pointer;background:rgba(0,0,0,0.08)}
+body.night .story-btn{background:rgba(255,255,255,0.12);color:#fff}
+body.day .story-scene,body.sunset .story-scene{background:rgba(0,0,0,0.04)}
+body.night .story-scene{background:rgba(255,255,255,0.08)}
+@media (min-width:780px){
+  body{max-width:900px;margin:0 auto}
+  .stats-grid{grid-template-columns:repeat(5,minmax(90px,1fr));gap:8px}
+  .actions-grid{gap:8px}
+}

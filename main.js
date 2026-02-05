@@ -59,7 +59,7 @@ const itemInfo={
   swing:{name:'ブランコ',icon:'🎠',usable:false},
   sleep_box:{name:'スリープボックス',icon:'🛏️',usable:true,effect:'1〜10時間の状態維持スリープ'}
 };
-let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',chatApiDraft:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
+let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',chatApiDraft:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,autoTheme:true,autoWeather:false,geo:null,story:{ep:1,step:0,hp:20,trust:0,enemyHp:18,state:'intro'},lastWeatherFetch:0,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
 let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBird=null,shopTab='food',selItem=null;
 let currentMg=null,mgData={},mgInterval=null;
 
@@ -113,6 +113,11 @@ function ensureNewSettings(){
   if(!Array.isArray(G.errorLogs))G.errorLogs=[];
   if(typeof G.threeDRotX!=='number')G.threeDRotX=10;
   if(typeof G.threeDRotY!=='number')G.threeDRotY=-8;
+  if(typeof G.autoTheme!=='boolean')G.autoTheme=true;
+  if(typeof G.autoWeather!=='boolean')G.autoWeather=false;
+  if(typeof G.geo!=='object'&&G.geo!==null)G.geo=null;
+  if(!G.story||typeof G.story!=='object')G.story={ep:1,step:0,hp:20,trust:0,enemyHp:18,state:'intro'};
+  if(typeof G.lastWeatherFetch!=='number')G.lastWeatherFetch=0;
 }
 let audioCtx=null;
 function playBirdSound(type='action'){
@@ -152,7 +157,7 @@ function selectNameSuggestion(name){document.getElementById('nameInput').value=n
 function hideModal(id){document.getElementById(id).classList.remove('show')}
 function showInstallGuide(){hideInstallBanner();showModal('installModal')}
 function hideInstallBanner(){document.getElementById('installBanner').classList.remove('show');G.bannerDismissed=true;save()}
-function togglePanel(p){['shop','inventory','minigame','customize','chat','logs'].forEach(x=>{const el=document.getElementById(x+'Panel');if(!el)return;el.classList.toggle('show',x===p&&!el.classList.contains('show'))});if(p==='shop')renderShop();if(p==='inventory')renderInv();if(p==='minigame'){renderMinigameGrid();document.getElementById('minigameSelect').style.display='block';document.getElementById('minigamePlay').style.display='none';currentMg=null;}if(p==='chat')renderChat();if(p==='logs'){renderChangeLog();renderErrorLogs();}}
+function togglePanel(p){['shop','inventory','minigame','customize','chat','logs','story'].forEach(x=>{const el=document.getElementById(x+'Panel');if(!el)return;el.classList.toggle('show',x===p&&!el.classList.contains('show'))});if(p==='shop')renderShop();if(p==='inventory')renderInv();if(p==='minigame'){renderMinigameGrid();document.getElementById('minigameSelect').style.display='block';document.getElementById('minigamePlay').style.display='none';currentMg=null;}if(p==='chat')renderChat();if(p==='logs'){renderChangeLog();renderErrorLogs();}if(p==='story')renderStory();}
 
 function updateUI(){
   const b=birds[G.species];
@@ -255,7 +260,10 @@ function renderCustomize(){
   document.getElementById('resolutionOpts').innerHTML=[{id:0.8,n:'低'},{id:1,n:'中'},{id:1.6,n:'高精細'}].map(r=>`<button class="customize-btn ${G.resolutionScale===r.id?'active':''}" onclick="setResolution(${r.id})">${r.n}</button>`).join('');
   document.getElementById('beta3dOpts').innerHTML=[{v:true,n:'ON'},{v:false,n:'OFF'}].map(c=>`<button class="customize-btn ${(G.beta3d===c.v)?'active':''}" onclick="setBeta3d(${c.v})">${c.n}</button>`).join('');
   document.getElementById('themeOpts').innerHTML=[{id:'day',n:'☀️昼'},{id:'sunset',n:'🌅夕'},{id:'night',n:'🌙夜'}].map(t=>`<button class="customize-btn ${G.theme===t.id?'active':''}" onclick="setTheme('${t.id}')">${t.n}</button>`).join('');
+  document.getElementById('themeAutoOpts').innerHTML=[{v:true,n:'🕒自動'},{v:false,n:'✋手動'}].map(o=>`<button class="customize-btn ${(G.autoTheme===o.v)?'active':''}" onclick="setAutoTheme(${o.v})">${o.n}</button>`).join('');
   document.getElementById('weatherOpts').innerHTML=[{id:'none',n:'☀️なし'},{id:'rain',n:'🌧️雨'},{id:'snow',n:'❄️雪'}].map(w=>`<button class="customize-btn ${G.weather===w.id?'active':''}" onclick="setWeather('${w.id}')">${w.n}</button>`).join('');
+  document.getElementById('weatherAutoOpts').innerHTML=[{v:true,n:'📍実天気ON'},{v:false,n:'✋手動'}].map(o=>`<button class="customize-btn ${(G.autoWeather===o.v)?'active':''}" onclick="setAutoWeather(${o.v})">${o.n}</button>`).join('');
+  document.getElementById('weatherHint').textContent=G.autoWeather?'実際の天気と連動中（位置情報）':'手動天気モードです。';
   document.getElementById('soundOpts').innerHTML=[{id:'off',n:'🔇OFF'},{id:'chirp',n:'🐤チュン'},{id:'bell',n:'🔔ベル'}].map(s=>`<button class="customize-btn ${G.soundMode===s.id?'active':''}" onclick="setSoundMode('${s.id}')">${s.n}</button>`).join('');
   document.getElementById('chatApiOpts').innerHTML=[{v:true,n:'ON'},{v:false,n:'OFF'}].map(c=>`<button class="customize-btn ${(G.chatApiEnabled===c.v)?'active':''}" onclick="setChatApi(${c.v})">${c.n}</button>`).join('');
   const keyInput=document.getElementById('chatApiKey');
@@ -676,8 +684,70 @@ function cancelSleepBox(){
   save();updateUI();
 }
 
-function setTheme(t){G.theme=t;document.body.className=t;save();renderCustomize()}
-function setWeather(w){G.weather=w;save();renderCustomize();renderWeather()}
+
+function setAutoTheme(v){G.autoTheme=v===true||v==='true';if(G.autoTheme)applyAutoTheme();save();renderCustomize();updateUI();}
+function setAutoWeather(v){
+  G.autoWeather=v===true||v==='true';
+  if(G.autoWeather)getGeoAndWeather();
+  save();renderCustomize();
+}
+function applyAutoTheme(){
+  const h=(new Date()).getHours();
+  G.theme=h>=6&&h<17?'day':h>=17&&h<19?'sunset':'night';
+}
+function weatherCodeToType(code){
+  if([71,73,75,77,85,86].includes(code))return'snow';
+  if((code>=51&&code<=67)||(code>=80&&code<=82)||code===95)return'rain';
+  return'none';
+}
+function getGeoAndWeather(){
+  if(!navigator.geolocation){showToast('位置情報が使えません','warning');return;}
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const lat=pos.coords.latitude,lon=pos.coords.longitude;G.geo={lat,lon};
+    try{
+      const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code`);
+      const d=await r.json();
+      const code=d.current&&typeof d.current.weather_code==='number'?d.current.weather_code:0;
+      G.weather=weatherCodeToType(code);G.lastWeatherFetch=Date.now();save();updateUI();
+    }catch(e){logError('weather',String(e));showToast('天気取得に失敗','warning');}
+  },err=>{logError('geolocation',err.message||'geo error');showToast('位置情報が拒否されました','warning');});
+}
+const storyLines=[
+  '夜の森。あなたと小さな鳥は、光る扉を見つけた。',
+  '扉の向こうで、迷いの精「ルーン」が現れる。',
+  'ルーン:「戦う？ それとも、話して進む？」',
+  '鳥があなたの袖をついばみ、そっと見上げる。'
+];
+function renderStory(){
+  const scene=document.getElementById('storyScene'),status=document.getElementById('storyStatus'),actions=document.getElementById('storyActions');
+  if(!scene||!status||!actions)return;
+  const st=G.story;
+  scene.textContent=storyLines[Math.min(st.step,storyLines.length-1)]+'\n\n'+(st.state==='battle'?'精霊との対峙が始まった。':'選択で物語が変化する。');
+  status.textContent=`あなたHP:${st.hp} / ルーンHP:${st.enemyHp} / 信頼:${st.trust}`;
+  actions.innerHTML=`
+    <button class="story-btn" onclick="storyAction('talk')">🗨️ 話す</button>
+    <button class="story-btn" onclick="storyAction('mercy')">🤝 見逃す</button>
+    <button class="story-btn" onclick="storyAction('fight')">⚔️ 戦う</button>
+    <button class="story-btn" onclick="storyAction('next')">➡️ 進む</button>
+  `;
+}
+function storyAction(type){
+  const st=G.story;
+  if(type==='next'){st.step=Math.min(st.step+1,storyLines.length-1);if(st.step>=2)st.state='battle';renderStory();save();return;}
+  if(st.state!=='battle'){setMsg('まず物語を進めよう。');return;}
+  if(type==='talk'){st.trust+=2;st.enemyHp=Math.max(0,st.enemyHp-1);setMsg('優しく語りかけた。空気が和らいだ。');}
+  if(type==='mercy'){st.trust+=3;st.enemyHp=Math.max(0,st.enemyHp-2);setMsg('あなたは手を下ろした。ルーンが目を伏せる。');}
+  if(type==='fight'){st.enemyHp=Math.max(0,st.enemyHp-5);st.hp=Math.max(0,st.hp-2);setMsg('一撃を交わした。森が震える。');}
+  if(st.enemyHp<=0||st.trust>=10){
+    st.state='clear';
+    document.getElementById('storyScene').textContent='第一話クリア：ルーンは道を開き、次の世界への鍵を託した。\n「本当の強さは、選ぶ心にある」';
+    showToast('📖 第一話クリア！','achievement');
+  }
+  renderStory();save();
+}
+
+function setTheme(t){G.autoTheme=false;G.theme=t;document.body.className=t;save();renderCustomize()}
+function setWeather(w){G.autoWeather=false;G.weather=w;save();renderCustomize();renderWeather()}
 function setAnimationMode(m){G.animationMode=m;save();renderCustomize()}
 function setResolution(scale){G.resolutionScale=scale;const svg=document.getElementById('birdSvg');svg.setAttribute('viewBox',scale>=1.6?'0 0 200 220':'0 0 200 220');save();updateUI()}
 function setSoundMode(mode){G.soundMode=mode;save();renderCustomize()}
@@ -795,6 +865,8 @@ function init3dControl(){
 
 function addExp(a){G.exp+=a;const need=G.level*50;if(G.exp>=need){G.exp-=need;G.level++;G.coins+=G.level*10;G.gems++;showToast(`レベルアップ！Lv.${G.level}`,'levelup')}}
 function gameTick(){
+  if(G.autoTheme)applyAutoTheme();
+  if(G.autoWeather&&Date.now()-G.lastWeatherFetch>30*60*1000)getGeoAndWeather();
   if(G.sleepBoxUntil&&Date.now()<G.sleepBoxUntil)applySleepBoxLock();
   if(!G.isSleeping){
     G.hunger=Math.max(0,G.hunger-0.07);G.happiness=Math.max(0,G.happiness-0.035);G.cleanliness=Math.max(0,G.cleanliness-0.02);G.energy=Math.max(0,G.energy-0.025);
@@ -818,7 +890,9 @@ function init(){
   chatInput.addEventListener('keypress',e=>{if(e.key==='Enter')sendChatMessage()});
   window.addEventListener('error',e=>logError('window',e.message||'unknown'));
   window.addEventListener('unhandledrejection',e=>logError('promise',String(e.reason||'rejection')));
-  init3dControl();renderChangeLog();renderErrorLogs();renderChat();
+  init3dControl();renderChangeLog();renderErrorLogs();renderChat();renderStory();
+  if(G.autoTheme)applyAutoTheme();
+  if(G.autoWeather&&(!G.lastWeatherFetch||Date.now()-G.lastWeatherFetch>30*60*1000))getGeoAndWeather();
   document.addEventListener('visibilitychange',()=>{
     if(!document.hidden&&G.isSleeping&&G.sleepStart){
       const sleepMins=(Date.now()-G.sleepStart)/60000,eBefore=G.energy;

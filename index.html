@@ -128,6 +128,7 @@
     <button class="quick-btn minigame" onclick="togglePanel('minigame')">🎮ミニゲーム</button>
     <button class="quick-btn chat" id="chatOpenBtn" onclick="togglePanel('chat')" style="display:none">💬AI会話</button>
     <button class="quick-btn logs" onclick="togglePanel('logs')">🧰ログ</button>
+    <button class="quick-btn story" onclick="togglePanel('story')">📖第一話</button>
   </div>
   <div class="panel" id="shopPanel">
     <div class="panel-title">🛒 ショップ</div>
@@ -183,6 +184,14 @@
     <div class="error-log" id="errorLogArea"></div>
   </div>
 
+
+  <div class="panel" id="storyPanel">
+    <div class="panel-title">📖 第一話: すべての始まり</div>
+    <div class="story-scene" id="storyScene"></div>
+    <div class="story-status" id="storyStatus"></div>
+    <div class="story-actions" id="storyActions"></div>
+  </div>
+
   <div class="panel" id="customizePanel">
     <div class="customize-section">
       <div class="customize-title">✨ アニメーション</div>
@@ -199,10 +208,13 @@
     <div class="customize-section">
       <div class="customize-title">🌤️ 背景</div>
       <div class="customize-options" id="themeOpts"></div>
+      <div class="customize-options" id="themeAutoOpts"></div>
     </div>
     <div class="customize-section">
       <div class="customize-title">🌦️ 天気</div>
       <div class="customize-options" id="weatherOpts"></div>
+      <div class="customize-options" id="weatherAutoOpts"></div>
+      <small class="api-hint" id="weatherHint">位置情報を使って実際の天気に連動できます。</small>
     </div>
     <div class="customize-section">
       <div class="customize-title">🔊 サウンド</div>
