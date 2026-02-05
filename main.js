@@ -59,7 +59,7 @@ const itemInfo={
   swing:{name:'ブランコ',icon:'🎠',usable:false},
   sleep_box:{name:'スリープボックス',icon:'🛏️',usable:true,effect:'1〜10時間の状態維持スリープ'}
 };
-let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
+let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',chatApiDraft:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
 let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBird=null,shopTab='food',selItem=null;
 let currentMg=null,mgData={},mgInterval=null;
 
@@ -103,6 +103,7 @@ function ensureNewSettings(){
   if(!G.soundMode)G.soundMode='chirp';
   if(typeof G.chatApiEnabled!=='boolean')G.chatApiEnabled=false;
   if(typeof G.chatApiKey!=='string')G.chatApiKey='';
+  if(typeof G.chatApiDraft!=='string')G.chatApiDraft=G.chatApiKey||'';
   if(typeof G.beta3d!=='boolean')G.beta3d=false;
   if(typeof G.sleepBoxUntil!=='number')G.sleepBoxUntil=null;
   if(typeof G.sleepBoxLock!=='object'&&G.sleepBoxLock!==null)G.sleepBoxLock=null;
@@ -259,7 +260,8 @@ function renderCustomize(){
   document.getElementById('chatApiOpts').innerHTML=[{v:true,n:'ON'},{v:false,n:'OFF'}].map(c=>`<button class="customize-btn ${(G.chatApiEnabled===c.v)?'active':''}" onclick="setChatApi(${c.v})">${c.n}</button>`).join('');
   const keyInput=document.getElementById('chatApiKey');
   keyInput.style.display='block';
-  keyInput.value=G.chatApiKey||'';
+  const shouldPreserve=document.activeElement===keyInput;
+  if(!shouldPreserve)keyInput.value=(G.chatApiDraft||G.chatApiKey||'');
   document.getElementById('chatApiHint').textContent=G.chatApiEnabled?'APIキーはCookieに保存されます。':'OFF中はAPIを使いません。';
 }
 function renderBird(){
@@ -682,17 +684,30 @@ function setSoundMode(mode){G.soundMode=mode;save();renderCustomize()}
 function setBeta3d(v){G.beta3d=v===true||v==='true';save();updateUI()}
 function setChatApi(enabled){G.chatApiEnabled=enabled===true||enabled==='true';
   const keyInput=document.getElementById('chatApiKey');
-  if(G.chatApiEnabled&&!((keyInput.value||G.chatApiKey||'').trim())){
+  if(G.chatApiEnabled&&!((keyInput.value||G.chatApiDraft||G.chatApiKey||'').trim())){
     G.chatApiEnabled=false;showToast('APIキーを入力してください','warning');
   }
-  if(G.chatApiEnabled){G.chatApiKey=(keyInput.value||G.chatApiKey||'').trim();}
+  if(G.chatApiEnabled){G.chatApiKey=(keyInput.value||G.chatApiDraft||G.chatApiKey||'').trim();}
   save();renderCustomize();updateUI();
 }
 function saveChatApiKey(){
   const key=document.getElementById('chatApiKey').value.trim();
+  G.chatApiDraft=key;
   if(!G.chatApiEnabled)return;
   if(!key){showToast('APIキーが空です','warning');return;}
   G.chatApiKey=key;save();showToast('APIキーを保存しました');
+}
+
+
+function shareGame(){
+  const text=`🐦 ${getCurrentBirdName()} を育成中！ Lv.${G.level} / 💰${Math.round(G.coins)} / 😊${document.getElementById('mood').textContent}`;
+  if(navigator.share){
+    navigator.share({title:'鳥育成ゲーム',text,url:location.href}).catch(()=>{});
+    return;
+  }
+  navigator.clipboard?.writeText(`${text}
+${location.href}`);
+  showToast('共有文をコピーしました');
 }
 
 function getBirdInfoCompact(){
@@ -797,6 +812,7 @@ function init(){
   document.getElementById('nameInput').addEventListener('keypress',e=>{if(e.key==='Enter')saveName()});
   const apiInput=document.getElementById('chatApiKey');
   apiInput.addEventListener('keypress',e=>{if(e.key==='Enter')saveChatApiKey()});
+  apiInput.addEventListener('input',e=>{G.chatApiDraft=e.target.value;});
   apiInput.addEventListener('blur',saveChatApiKey);
   const chatInput=document.getElementById('chatInput');
   chatInput.addEventListener('keypress',e=>{if(e.key==='Enter')sendChatMessage()});

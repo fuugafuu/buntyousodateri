@@ -241,3 +241,5 @@ body.day .changelog,body.day .error-log,body.sunset .changelog,body.sunset .erro
 body.night .changelog,body.night .error-log{background:rgba(255,255,255,0.08)}
 #birdSvg.bird-3d-real{transform:perspective(900px) rotateX(var(--rx,10deg)) rotateY(var(--ry,-8deg)) translateZ(4px);transform-style:preserve-3d;transition:transform .08s linear}
 .main-display{perspective:950px}
+
+.quick-btn.share{background:linear-gradient(135deg,#00acc1,#00838f);border:none;color:#fff}
