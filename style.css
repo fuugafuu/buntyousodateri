@@ -292,3 +292,15 @@ body.night .battle-ui{background:rgba(0,0,0,.25)}
 .bullet{position:absolute;width:8px;height:8px;border-radius:50%;background:#fff}
 .adventure-stage{border:2px solid rgba(255,255,255,.35)}
 .story-player,.story-enemy{image-rendering:pixelated}
+
+
+.quick-dock{position:sticky;bottom:8px;z-index:30;padding:8px 10px;border-radius:14px;background:rgba(0,0,0,0.1);backdrop-filter:blur(8px);animation:dockIn .35s ease}
+@keyframes dockIn{from{transform:translateY(8px);opacity:.4}to{transform:translateY(0);opacity:1}}
+.quick-dock .quick-btn{transform:translateY(0);transition:transform .18s ease,filter .18s ease}
+.quick-dock .quick-btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
+.story-joystick{align-items:flex-start}
+.dpad{display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,34px);gap:4px;margin-top:2px}
+.dpad-btn{border:none;border-radius:8px;background:linear-gradient(135deg,#455a64,#263238);color:#fff;font-size:.72rem;font-family:inherit}
+.dpad-btn.up{grid-column:2;grid-row:1}.dpad-btn.left{grid-column:1;grid-row:2}.dpad-btn.right{grid-column:3;grid-row:2}.dpad-btn.down{grid-column:2;grid-row:3}
+.story-next{width:100%;margin-top:8px;padding:8px 10px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffa726,#f57c00);color:#fff;font-family:inherit;font-size:.75rem;font-weight:700;animation:pulseStory 1.6s ease-in-out infinite}
+@keyframes pulseStory{0%,100%{box-shadow:0 0 0 0 rgba(255,167,38,.35)}50%{box-shadow:0 0 0 8px rgba(255,167,38,0)}}

@@ -739,6 +739,16 @@ const storyLines=[
 let joyState={active:false,cx:46,cy:46,dx:0,dy:0};
 let soulState={x:44,y:44,vx:0,vy:0,bullets:[]};
 let storyTickTimer=null;
+function setJoyDir(x,y){joyState.dx=x;joyState.dy=y;}
+function resetJoyDir(){joyState.dx=0;joyState.dy=0;}
+function advanceStory(){
+  const st=G.story;
+  if(st.state==='battle'||st.state==='clear')return;
+  st.step=Math.min(st.step+1,storyLines.length-1);
+  if(st.step>=2)setMsg('ルーンの気配が近い...');
+  save();renderStory();
+}
+
 function renderStory(){
   const scene=document.getElementById('storyScene'),status=document.getElementById('storyStatus'),actions=document.getElementById('storyActions');
   const player=document.getElementById('storyPlayer'),enemy=document.getElementById('storyEnemy'),battleUi=document.getElementById('battleUi');
@@ -747,6 +757,7 @@ function renderStory(){
   player.style.left=`${st.x}px`;player.style.top=`${st.y}px`;
   enemy.style.display=st.state==='clear'?'none':'flex';
   scene.textContent=(st.state==='battle'?'ルーンと向き合っている。選択で未来が変わる。':storyLines[Math.min(st.step,storyLines.length-1)]);
+  const nextBtn=document.getElementById('storyNextBtn');if(nextBtn)nextBtn.style.display=(st.state==='field'&&st.step<storyLines.length-1)?'block':'none';
   status.textContent=`章:${st.ep} / あなたHP:${st.hp} / ルーンHP:${st.enemyHp} / 信頼:${st.trust}`;
   battleUi.style.display=st.state==='battle'?'block':'none';
   if(st.state==='battle')renderSoulBattle();
@@ -773,7 +784,7 @@ function renderSoulBattle(){
 
 function storyAction(type){
   const st=G.story;
-  if(st.state!=='battle'){setMsg('まずルーンに近づこう。');return;}
+  if(st.state!=='battle'&&st.step>=2){setMsg('まずルーンに近づこう。');return;}
   if(type==='talk'){st.trust+=2;st.enemyHp=Math.max(0,st.enemyHp-1);setMsg('あなたは過去を語った。ルーンの瞳が揺れる。');}
   if(type==='mercy'){st.trust+=3;st.enemyHp=Math.max(0,st.enemyHp-2);setMsg('武器を下ろした。静けさが戻る。');}
   if(type==='fight'){st.enemyHp=Math.max(0,st.enemyHp-5);st.hp=Math.max(0,st.hp-2);setMsg('鋭い一撃。だが心はまだ迷っている。');}
@@ -791,9 +802,10 @@ function runStoryTick(){
   if(st.state==='clear')return;
   st.x=Math.max(6,Math.min(300,st.x+joyState.dx*2.2));
   st.y=Math.max(12,Math.min(136,st.y+joyState.dy*2.2));
-  if(st.step<2&&st.x>90)st.step=2;
+  if(st.step<1&&st.x>70)st.step=1;
+  if(st.step<2&&st.x>120)st.step=2;
   const ex=250,ey=70;
-  if(st.state!=='battle'){
+  if(st.state!=='battle'&&st.step>=2){
     const d=Math.hypot((st.x+18)-ex,(st.y+18)-ey);
     if(d<45){st.state='battle';st.enemySeen=true;setMsg('ルーンと遭遇した！');}
   }
@@ -814,7 +826,11 @@ function bindJoystick(){
   };
   base.addEventListener('pointerdown',e=>{joyState.active=true;base.setPointerCapture(e.pointerId);move(e.clientX,e.clientY);});
   base.addEventListener('pointermove',e=>{if(!joyState.active)return;move(e.clientX,e.clientY);});
-  base.addEventListener('pointerup',reset);base.addEventListener('pointercancel',reset);base.addEventListener('pointerleave',e=>{if(!joyState.active)return;});
+  base.addEventListener('pointerup',reset);base.addEventListener('pointercancel',reset);
+  window.addEventListener('pointerup',reset);
+  base.addEventListener('touchstart',e=>{const t=e.touches[0];if(!t)return;joyState.active=true;move(t.clientX,t.clientY);},{passive:true});
+  base.addEventListener('touchmove',e=>{const t=e.touches[0];if(!t||!joyState.active)return;move(t.clientX,t.clientY);},{passive:true});
+  base.addEventListener('touchend',reset);
 }
 function setTheme(t){G.autoTheme=false;G.theme=t;document.body.className=t;save();renderCustomize()}
 function setWeather(w){G.autoWeather=false;G.weather=w;save();renderCustomize();renderWeather()}

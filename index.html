@@ -121,7 +121,7 @@
     <button class="action-btn train" onclick="trainBird()">📚訓練</button>
     <button class="action-btn sing" onclick="singBird()">🎵歌う</button>
   </div>
-  <div class="quick-actions">
+  <div class="quick-actions quick-dock">
     <button class="quick-btn birds" onclick="showModal('birdModal')">🐦鳥図鑑</button>
     <button class="quick-btn shop" onclick="togglePanel('shop')">🛒ショップ</button>
     <button class="quick-btn inventory" onclick="togglePanel('inventory')">🎒持ち物</button>
@@ -194,9 +194,16 @@
     </div>
     <div class="story-joystick" id="storyJoystick">
       <div class="joy-base" id="joyBase"><div class="joy-stick" id="joyStick"></div></div>
+      <div class="dpad" id="dpad">
+        <button class="dpad-btn up" onpointerdown="setJoyDir(0,-1)" onpointerup="resetJoyDir()" ontouchstart="setJoyDir(0,-1)" ontouchend="resetJoyDir()">▲</button>
+        <button class="dpad-btn left" onpointerdown="setJoyDir(-1,0)" onpointerup="resetJoyDir()" ontouchstart="setJoyDir(-1,0)" ontouchend="resetJoyDir()">◀</button>
+        <button class="dpad-btn right" onpointerdown="setJoyDir(1,0)" onpointerup="resetJoyDir()" ontouchstart="setJoyDir(1,0)" ontouchend="resetJoyDir()">▶</button>
+        <button class="dpad-btn down" onpointerdown="setJoyDir(0,1)" onpointerup="resetJoyDir()" ontouchstart="setJoyDir(0,1)" ontouchend="resetJoyDir()">▼</button>
+      </div>
       <div class="story-status" id="storyStatus"></div>
     </div>
     <div class="story-scene" id="storyScene"></div>
+    <button class="story-next" id="storyNextBtn" onclick="advanceStory()">▶ 会話を進める</button>
     <div class="battle-ui" id="battleUi" style="display:none">
       <div class="battle-title">⚔️ 遭遇: 迷いの精 ルーン</div>
       <div class="soul-box" id="soulBox"><div class="soul-bird" id="soulBird">🐦</div></div>
