@@ -33,7 +33,8 @@ const shopData={
     {id:'vitamins',name:'ビタミン',desc:'元気+30 ×5',price:80,icon:'💉',curr:'coins',amt:5},
     {id:'medicine',name:'お薬',desc:'健康全回復 ×2',price:100,icon:'💊',curr:'coins',amt:2},
     {id:'shampoo',name:'シャンプー',desc:'清潔全回復 ×3',price:50,icon:'🧴',curr:'coins',amt:3},
-    {id:'toys',name:'おもちゃ',desc:'遊び効果UP',price:120,icon:'🎾',curr:'coins',amt:1}
+    {id:'toys',name:'おもちゃ',desc:'遊び効果UP',price:120,icon:'🎾',curr:'coins',amt:1},
+    {id:'sleep_box',name:'スリープボックス',desc:'状態維持スリープ 1回',price:180,icon:'🛏️',curr:'coins',amt:1}
   ],
   premium:[
     {id:'super_energy',name:'Sエナジー',desc:'元気全回復 ×2',price:3,icon:'⚡',curr:'gems',amt:2},
@@ -55,9 +56,10 @@ const itemInfo={
   super_energy:{name:'Sエナジー',icon:'⚡',usable:true,effect:'元気全回復'},
   mirror:{name:'鏡',icon:'🪞',usable:false},
   bell:{name:'鈴',icon:'🔔',usable:false},
-  swing:{name:'ブランコ',icon:'🎠',usable:false}
+  swing:{name:'ブランコ',icon:'🎠',usable:false},
+  sleep_box:{name:'スリープボックス',icon:'🛏️',usable:true,effect:'1〜10時間の状態維持スリープ'}
 };
-let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0},isSleeping:false,bannerDismissed:false};
+let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
 let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBird=null,shopTab='food',selItem=null;
 let currentMg=null,mgData={},mgInterval=null;
 
@@ -101,6 +103,10 @@ function ensureNewSettings(){
   if(!G.soundMode)G.soundMode='chirp';
   if(typeof G.chatApiEnabled!=='boolean')G.chatApiEnabled=false;
   if(typeof G.chatApiKey!=='string')G.chatApiKey='';
+  if(typeof G.beta3d!=='boolean')G.beta3d=false;
+  if(typeof G.sleepBoxUntil!=='number')G.sleepBoxUntil=null;
+  if(typeof G.sleepBoxLock!=='object'&&G.sleepBoxLock!==null)G.sleepBoxLock=null;
+  if(typeof G.sleepBoxRate!=='number')G.sleepBoxRate=0;
 }
 let audioCtx=null;
 function playBirdSound(type='action'){
@@ -123,7 +129,8 @@ function playBirdSound(type='action'){
 }
 
 function isStandalone(){return window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone===true}
-function showToast(m,t=''){const e=document.getElementById('toast');e.textContent=m;e.className='toast show '+t;setTimeout(()=>e.classList.remove('show'),2500)}
+let toastTimer=null;
+function showToast(m,t=''){const e=document.getElementById('toast');e.textContent=m;e.className='toast show '+t;if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>{e.classList.remove('show');},2500)}
 function setMsg(m){document.getElementById('message').textContent=m}
 function showModal(id){
   document.getElementById(id).classList.add('show');
@@ -159,8 +166,9 @@ function updateUI(){
   document.getElementById('tPlays').textContent=G.tPlays;
   document.getElementById('tBaths').textContent=G.tBaths;
   document.getElementById('sleepBtn').innerHTML=G.isSleeping?'☀️起こす':'💤寝かす';
+  if(G.sleepBoxUntil&&Date.now()<G.sleepBoxUntil){document.getElementById('sleepBtn').innerHTML='🛏️解除';}
   document.body.className=G.theme;
-  const svg=document.getElementById('birdSvg');svg.setAttribute('width',String(220*G.resolutionScale));svg.setAttribute('height',String(242*G.resolutionScale));
+  const svg=document.getElementById('birdSvg');svg.setAttribute('width',String(220*G.resolutionScale));svg.setAttribute('height',String(242*G.resolutionScale));svg.style.imageRendering=G.resolutionScale>1?'auto':'-webkit-optimize-contrast';svg.classList.toggle('bird-3d',G.beta3d===true);
   renderWeather();renderCustomize();
 }
 function renderStats(){
@@ -218,6 +226,7 @@ function renderInv(){
 function showUseItem(id){selItem=id;const i=itemInfo[id];document.getElementById('useItemTitle').textContent=i.name+'を使う';document.getElementById('useItemDesc').textContent='効果: '+i.effect;showModal('useItemModal')}
 function confirmUseItem(){
   if(!selItem||G.inv[selItem]<=0)return;
+  if(selItem==='sleep_box'){startSleepBoxPrompt();return;}
   G.inv[selItem]--;
   switch(selItem){
     case'fruits':G.happiness=Math.min(100,G.happiness+15);playBirdSound('feed');setMsg('フルーツおいしい！🍎');break;
@@ -238,13 +247,14 @@ function renderWeather(){
 function renderStars(){const c=document.getElementById('stars');for(let i=0;i<35;i++){const s=document.createElement('div');s.className='star';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*50+'%';s.style.width=s.style.height=(1+Math.random()*2)+'px';s.style.animationDelay=Math.random()*2+'s';c.appendChild(s)}}
 function renderCustomize(){
   document.getElementById('animationOpts').innerHTML=[{id:'fine',n:'✨細かい'},{id:'normal',n:'🎞️標準'},{id:'simple',n:'⚡軽量'}].map(a=>`<button class="customize-btn ${G.animationMode===a.id?'active':''}" onclick="setAnimationMode('${a.id}')">${a.n}</button>`).join('');
-  document.getElementById('resolutionOpts').innerHTML=[{id:0.8,n:'低'},{id:1,n:'中'},{id:1.4,n:'高'}].map(r=>`<button class="customize-btn ${G.resolutionScale===r.id?'active':''}" onclick="setResolution(${r.id})">${r.n}</button>`).join('');
+  document.getElementById('resolutionOpts').innerHTML=[{id:0.8,n:'低'},{id:1,n:'中'},{id:1.6,n:'高精細'}].map(r=>`<button class="customize-btn ${G.resolutionScale===r.id?'active':''}" onclick="setResolution(${r.id})">${r.n}</button>`).join('');
+  document.getElementById('beta3dOpts').innerHTML=[{v:true,n:'ON'},{v:false,n:'OFF'}].map(c=>`<button class="customize-btn ${(G.beta3d===c.v)?'active':''}" onclick="setBeta3d(${c.v})">${c.n}</button>`).join('');
   document.getElementById('themeOpts').innerHTML=[{id:'day',n:'☀️昼'},{id:'sunset',n:'🌅夕'},{id:'night',n:'🌙夜'}].map(t=>`<button class="customize-btn ${G.theme===t.id?'active':''}" onclick="setTheme('${t.id}')">${t.n}</button>`).join('');
   document.getElementById('weatherOpts').innerHTML=[{id:'none',n:'☀️なし'},{id:'rain',n:'🌧️雨'},{id:'snow',n:'❄️雪'}].map(w=>`<button class="customize-btn ${G.weather===w.id?'active':''}" onclick="setWeather('${w.id}')">${w.n}</button>`).join('');
   document.getElementById('soundOpts').innerHTML=[{id:'off',n:'🔇OFF'},{id:'chirp',n:'🐤チュン'},{id:'bell',n:'🔔ベル'}].map(s=>`<button class="customize-btn ${G.soundMode===s.id?'active':''}" onclick="setSoundMode('${s.id}')">${s.n}</button>`).join('');
   document.getElementById('chatApiOpts').innerHTML=[{v:true,n:'ON'},{v:false,n:'OFF'}].map(c=>`<button class="customize-btn ${(G.chatApiEnabled===c.v)?'active':''}" onclick="setChatApi(${c.v})">${c.n}</button>`).join('');
   const keyInput=document.getElementById('chatApiKey');
-  keyInput.style.display=G.chatApiEnabled?'block':'none';
+  keyInput.style.display='block';
   keyInput.value=G.chatApiKey||'';
   document.getElementById('chatApiHint').textContent=G.chatApiEnabled?'APIキーはCookieに保存されます。':'OFF中はAPIを使いません。';
 }
@@ -252,14 +262,15 @@ function renderBird(){
   const b=birds[G.species],c=b.colors,svg=document.getElementById('birdSvg');
   const speed=G.animationMode==='fine'?1.2:G.animationMode==='simple'?0.7:1;
   const amp=G.animationMode==='fine'?1.2:G.animationMode==='simple'?0.75:1;
+  const quality=G.resolutionScale>=1.6?1:0;
   const bounce=Math.sin(animF*0.2*speed)*4*amp,tilt=Math.sin(animF*0.1*speed)*2*amp;
-  const wingFlap=action==='play'||action==='bath'||action==='sing'?Math.sin(animF*0.6*speed)*20*amp:Math.sin(animF*0.06*speed)*3*amp;
-  const headTilt=action==='pet'?Math.sin(animF*0.3*speed)*12*amp:tilt;
+  const wingFlap=action==='play'||action==='bath'||action==='sing'?Math.sin(animF*0.48*speed)*15*amp:Math.sin(animF*0.05*speed)*2.4*amp;
+  const headTilt=action==='pet'?Math.sin(animF*0.24*speed)*8*amp:tilt;
   const eyesClosed=G.isSleeping||blink||action==='pet';
-  const jumpY=action==='play'?Math.abs(Math.sin(animF*0.4*speed))*28*amp:0;
-  const eatBob=action==='feed'||action==='treat'?Math.abs(Math.sin(animF*0.8*speed))*12*amp:0;
-  const shake=action==='bath'?Math.sin(animF*1*speed)*10*amp:0;
-  const singBob=action==='sing'?Math.sin(animF*0.6*speed)*6*amp:0;
+  const jumpY=action==='play'?Math.abs(Math.sin(animF*0.36*speed))*21*amp:0;
+  const eatBob=action==='feed'||action==='treat'?Math.max(0,Math.sin(animF*0.45*speed))*4*amp:0;
+  const shake=action==='bath'?Math.sin(animF*0.65*speed)*5*amp:0;
+  const singBob=action==='sing'?Math.sin(animF*0.45*speed)*5*amp:0;
   svg.innerHTML=`
     <defs>
       <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c.body}"/><stop offset="100%" stop-color="${c.wing}"/></linearGradient>
@@ -274,6 +285,8 @@ function renderBird(){
       <g transform="translate(118,175)"><path d="M0,0 L-9,16 M0,0 L0,18 M0,0 L9,16" stroke="${c.feet}" stroke-width="4" stroke-linecap="round" fill="none"/></g>
       <ellipse cx="100" cy="132" rx="48" ry="42" fill="url(#bg)"/>
       <ellipse cx="100" cy="145" rx="34" ry="30" fill="url(#bel)"/>
+      <ellipse cx="92" cy="120" rx="12" ry="8" fill="rgba(255,255,255,0.14)"/>
+      ${quality?'<path d="M70,128 Q100,98 132,126" stroke="rgba(255,255,255,0.16)" stroke-width="2" fill="none"/>':''}
       <g transform="translate(52,120) rotate(${-wingFlap})"><ellipse cx="0" cy="18" rx="14" ry="35" fill="${c.wing}"/></g>
       <g transform="translate(148,120) rotate(${wingFlap})"><ellipse cx="0" cy="18" rx="14" ry="35" fill="${c.wing}"/></g>
       <g transform="rotate(${headTilt},100,78)">
@@ -281,16 +294,16 @@ function renderBird(){
         ${b.hasCheek?`<ellipse cx="67" cy="88" rx="20" ry="18" fill="${c.cheek}"/><ellipse cx="133" cy="88" rx="20" ry="18" fill="${c.cheek}"/>`:''}
         <circle cx="78" cy="72" r="14" fill="${c.eyeRing}"/><circle cx="122" cy="72" r="14" fill="${c.eyeRing}"/>
         ${eyesClosed?`<path d="M67,72 Q78,82 89,72" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M111,72 Q122,82 133,72" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/>`:`<circle cx="78" cy="72" r="10" fill="#0a0505"/><circle cx="122" cy="72" r="10" fill="#0a0505"/><circle cx="82" cy="68" r="4" fill="white"/><circle cx="126" cy="68" r="4" fill="white"/>`}
-        <g transform="translate(100,98) rotate(${eatBob>0?Math.sin(animF*1.2)*10:0})">
+        <g transform="translate(100,98) rotate(${eatBob>0?Math.sin(animF*0.5)*4:0})">
           ${b.isOwl?`<path d="M-5,-8 L0,6 L5,-8 Z" fill="${c.beak}"/>`:`<ellipse cx="0" cy="-3" rx="14" ry="10" fill="${c.beak}"/><ellipse cx="0" cy="4" rx="11" ry="6" fill="${c.beak}" opacity="0.85"/>`}
         </g>
         ${action==='sing'?`<text x="145" y="50" font-size="16" fill="#ff6b9d" opacity="${0.4+Math.sin(animF*0.25)*0.6}">♪</text><text x="158" y="35" font-size="12" fill="#9c27b0" opacity="${0.4+Math.sin(animF*0.25+1)*0.6}">♫</text>`:''}
       </g>
       ${G.isSleeping?`<text x="152" y="46" font-size="22" fill="#6a6aff" font-weight="bold" opacity="${0.35+Math.sin(animF*0.12)*0.65}">Z</text><text x="170" y="28" font-size="15" fill="#6a6aff" font-weight="bold" opacity="${0.35+Math.sin(animF*0.12+1)*0.65}">z</text>`:''}
-      ${action==='feed'||action==='treat'?[0,1,2].map(i=>`<circle cx="${84+i*16}" cy="${178-(animF*1.6+i*12)%30}" r="4" fill="#d4a574" opacity="${1-((animF*1.6+i*12)%30)/30}"/>`).join(''):''}
+      ${action==='feed'||action==='treat'?[0,1,2,3,4].map(i=>`<ellipse cx="${78+i*10+Math.sin(animF*0.12+i)*2}" cy="${165+(animF*0.8+i*7)%22}" rx="${1.8+((i%2)*0.6)}" ry="${1.2+((i%3)*0.4)}" fill="#c89a62" opacity="${0.9-((animF*0.8+i*7)%22)/24}"/>`).join(''):''}
       ${action==='pet'?[0,1,2].map(i=>`<text x="${55+i*42}" y="${38+Math.sin(animF*0.2+i)*12}" font-size="18" opacity="${0.45+Math.sin(animF*0.2+i)*0.55}">💕</text>`).join(''):''}
       ${action==='play'?[0,1,2,3].map(i=>`<text x="${44+i*38}" y="${28+Math.abs(Math.sin(animF*0.3+i*0.6))*30}" font-size="15">✨</text>`).join(''):''}
-      ${action==='bath'?[0,1,2,3,4].map(i=>`<circle cx="${65+i*14+Math.sin(animF*0.35+i)*6}" cy="${158+(animF*2+i*10)%38}" r="2.5" fill="#88ccff" opacity="${1-((animF*2+i*10)%38)/38}"/>`).join(''):''}
+      ${action==='bath'?[0,1,2,3,4,5,6].map(i=>`<ellipse cx="${58+i*12+Math.sin(animF*0.25+i)*4}" cy="${154+(animF*1.4+i*9)%44}" rx="${1.4+Math.sin(animF*0.1+i)*0.6}" ry="${2.2+Math.cos(animF*0.12+i)*0.7}" fill="#9bd7ff" opacity="${1-((animF*1.4+i*9)%44)/45}"/>`).join(''):''}
     </g>`;
 }
 function doAction(n,cb){if(action||(G.isSleeping&&n!=='wake')){if(G.isSleeping)setMsg('Zzz...寝てるよ...');return false}action=n;cb();setTimeout(()=>action=null,2000);return true}
@@ -298,7 +311,12 @@ function feedBird(){if(G.inv.seeds<=0){playBirdSound('feed');setMsg('シード�
 function petBird(){doAction('pet',()=>{playBirdSound('pet');G.happiness=Math.min(100,G.happiness+10+(G.inv.mirror>0?5:0));G.tPets++;addExp(1);setMsg(['チュンチュン♪うれしい！','もっとなでて〜💕','眠れる...'][Math.floor(Math.random()*3)]);save()})}
 function playBird(){if(G.energy<20){playBirdSound('feed');setMsg('疲れてる...休ませて...');return}doAction('play',()=>{playBirdSound('play');const b=G.inv.swing>0?2:1,tb=G.inv.toys>0?5:0;G.happiness=Math.min(100,G.happiness+(15+tb)*b);G.energy=Math.max(0,G.energy-12);G.hunger=Math.max(0,G.hunger-5);G.tPlays++;G.coins+=2;addExp(3);setMsg(['わーい！楽しい！🎉','もっと遊ぼう！'][Math.floor(Math.random()*2)]);save()})}
 function bathBird(){doAction('bath',()=>{playBirdSound('bath');const b=G.inv.shampoo>0;if(b)G.inv.shampoo--;G.cleanliness=100;G.happiness=Math.min(100,G.happiness+(b?15:8));G.tBaths++;addExp(2);setMsg(b?'シャンプーでピカピカ！✨':['バシャバシャ！💦','きれいになった〜'][Math.floor(Math.random()*2)]);save()})}
-function toggleSleep(){if(G.isSleeping){G.isSleeping=false;G.sleepStart=null;playBirdSound('feed');setMsg('おはよう！🌅')}else{G.isSleeping=true;G.sleepStart=Date.now();playBirdSound('feed');setMsg('おやすみ...💤 閉じても元気が回復！')}save();updateUI()}
+function toggleSleep(){
+  if(G.sleepBoxUntil&&Date.now()<G.sleepBoxUntil){cancelSleepBox();return;}
+  if(G.isSleeping){G.isSleeping=false;G.sleepStart=null;playBirdSound('feed');setMsg('おはよう！🌅')}
+  else{G.isSleeping=true;G.sleepStart=Date.now();playBirdSound('feed');setMsg('おやすみ...💤 閉じても元気が回復！')}
+  save();updateUI();
+}
 function giveTreat(){if(G.inv.treats<=0){playBirdSound('feed');setMsg('おやつがない！');return}doAction('treat',()=>{playBirdSound('feed');G.inv.treats--;G.happiness=Math.min(100,G.happiness+25);G.hunger=Math.min(100,G.hunger+10);addExp(4);setMsg('わーい！おやつ！🍬');save()})}
 function trainBird(){if(G.energy<25){playBirdSound('feed');setMsg('疲れてる...訓練は無理...');return}doAction('train',()=>{playBirdSound('play');G.energy=Math.max(0,G.energy-15);G.coins+=3;addExp(4);setMsg(['賢くなった！📚','新しいこと覚えた！'][Math.floor(Math.random()*2)]);save()})}
 function singBird(){if(G.energy<15){playBirdSound('feed');setMsg('疲れて歌えない...');return}doAction('sing',()=>{playBirdSound('sing');G.happiness=Math.min(100,G.happiness+12);G.energy=Math.max(0,G.energy-8);G.tSings++;G.coins+=2;addExp(3);setMsg(['チュンチュン〜♪🎵','上手に歌えた！','いい鳴き声でしょ？🎤'][Math.floor(Math.random()*3)]);save()})}
@@ -610,17 +628,60 @@ function digTreasure(i){
   document.getElementById('mgScore').textContent=mgScore;renderTreasureGrid();
   if(mgData.tries>=8||mgData.treasures.every(t=>mgData.grid[t])){setTimeout(()=>{if(mgActive)endMinigame();},500);}
 }
+
+function startSleepBoxPrompt(){
+  const hoursRaw=prompt('スリープボックス何時間？ (1〜10)');
+  if(hoursRaw===null){renderInv();return;}
+  const hours=Math.max(1,Math.min(10,parseInt(hoursRaw,10)||0));
+  if(!hours){showToast('1〜10時間で入力してください','warning');renderInv();return;}
+  const cost=hours*hours*12;
+  if(G.coins<cost){showToast('💰が足りません','warning');renderInv();return;}
+  G.coins-=cost;
+  G.inv.sleep_box=Math.max(0,(G.inv.sleep_box||0)-1);
+  G.sleepBoxUntil=Date.now()+hours*3600000;
+  G.sleepBoxRate=hours;
+  G.sleepBoxLock={hunger:G.hunger,happiness:G.happiness,health:G.health,energy:G.energy,cleanliness:G.cleanliness};
+  G.isSleeping=true;G.sleepStart=Date.now();
+  playBirdSound('bell');
+  setMsg(`スリープボックス開始（${hours}時間）`);
+  showToast(`🛏️ 状態維持モード開始 -${cost}💰`,'achievement');
+  save();updateUI();renderInv();hideModal('useItemModal');
+}
+function applySleepBoxLock(){
+  if(!(G.sleepBoxUntil&&G.sleepBoxLock))return;
+  if(Date.now()>=G.sleepBoxUntil){
+    G.sleepBoxUntil=null;G.sleepBoxLock=null;G.sleepBoxRate=0;
+    showToast('🛏️ スリープボックス終了');
+    return;
+  }
+  G.hunger=G.sleepBoxLock.hunger;
+  G.happiness=G.sleepBoxLock.happiness;
+  G.health=G.sleepBoxLock.health;
+  G.energy=Math.min(100,G.energy+0.08);
+  G.cleanliness=G.sleepBoxLock.cleanliness;
+}
+function cancelSleepBox(){
+  if(!(G.sleepBoxUntil&&Date.now()<G.sleepBoxUntil)){return;}
+  G.sleepBoxUntil=null;G.sleepBoxLock=null;G.sleepBoxRate=0;
+  G.isSleeping=false;G.sleepStart=null;
+  showToast('🛏️ スリープボックスを解除しました');
+  setMsg('状態維持を解除しました。');
+  save();updateUI();
+}
+
 function setTheme(t){G.theme=t;document.body.className=t;save();renderCustomize()}
 function setWeather(w){G.weather=w;save();renderCustomize();renderWeather()}
 function setAnimationMode(m){G.animationMode=m;save();renderCustomize()}
-function setResolution(scale){G.resolutionScale=scale;save();updateUI()}
+function setResolution(scale){G.resolutionScale=scale;const svg=document.getElementById('birdSvg');svg.setAttribute('viewBox',scale>=1.6?'0 0 200 220':'0 0 200 220');save();updateUI()}
 function setSoundMode(mode){G.soundMode=mode;save();renderCustomize()}
+function setBeta3d(v){G.beta3d=v===true||v==='true';save();updateUI()}
 function setChatApi(enabled){G.chatApiEnabled=enabled===true||enabled==='true';
   const keyInput=document.getElementById('chatApiKey');
   if(G.chatApiEnabled&&!((keyInput.value||G.chatApiKey||'').trim())){
     G.chatApiEnabled=false;showToast('APIキーを入力してください','warning');
   }
   if(G.chatApiEnabled){G.chatApiKey=(keyInput.value||G.chatApiKey||'').trim();}
+  if(!G.chatApiEnabled){G.chatApiKey='';}
   save();renderCustomize();
 }
 function saveChatApiKey(){
@@ -631,6 +692,7 @@ function saveChatApiKey(){
 }
 function addExp(a){G.exp+=a;const need=G.level*50;if(G.exp>=need){G.exp-=need;G.level++;G.coins+=G.level*10;G.gems++;showToast(`レベルアップ！Lv.${G.level}`,'levelup')}}
 function gameTick(){
+  if(G.sleepBoxUntil&&Date.now()<G.sleepBoxUntil)applySleepBoxLock();
   if(!G.isSleeping){
     G.hunger=Math.max(0,G.hunger-0.07);G.happiness=Math.max(0,G.happiness-0.035);G.cleanliness=Math.max(0,G.cleanliness-0.02);G.energy=Math.max(0,G.energy-0.025);
     const avg=(G.hunger+G.cleanliness)/2;if(avg<30)G.health=Math.max(0,G.health-0.08);else if(avg>70)G.health=Math.min(100,G.health+0.02);
@@ -651,7 +713,7 @@ function init(){
   document.addEventListener('visibilitychange',()=>{
     if(!document.hidden&&G.isSleeping&&G.sleepStart){
       const sleepMins=(Date.now()-G.sleepStart)/60000,eBefore=G.energy;
-      G.energy=Math.min(100,G.energy+sleepMins*0.8);
+      if(G.sleepBoxUntil&&Date.now()<G.sleepBoxUntil){applySleepBoxLock();}else{G.energy=Math.min(100,G.energy+sleepMins*0.8);}
       const rec=G.energy-eBefore;
       if(rec>5){const b=document.getElementById('recoveryBanner');b.textContent=`💤 寝ている間に元気が${Math.round(rec)}回復！`;b.classList.add('show');setTimeout(()=>b.classList.remove('show'),4000)}
       if(G.energy>=100){G.isSleeping=false;G.sleepStart=null;playBirdSound('feed');setMsg('ぐっすり眠って元気満タン！🌅')}

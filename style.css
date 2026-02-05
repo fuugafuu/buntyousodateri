@@ -65,8 +65,8 @@
     @keyframes rain{to{transform:translateY(250px)}}
     .snowflake{position:absolute;color:white;animation:snow 4s linear infinite;opacity:0.7}
     @keyframes snow{to{transform:translateY(250px) rotate(360deg)}}
-    .toast{position:fixed;top:calc(65px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-80px);background:linear-gradient(135deg,#4caf50,#2e7d32);color:white;padding:9px 18px;border-radius:22px;font-weight:600;font-size:0.8rem;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:1000;transition:transform 0.3s;white-space:nowrap}
-    .toast.show{transform:translateX(-50%) translateY(0)}
+    .toast{position:fixed;top:calc(65px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-80px);opacity:0;pointer-events:none;background:linear-gradient(135deg,#4caf50,#2e7d32);color:white;padding:9px 18px;border-radius:22px;font-weight:600;font-size:0.8rem;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:1000;transition:transform 0.3s,opacity 0.3s;white-space:nowrap}
+    .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
     .toast.achievement{background:linear-gradient(135deg,#ffd700,#ff8c00)}
     .toast.levelup{background:linear-gradient(135deg,#9c27b0,#673ab7)}
     .toast.warning{background:linear-gradient(135deg,#ff5722,#d84315)}
@@ -213,3 +213,10 @@
 .api-input{width:100%;margin-top:8px;padding:8px 10px;border-radius:10px;border:1px solid rgba(139,105,20,0.3);font-family:inherit;font-size:0.75rem;background:rgba(255,255,255,0.9)}
 body.night .api-input{background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.3)}
 .api-hint{display:block;text-align:center;margin-top:6px;opacity:0.7;font-size:0.68rem}
+
+.api-save-btn{width:100%;margin-top:8px;padding:8px 10px;border:none;border-radius:10px;background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff;font-family:inherit;font-size:0.74rem;cursor:pointer}
+.api-save-btn:hover{opacity:0.9}
+body.night .api-save-btn{background:linear-gradient(135deg,#66bb6a,#388e3c)}
+
+#birdSvg.bird-3d{filter:drop-shadow(0 14px 16px rgba(0,0,0,0.25));transform:perspective(720px) rotateX(10deg) rotateY(-9deg);transition:transform 0.35s ease,filter 0.35s ease}
+#birdSvg.bird-3d:hover{transform:perspective(720px) rotateX(7deg) rotateY(7deg)}
