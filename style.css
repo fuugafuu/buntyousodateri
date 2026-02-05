@@ -218,5 +218,26 @@ body.night .api-input{background:rgba(255,255,255,0.1);color:#fff;border-color:r
 .api-save-btn:hover{opacity:0.9}
 body.night .api-save-btn{background:linear-gradient(135deg,#66bb6a,#388e3c)}
 
-#birdSvg.bird-3d{filter:drop-shadow(0 14px 16px rgba(0,0,0,0.25));transform:perspective(720px) rotateX(10deg) rotateY(-9deg);transition:transform 0.35s ease,filter 0.35s ease}
+#birdSvg.bird-3d{filter:drop-shadow(0 16px 18px rgba(0,0,0,0.28)) saturate(1.08);transition:transform 0.2s ease,filter 0.2s ease}
 #birdSvg.bird-3d:hover{transform:perspective(720px) rotateX(7deg) rotateY(7deg)}
+
+
+.quick-btn.chat{background:linear-gradient(135deg,#673ab7,#512da8);border:none;color:#fff}
+.quick-btn.logs{background:linear-gradient(135deg,#607d8b,#455a64);border:none;color:#fff}
+.chat-wrap{max-height:220px;overflow:auto;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:8px}
+body.day .chat-wrap,body.sunset .chat-wrap{background:rgba(0,0,0,0.04)}
+body.night .chat-wrap{background:rgba(255,255,255,0.08)}
+.chat-msg{display:flex}.chat-msg>div{max-width:82%;padding:8px 10px;border-radius:12px;font-size:0.76rem;line-height:1.45}
+.chat-msg.user{justify-content:flex-end}.chat-msg.user>div{background:linear-gradient(135deg,#4caf50,#2e7d32);color:#fff}
+.chat-msg.ai{justify-content:flex-start}.chat-msg.ai>div{background:rgba(139,105,20,0.15)}
+body.night .chat-msg.ai>div{background:rgba(255,255,255,0.12)}
+.chat-input-row{display:flex;gap:6px;margin-top:8px}.chat-input{flex:1;padding:8px;border-radius:10px;border:1px solid rgba(0,0,0,0.2);font-family:inherit}.chat-send{border:none;border-radius:10px;padding:8px 12px;background:linear-gradient(135deg,#ff9800,#f57c00);color:#fff;font-family:inherit}
+.thinking{display:flex;align-items:center;gap:5px;font-size:0.72rem;opacity:0.8;margin-top:8px}
+.thinking span{width:6px;height:6px;border-radius:50%;background:currentColor;animation:think 1.2s infinite}.thinking span:nth-child(2){animation-delay:.2s}.thinking span:nth-child(3){animation-delay:.4s}
+@keyframes think{0%,100%{transform:translateY(0);opacity:.3}50%{transform:translateY(-4px);opacity:1}}
+.changelog,.error-log{font-size:.72rem;line-height:1.45;padding:8px;border-radius:10px;max-height:140px;overflow:auto}
+.bug-input{width:100%;min-height:70px;border-radius:10px;padding:8px;margin:8px 0;border:1px solid rgba(0,0,0,0.2);font-family:inherit;font-size:.75rem}
+body.day .changelog,body.day .error-log,body.sunset .changelog,body.sunset .error-log{background:rgba(0,0,0,0.04)}
+body.night .changelog,body.night .error-log{background:rgba(255,255,255,0.08)}
+#birdSvg.bird-3d-real{transform:perspective(900px) rotateX(var(--rx,10deg)) rotateY(var(--ry,-8deg)) translateZ(4px);transform-style:preserve-3d;transition:transform .08s linear}
+.main-display{perspective:950px}

@@ -59,7 +59,7 @@ const itemInfo={
   swing:{name:'ブランコ',icon:'🎠',usable:false},
   sleep_box:{name:'スリープボックス',icon:'🛏️',usable:true,effect:'1〜10時間の状態維持スリープ'}
 };
-let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
+let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
 let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBird=null,shopTab='food',selItem=null;
 let currentMg=null,mgData={},mgInterval=null;
 
@@ -107,6 +107,11 @@ function ensureNewSettings(){
   if(typeof G.sleepBoxUntil!=='number')G.sleepBoxUntil=null;
   if(typeof G.sleepBoxLock!=='object'&&G.sleepBoxLock!==null)G.sleepBoxLock=null;
   if(typeof G.sleepBoxRate!=='number')G.sleepBoxRate=0;
+  if(!Array.isArray(G.chatHistory))G.chatHistory=[];
+  if(!Array.isArray(G.bugReports))G.bugReports=[];
+  if(!Array.isArray(G.errorLogs))G.errorLogs=[];
+  if(typeof G.threeDRotX!=='number')G.threeDRotX=10;
+  if(typeof G.threeDRotY!=='number')G.threeDRotY=-8;
 }
 let audioCtx=null;
 function playBirdSound(type='action'){
@@ -146,7 +151,7 @@ function selectNameSuggestion(name){document.getElementById('nameInput').value=n
 function hideModal(id){document.getElementById(id).classList.remove('show')}
 function showInstallGuide(){hideInstallBanner();showModal('installModal')}
 function hideInstallBanner(){document.getElementById('installBanner').classList.remove('show');G.bannerDismissed=true;save()}
-function togglePanel(p){['shop','inventory','minigame','customize'].forEach(x=>{const el=document.getElementById(x+'Panel');el.classList.toggle('show',x===p&&!el.classList.contains('show'))});if(p==='shop')renderShop();if(p==='inventory')renderInv();if(p==='minigame'){renderMinigameGrid();document.getElementById('minigameSelect').style.display='block';document.getElementById('minigamePlay').style.display='none';currentMg=null;}}
+function togglePanel(p){['shop','inventory','minigame','customize','chat','logs'].forEach(x=>{const el=document.getElementById(x+'Panel');if(!el)return;el.classList.toggle('show',x===p&&!el.classList.contains('show'))});if(p==='shop')renderShop();if(p==='inventory')renderInv();if(p==='minigame'){renderMinigameGrid();document.getElementById('minigameSelect').style.display='block';document.getElementById('minigamePlay').style.display='none';currentMg=null;}if(p==='chat')renderChat();if(p==='logs'){renderChangeLog();renderErrorLogs();}}
 
 function updateUI(){
   const b=birds[G.species];
@@ -168,7 +173,8 @@ function updateUI(){
   document.getElementById('sleepBtn').innerHTML=G.isSleeping?'☀️起こす':'💤寝かす';
   if(G.sleepBoxUntil&&Date.now()<G.sleepBoxUntil){document.getElementById('sleepBtn').innerHTML='🛏️解除';}
   document.body.className=G.theme;
-  const svg=document.getElementById('birdSvg');svg.setAttribute('width',String(220*G.resolutionScale));svg.setAttribute('height',String(242*G.resolutionScale));svg.style.imageRendering=G.resolutionScale>1?'auto':'-webkit-optimize-contrast';svg.classList.toggle('bird-3d',G.beta3d===true);
+  const svg=document.getElementById('birdSvg');svg.setAttribute('width',String(220*G.resolutionScale));svg.setAttribute('height',String(242*G.resolutionScale));svg.style.imageRendering=G.resolutionScale>1?'auto':'-webkit-optimize-contrast';svg.classList.toggle('bird-3d',G.beta3d===true);svg.classList.toggle('bird-3d-real',G.beta3d===true);svg.style.setProperty('--rx',`${G.threeDRotX}deg`);svg.style.setProperty('--ry',`${G.threeDRotY}deg`);
+  const chatBtn=document.getElementById('chatOpenBtn');if(chatBtn)chatBtn.style.display=(G.chatApiEnabled&&G.chatApiKey)?'inline-block':'none';
   renderWeather();renderCustomize();
 }
 function renderStats(){
@@ -194,15 +200,13 @@ function buyBird(){
   const b=birds[selBird],owned=G.unlocked.includes(selBird);
   if(owned){
     if(selBird!==G.species){
-      G.species=selBird;G.name=getCurrentBirdName();playBirdSound('feed');setMsg(b.name+'に変身！');save();updateUI();
-      showChangeNameModal();
+      G.species=selBird;if(!G.birdNames[selBird])G.birdNames[selBird]=b.name;G.name=getCurrentBirdName();playBirdSound('feed');setMsg(b.name+'に変身！');save();updateUI();
     }
     hideModal('birdModal');return;
   }
   if(G[b.curr]<b.price){showToast(b.curr==='gems'?'💎が足りません':'💰が足りません','warning');return}
   G[b.curr]-=b.price;G.unlocked.push(selBird);G.species=selBird;
-  showToast('🎉'+b.name+'をゲット！','achievement');playBirdSound('feed');setMsg(b.name+'がやってきた！');save();updateUI();renderBirdGrid();
-  showChangeNameModal();
+  G.birdNames[selBird]=G.birdNames[selBird]||b.name;showToast('🎉'+b.name+'をゲット！','achievement');playBirdSound('feed');setMsg(b.name+'がやってきた！あとで名前変更できます。');save();updateUI();renderBirdGrid();
 }
 function showChangeNameModal(){
   const b=birds[G.species];
@@ -246,7 +250,7 @@ function renderWeather(){
 }
 function renderStars(){const c=document.getElementById('stars');for(let i=0;i<35;i++){const s=document.createElement('div');s.className='star';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*50+'%';s.style.width=s.style.height=(1+Math.random()*2)+'px';s.style.animationDelay=Math.random()*2+'s';c.appendChild(s)}}
 function renderCustomize(){
-  document.getElementById('animationOpts').innerHTML=[{id:'fine',n:'✨細かい'},{id:'normal',n:'🎞️標準'},{id:'simple',n:'⚡軽量'}].map(a=>`<button class="customize-btn ${G.animationMode===a.id?'active':''}" onclick="setAnimationMode('${a.id}')">${a.n}</button>`).join('');
+  document.getElementById('animationOpts').innerHTML=[{id:'ultra',n:'🚀最高'},{id:'fine',n:'✨細かい'},{id:'normal',n:'🎞️標準'},{id:'simple',n:'⚡軽量'}].map(a=>`<button class="customize-btn ${G.animationMode===a.id?'active':''}" onclick="setAnimationMode('${a.id}')">${a.n}</button>`).join('');
   document.getElementById('resolutionOpts').innerHTML=[{id:0.8,n:'低'},{id:1,n:'中'},{id:1.6,n:'高精細'}].map(r=>`<button class="customize-btn ${G.resolutionScale===r.id?'active':''}" onclick="setResolution(${r.id})">${r.n}</button>`).join('');
   document.getElementById('beta3dOpts').innerHTML=[{v:true,n:'ON'},{v:false,n:'OFF'}].map(c=>`<button class="customize-btn ${(G.beta3d===c.v)?'active':''}" onclick="setBeta3d(${c.v})">${c.n}</button>`).join('');
   document.getElementById('themeOpts').innerHTML=[{id:'day',n:'☀️昼'},{id:'sunset',n:'🌅夕'},{id:'night',n:'🌙夜'}].map(t=>`<button class="customize-btn ${G.theme===t.id?'active':''}" onclick="setTheme('${t.id}')">${t.n}</button>`).join('');
@@ -260,8 +264,8 @@ function renderCustomize(){
 }
 function renderBird(){
   const b=birds[G.species],c=b.colors,svg=document.getElementById('birdSvg');
-  const speed=G.animationMode==='fine'?1.2:G.animationMode==='simple'?0.7:1;
-  const amp=G.animationMode==='fine'?1.2:G.animationMode==='simple'?0.75:1;
+  const speed=G.animationMode==='ultra'?1.35:G.animationMode==='fine'?1.2:G.animationMode==='simple'?0.7:1;
+  const amp=G.animationMode==='ultra'?1.35:G.animationMode==='fine'?1.2:G.animationMode==='simple'?0.75:1;
   const quality=G.resolutionScale>=1.6?1:0;
   const bounce=Math.sin(animF*0.2*speed)*4*amp,tilt=Math.sin(animF*0.1*speed)*2*amp;
   const wingFlap=action==='play'||action==='bath'||action==='sing'?Math.sin(animF*0.48*speed)*15*amp:Math.sin(animF*0.05*speed)*2.4*amp;
@@ -303,6 +307,7 @@ function renderBird(){
       ${action==='feed'||action==='treat'?[0,1,2,3,4].map(i=>`<ellipse cx="${78+i*10+Math.sin(animF*0.12+i)*2}" cy="${165+(animF*0.8+i*7)%22}" rx="${1.8+((i%2)*0.6)}" ry="${1.2+((i%3)*0.4)}" fill="#c89a62" opacity="${0.9-((animF*0.8+i*7)%22)/24}"/>`).join(''):''}
       ${action==='pet'?[0,1,2].map(i=>`<text x="${55+i*42}" y="${38+Math.sin(animF*0.2+i)*12}" font-size="18" opacity="${0.45+Math.sin(animF*0.2+i)*0.55}">💕</text>`).join(''):''}
       ${action==='play'?[0,1,2,3].map(i=>`<text x="${44+i*38}" y="${28+Math.abs(Math.sin(animF*0.3+i*0.6))*30}" font-size="15">✨</text>`).join(''):''}
+      ${G.animationMode==='ultra'?[0,1,2,3,4].map(i=>`<circle cx="${52+i*26}" cy="${56+Math.sin(animF*0.17+i)*18}" r="${1.5+Math.sin(animF*0.08+i)*0.8}" fill="rgba(255,255,255,0.5)"/>`).join(''):''}
       ${action==='bath'?[0,1,2,3,4,5,6].map(i=>`<ellipse cx="${58+i*12+Math.sin(animF*0.25+i)*4}" cy="${154+(animF*1.4+i*9)%44}" rx="${1.4+Math.sin(animF*0.1+i)*0.6}" ry="${2.2+Math.cos(animF*0.12+i)*0.7}" fill="#9bd7ff" opacity="${1-((animF*1.4+i*9)%44)/45}"/>`).join(''):''}
     </g>`;
 }
@@ -681,8 +686,7 @@ function setChatApi(enabled){G.chatApiEnabled=enabled===true||enabled==='true';
     G.chatApiEnabled=false;showToast('APIキーを入力してください','warning');
   }
   if(G.chatApiEnabled){G.chatApiKey=(keyInput.value||G.chatApiKey||'').trim();}
-  if(!G.chatApiEnabled){G.chatApiKey='';}
-  save();renderCustomize();
+  save();renderCustomize();updateUI();
 }
 function saveChatApiKey(){
   const key=document.getElementById('chatApiKey').value.trim();
@@ -690,6 +694,90 @@ function saveChatApiKey(){
   if(!key){showToast('APIキーが空です','warning');return;}
   G.chatApiKey=key;save();showToast('APIキーを保存しました');
 }
+
+function getBirdInfoCompact(){
+  return `n:${getCurrentBirdName()} sp:${birds[G.species].name} lv:${G.level} mood:${document.getElementById('mood').textContent} c:${Math.round(G.coins)} g:${Math.round(G.gems)} h:${Math.round(G.hunger)} hp:${Math.round(G.health)} e:${Math.round(G.energy)} cl:${Math.round(G.cleanliness)} happy:${Math.round(G.happiness)}`;
+}
+function renderChat(){
+  const wrap=document.getElementById('chatWrap');
+  if(!wrap)return;
+  const rows=G.chatHistory.slice(-16).map(m=>`<div class="chat-msg ${m.role}"><div>${m.text}</div></div>`).join('');
+  wrap.innerHTML=rows||'<div class="chat-empty">APIをONにして会話できます。</div>';
+  wrap.scrollTop=wrap.scrollHeight;
+}
+function typewriterAppend(text){
+  return new Promise(resolve=>{
+    const wrap=document.getElementById('chatWrap');
+    const row=document.createElement('div');row.className='chat-msg ai';const body=document.createElement('div');row.appendChild(body);wrap.appendChild(row);
+    let i=0;const timer=setInterval(()=>{body.textContent=text.slice(0,++i);wrap.scrollTop=wrap.scrollHeight;if(i>=text.length){clearInterval(timer);resolve();}},18);
+  });
+}
+async function sendChatMessage(){
+  if(!(G.chatApiEnabled&&G.chatApiKey)){showToast('先にAPIをON＋キー保存してください','warning');return;}
+  const input=document.getElementById('chatInput');
+  const text=input.value.trim();
+  if(!text)return;
+  input.value='';
+  G.chatHistory.push({role:'user',text});
+  renderChat();
+  const thinking=document.getElementById('chatThinking');thinking.style.display='flex';
+  try{
+    const recent=G.chatHistory.slice(-6).map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}));
+    const resp=await fetch('https://api.openai.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.chatApiKey},
+      body:JSON.stringify({
+        model:'gpt-4o-mini',temperature:0.7,max_tokens:180,
+        messages:[
+          {role:'system',content:'あなたは優しい鳥育成アシスタント。短文で返答。コード生成は禁止。'},
+          {role:'system',content:'鳥情報:'+getBirdInfoCompact()},
+          ...recent,
+          {role:'user',content:text}
+        ]
+      })
+    });
+    const data=await resp.json();
+    const out=(data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content?data.choices[0].message.content:'うまく返事できませんでした。').trim();
+    await typewriterAppend(out);
+    G.chatHistory.push({role:'ai',text:out});
+    save();
+    setMsg('AIとおしゃべりしたよ！');
+  }catch(e){
+    logError('chat',String(e));
+    showToast('AI通信に失敗しました','warning');
+  }finally{thinking.style.display='none';save();}
+}
+function renderChangeLog(){
+  const el=document.getElementById('changeLogArea');if(!el)return;
+  el.innerHTML=`<div>v2.1.0 変更ログ</div><ul><li>鳥ごとの名前保持を改善</li><li>3D表示ON時にドラッグ回転</li><li>AI会話UIと考え中アニメ追加</li><li>バグ報告・エラーログ表示追加</li><li>アニメーション設定に「最高」追加</li></ul>`;
+}
+function submitBugReport(){
+  const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
+  const item={at:new Date().toISOString(),bird:getCurrentBirdName(),text};
+  G.bugReports.push(item);if(G.bugReports.length>30)G.bugReports.shift();inp.value='';save();showToast('バグ報告を保存しました');
+}
+function copyBugReport(){
+  const last=G.bugReports[G.bugReports.length-1];if(!last){showToast('報告がありません','warning');return;}
+  const txt=`[bug] ${last.at} ${last.bird}: ${last.text}`;
+  navigator.clipboard?.writeText(txt);showToast('最新報告をコピーしました');
+}
+function logError(src,msg){
+  G.errorLogs.push({at:new Date().toLocaleString(),src,msg});
+  if(G.errorLogs.length>40)G.errorLogs.shift();
+  renderErrorLogs();save();
+}
+function renderErrorLogs(){
+  const el=document.getElementById('errorLogArea');if(!el)return;
+  const rows=G.errorLogs.slice().reverse().slice(0,14).map(e=>`<div>• [${e.at}] (${e.src}) ${e.msg}</div>`).join('');
+  el.innerHTML=rows||'エラーログはまだありません。';
+}
+function init3dControl(){
+  const area=document.querySelector('.main-display');let down=false,lastX=0,lastY=0;
+  area.addEventListener('pointerdown',e=>{if(!G.beta3d)return;down=true;lastX=e.clientX;lastY=e.clientY;area.setPointerCapture(e.pointerId);});
+  area.addEventListener('pointermove',e=>{if(!G.beta3d||!down)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;G.threeDRotY=Math.max(-35,Math.min(35,G.threeDRotY+dx*0.25));G.threeDRotX=Math.max(-25,Math.min(35,G.threeDRotX-dy*0.2));updateUI();});
+  area.addEventListener('pointerup',()=>{down=false;});
+}
+
 function addExp(a){G.exp+=a;const need=G.level*50;if(G.exp>=need){G.exp-=need;G.level++;G.coins+=G.level*10;G.gems++;showToast(`レベルアップ！Lv.${G.level}`,'levelup')}}
 function gameTick(){
   if(G.sleepBoxUntil&&Date.now()<G.sleepBoxUntil)applySleepBoxLock();
@@ -710,6 +798,11 @@ function init(){
   const apiInput=document.getElementById('chatApiKey');
   apiInput.addEventListener('keypress',e=>{if(e.key==='Enter')saveChatApiKey()});
   apiInput.addEventListener('blur',saveChatApiKey);
+  const chatInput=document.getElementById('chatInput');
+  chatInput.addEventListener('keypress',e=>{if(e.key==='Enter')sendChatMessage()});
+  window.addEventListener('error',e=>logError('window',e.message||'unknown'));
+  window.addEventListener('unhandledrejection',e=>logError('promise',String(e.reason||'rejection')));
+  init3dControl();renderChangeLog();renderErrorLogs();renderChat();
   document.addEventListener('visibilitychange',()=>{
     if(!document.hidden&&G.isSleeping&&G.sleepStart){
       const sleepMins=(Date.now()-G.sleepStart)/60000,eBefore=G.energy;
