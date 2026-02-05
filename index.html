@@ -128,7 +128,7 @@
     <button class="quick-btn minigame" onclick="togglePanel('minigame')">🎮ミニゲーム</button>
     <button class="quick-btn chat" id="chatOpenBtn" onclick="togglePanel('chat')" style="display:none">💬AI会話</button>
     <button class="quick-btn logs" onclick="togglePanel('logs')">🧰ログ</button>
-    <button class="quick-btn story" onclick="togglePanel('story')">📖第一話</button>
+    <button class="quick-btn story" onclick="togglePanel('story')">🗺️文鳥の冒険</button>
   </div>
   <div class="panel" id="shopPanel">
     <div class="panel-title">🛒 ショップ</div>
@@ -186,10 +186,21 @@
 
 
   <div class="panel" id="storyPanel">
-    <div class="panel-title">📖 第一話: すべての始まり</div>
+    <div class="panel-title">🗺️ 文鳥の冒険 - 第一章: すべての始まり</div>
+    <div class="adventure-stage" id="adventureStage">
+      <div class="adventure-bg-layer"></div>
+      <div class="story-player" id="storyPlayer">🐦</div>
+      <div class="story-enemy" id="storyEnemy">👤</div>
+    </div>
+    <div class="story-joystick" id="storyJoystick">
+      <div class="joy-base" id="joyBase"><div class="joy-stick" id="joyStick"></div></div>
+      <div class="story-status" id="storyStatus"></div>
+    </div>
     <div class="story-scene" id="storyScene"></div>
-    <div class="story-status" id="storyStatus"></div>
-    <div class="story-actions" id="storyActions"></div>
+    <div class="battle-ui" id="battleUi" style="display:none">
+      <div class="battle-title">⚔️ 遭遇: 迷いの精 ルーン</div>
+      <div class="story-actions" id="storyActions"></div>
+    </div>
   </div>
 
   <div class="panel" id="customizePanel">

@@ -260,3 +260,27 @@ body.night .story-scene{background:rgba(255,255,255,0.08)}
   .stats-grid{grid-template-columns:repeat(5,minmax(90px,1fr));gap:8px}
   .actions-grid{gap:8px}
 }
+
+
+.panel{border:1px solid rgba(255,255,255,0.18)}
+body.day .panel,body.sunset .panel{background:linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0.72))}
+body.night .panel{background:linear-gradient(180deg,rgba(31,35,54,0.92),rgba(28,31,49,0.9))}
+.quick-actions{gap:8px}
+.quick-btn{border:none;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+.adventure-stage{position:relative;height:180px;border-radius:14px;overflow:hidden;margin-bottom:10px}
+.adventure-bg-layer{position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.25),transparent 35%),linear-gradient(180deg,#8ec5ff 0%,#9be7b7 58%,#7ecf8d 100%)}
+body.night .adventure-bg-layer{background:radial-gradient(circle at 70% 15%,rgba(255,255,255,.22),transparent 30%),linear-gradient(180deg,#1d2b4f 0%,#182138 60%,#111a2e 100%)}
+.story-player,.story-enemy{position:absolute;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;font-size:1.2rem;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+.story-player{left:24px;top:110px;background:rgba(255,255,255,.8)}
+.story-enemy{right:26px;top:70px;background:rgba(255,180,180,.78)}
+.story-joystick{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.joy-base{width:92px;height:92px;border-radius:50%;position:relative;background:radial-gradient(circle,#ffffff88,#00000022);touch-action:none}
+.joy-stick{position:absolute;left:31px;top:31px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4caf50,#2e7d32);box-shadow:0 2px 8px rgba(0,0,0,.28)}
+.battle-ui{margin-top:8px;padding:8px;border-radius:10px}
+body.day .battle-ui,body.sunset .battle-ui{background:rgba(255,255,255,.55)}
+body.night .battle-ui{background:rgba(0,0,0,.25)}
+.battle-title{font-size:.78rem;font-weight:700;margin-bottom:8px}
+.story-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.story-btn{background:linear-gradient(135deg,#1e88e5,#1565c0);color:#fff;font-weight:700}
+.story-btn[data-kind='peace']{background:linear-gradient(135deg,#66bb6a,#2e7d32)}
+.story-btn[data-kind='fight']{background:linear-gradient(135deg,#ff7043,#d84315)}

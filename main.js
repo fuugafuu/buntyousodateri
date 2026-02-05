@@ -59,7 +59,7 @@ const itemInfo={
   swing:{name:'ブランコ',icon:'🎠',usable:false},
   sleep_box:{name:'スリープボックス',icon:'🛏️',usable:true,effect:'1〜10時間の状態維持スリープ'}
 };
-let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',chatApiDraft:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,autoTheme:true,autoWeather:false,geo:null,story:{ep:1,step:0,hp:20,trust:0,enemyHp:18,state:'intro'},lastWeatherFetch:0,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
+let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',chatApiDraft:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,autoTheme:true,autoWeather:false,geo:null,story:{ep:1,step:0,hp:20,trust:0,enemyHp:18,state:'field',x:24,y:110,enemySeen:false},lastWeatherFetch:0,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
 let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBird=null,shopTab='food',selItem=null;
 let currentMg=null,mgData={},mgInterval=null;
 
@@ -116,7 +116,10 @@ function ensureNewSettings(){
   if(typeof G.autoTheme!=='boolean')G.autoTheme=true;
   if(typeof G.autoWeather!=='boolean')G.autoWeather=false;
   if(typeof G.geo!=='object'&&G.geo!==null)G.geo=null;
-  if(!G.story||typeof G.story!=='object')G.story={ep:1,step:0,hp:20,trust:0,enemyHp:18,state:'intro'};
+  if(!G.story||typeof G.story!=='object')G.story={ep:1,step:0,hp:20,trust:0,enemyHp:18,state:'field',x:24,y:110,enemySeen:false};
+  if(typeof G.story.x!=='number')G.story.x=24;
+  if(typeof G.story.y!=='number')G.story.y=110;
+  if(typeof G.story.enemySeen!=='boolean')G.story.enemySeen=false;
   if(typeof G.lastWeatherFetch!=='number')G.lastWeatherFetch=0;
 }
 let audioCtx=null;
@@ -713,39 +716,75 @@ function getGeoAndWeather(){
   },err=>{logError('geolocation',err.message||'geo error');showToast('位置情報が拒否されました','warning');});
 }
 const storyLines=[
-  '夜の森。あなたと小さな鳥は、光る扉を見つけた。',
-  '扉の向こうで、迷いの精「ルーン」が現れる。',
-  'ルーン:「戦う？ それとも、話して進む？」',
-  '鳥があなたの袖をついばみ、そっと見上げる。'
+  '森の入口。冷たい風のなか、文鳥はあなたの肩で震えていた。',
+  '最初の門を守る迷いの精「ルーン」が道を塞ぐ。',
+  '「力だけでは、先へは進めない。」とルーンは呟く。',
+  '文鳥の冒険 第一章: すべての始まり。'
 ];
+let joyState={active:false,cx:46,cy:46,dx:0,dy:0};
+let storyTickTimer=null;
 function renderStory(){
   const scene=document.getElementById('storyScene'),status=document.getElementById('storyStatus'),actions=document.getElementById('storyActions');
-  if(!scene||!status||!actions)return;
+  const player=document.getElementById('storyPlayer'),enemy=document.getElementById('storyEnemy'),battleUi=document.getElementById('battleUi');
+  if(!scene||!status||!actions||!player||!enemy||!battleUi)return;
   const st=G.story;
-  scene.textContent=storyLines[Math.min(st.step,storyLines.length-1)]+'\n\n'+(st.state==='battle'?'精霊との対峙が始まった。':'選択で物語が変化する。');
-  status.textContent=`あなたHP:${st.hp} / ルーンHP:${st.enemyHp} / 信頼:${st.trust}`;
-  actions.innerHTML=`
-    <button class="story-btn" onclick="storyAction('talk')">🗨️ 話す</button>
-    <button class="story-btn" onclick="storyAction('mercy')">🤝 見逃す</button>
-    <button class="story-btn" onclick="storyAction('fight')">⚔️ 戦う</button>
-    <button class="story-btn" onclick="storyAction('next')">➡️ 進む</button>
-  `;
+  player.style.left=`${st.x}px`;player.style.top=`${st.y}px`;
+  enemy.style.display=st.state==='clear'?'none':'flex';
+  scene.textContent=(st.state==='battle'?'ルーンと向き合っている。選択で未来が変わる。':storyLines[Math.min(st.step,storyLines.length-1)]);
+  status.textContent=`章:${st.ep} / あなたHP:${st.hp} / ルーンHP:${st.enemyHp} / 信頼:${st.trust}`;
+  battleUi.style.display=st.state==='battle'?'block':'none';
+  actions.innerHTML=st.state==='battle'?`
+    <button class="story-btn" data-kind="peace" onclick="storyAction('talk')">🗨️ 話す</button>
+    <button class="story-btn" data-kind="peace" onclick="storyAction('mercy')">🤝 見逃す</button>
+    <button class="story-btn" data-kind="fight" onclick="storyAction('fight')">⚔️ 戦う</button>
+    <button class="story-btn" onclick="storyAction('guard')">🛡️ 身構える</button>
+  `:'';
 }
 function storyAction(type){
   const st=G.story;
-  if(type==='next'){st.step=Math.min(st.step+1,storyLines.length-1);if(st.step>=2)st.state='battle';renderStory();save();return;}
-  if(st.state!=='battle'){setMsg('まず物語を進めよう。');return;}
-  if(type==='talk'){st.trust+=2;st.enemyHp=Math.max(0,st.enemyHp-1);setMsg('優しく語りかけた。空気が和らいだ。');}
-  if(type==='mercy'){st.trust+=3;st.enemyHp=Math.max(0,st.enemyHp-2);setMsg('あなたは手を下ろした。ルーンが目を伏せる。');}
-  if(type==='fight'){st.enemyHp=Math.max(0,st.enemyHp-5);st.hp=Math.max(0,st.hp-2);setMsg('一撃を交わした。森が震える。');}
+  if(st.state!=='battle'){setMsg('まずルーンに近づこう。');return;}
+  if(type==='talk'){st.trust+=2;st.enemyHp=Math.max(0,st.enemyHp-1);setMsg('あなたは過去を語った。ルーンの瞳が揺れる。');}
+  if(type==='mercy'){st.trust+=3;st.enemyHp=Math.max(0,st.enemyHp-2);setMsg('武器を下ろした。静けさが戻る。');}
+  if(type==='fight'){st.enemyHp=Math.max(0,st.enemyHp-5);st.hp=Math.max(0,st.hp-2);setMsg('鋭い一撃。だが心はまだ迷っている。');}
+  if(type==='guard'){st.hp=Math.min(20,st.hp+1);setMsg('呼吸を整え、防御の構えを取った。');}
   if(st.enemyHp<=0||st.trust>=10){
     st.state='clear';
-    document.getElementById('storyScene').textContent='第一話クリア：ルーンは道を開き、次の世界への鍵を託した。\n「本当の強さは、選ぶ心にある」';
-    showToast('📖 第一話クリア！','achievement');
+    st.step=3;
+    document.getElementById('storyScene').textContent='第一章クリア：ルーンは門を開き、文鳥の冒険は次の地へ。\n「優しさもまた、強さだ。」';
+    showToast('🗺️ 文鳥の冒険 第一章クリア！','achievement');
   }
   renderStory();save();
 }
-
+function runStoryTick(){
+  const st=G.story;
+  if(st.state==='clear')return;
+  st.x=Math.max(6,Math.min(300,st.x+joyState.dx*2.2));
+  st.y=Math.max(12,Math.min(136,st.y+joyState.dy*2.2));
+  if(st.step<2&&st.x>90)st.step=2;
+  const ex=250,ey=70;
+  if(st.state!=='battle'){
+    const d=Math.hypot((st.x+18)-ex,(st.y+18)-ey);
+    if(d<45){st.state='battle';st.enemySeen=true;setMsg('ルーンと遭遇した！');}
+  }
+  renderStory();
+}
+function bindJoystick(){
+  const base=document.getElementById('joyBase'),stick=document.getElementById('joyStick');
+  if(!base||!stick)return;
+  const reset=()=>{joyState.active=false;joyState.dx=0;joyState.dy=0;stick.style.left='31px';stick.style.top='31px';};
+  const move=(clientX,clientY)=>{
+    const r=base.getBoundingClientRect();
+    const cx=r.left+r.width/2,cy=r.top+r.height/2;
+    const dx=clientX-cx,dy=clientY-cy;const len=Math.hypot(dx,dy)||1;const max=28;
+    const nx=Math.max(-1,Math.min(1,dx/max));const ny=Math.max(-1,Math.min(1,dy/max));
+    joyState.dx=nx;joyState.dy=ny;
+    const px=(dx/len)*Math.min(max,len),py=(dy/len)*Math.min(max,len);
+    stick.style.left=`${31+px}px`;stick.style.top=`${31+py}px`;
+  };
+  base.addEventListener('pointerdown',e=>{joyState.active=true;base.setPointerCapture(e.pointerId);move(e.clientX,e.clientY);});
+  base.addEventListener('pointermove',e=>{if(!joyState.active)return;move(e.clientX,e.clientY);});
+  base.addEventListener('pointerup',reset);base.addEventListener('pointercancel',reset);base.addEventListener('pointerleave',e=>{if(!joyState.active)return;});
+}
 function setTheme(t){G.autoTheme=false;G.theme=t;document.body.className=t;save();renderCustomize()}
 function setWeather(w){G.autoWeather=false;G.weather=w;save();renderCustomize();renderWeather()}
 function setAnimationMode(m){G.animationMode=m;save();renderCustomize()}
@@ -890,7 +929,7 @@ function init(){
   chatInput.addEventListener('keypress',e=>{if(e.key==='Enter')sendChatMessage()});
   window.addEventListener('error',e=>logError('window',e.message||'unknown'));
   window.addEventListener('unhandledrejection',e=>logError('promise',String(e.reason||'rejection')));
-  init3dControl();renderChangeLog();renderErrorLogs();renderChat();renderStory();
+  init3dControl();renderChangeLog();renderErrorLogs();renderChat();renderStory();bindJoystick();if(storyTickTimer)clearInterval(storyTickTimer);storyTickTimer=setInterval(runStoryTick,50);
   if(G.autoTheme)applyAutoTheme();
   if(G.autoWeather&&(!G.lastWeatherFetch||Date.now()-G.lastWeatherFetch>30*60*1000))getGeoAndWeather();
   document.addEventListener('visibilitychange',()=>{
