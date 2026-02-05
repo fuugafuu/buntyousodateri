@@ -743,9 +743,10 @@ function setJoyDir(x,y){joyState.dx=x;joyState.dy=y;}
 function resetJoyDir(){joyState.dx=0;joyState.dy=0;}
 function advanceStory(){
   const st=G.story;
-  if(st.state==='battle'||st.state==='clear')return;
+  if(st.state==='clear'){setMsg('第一章はクリア済みです！');return;}
+  if(st.state==='battle'){setMsg('戦闘中！「話す / 見逃す / 戦う / 身構える」で進めよう。');return;}
   st.step=Math.min(st.step+1,storyLines.length-1);
-  if(st.step>=2)setMsg('ルーンの気配が近い...');
+  if(st.step>=2&&st.state!=='battle'){st.state='battle';st.enemySeen=true;setMsg('ルーンが姿を現した！');}
   save();renderStory();
 }
 
@@ -757,7 +758,7 @@ function renderStory(){
   player.style.left=`${st.x}px`;player.style.top=`${st.y}px`;
   enemy.style.display=st.state==='clear'?'none':'flex';
   scene.textContent=(st.state==='battle'?'ルーンと向き合っている。選択で未来が変わる。':storyLines[Math.min(st.step,storyLines.length-1)]);
-  const nextBtn=document.getElementById('storyNextBtn');if(nextBtn)nextBtn.style.display=(st.state==='field'&&st.step<storyLines.length-1)?'block':'none';
+  const nextBtn=document.getElementById('storyNextBtn');if(nextBtn){nextBtn.style.display='block';nextBtn.textContent=st.state==='battle'?'▶ 戦闘中（コマンドで進行）':st.state==='clear'?'✔ 第一章クリア済み':'▶ 会話を進める';nextBtn.disabled=st.state==='battle';}
   status.textContent=`章:${st.ep} / あなたHP:${st.hp} / ルーンHP:${st.enemyHp} / 信頼:${st.trust}`;
   battleUi.style.display=st.state==='battle'?'block':'none';
   if(st.state==='battle')renderSoulBattle();

@@ -304,3 +304,5 @@ body.night .battle-ui{background:rgba(0,0,0,.25)}
 .dpad-btn.up{grid-column:2;grid-row:1}.dpad-btn.left{grid-column:1;grid-row:2}.dpad-btn.right{grid-column:3;grid-row:2}.dpad-btn.down{grid-column:2;grid-row:3}
 .story-next{width:100%;margin-top:8px;padding:8px 10px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffa726,#f57c00);color:#fff;font-family:inherit;font-size:.75rem;font-weight:700;animation:pulseStory 1.6s ease-in-out infinite}
 @keyframes pulseStory{0%,100%{box-shadow:0 0 0 0 rgba(255,167,38,.35)}50%{box-shadow:0 0 0 8px rgba(255,167,38,0)}}
+
+.story-next:disabled{opacity:.6;filter:grayscale(.25);animation:none}
