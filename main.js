@@ -112,9 +112,21 @@ let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBir
 let currentMg=null,mgData={},mgInterval=null;
 let lastWeatherRender={type:null,mode:null};
 
-function setCookie(n,v){document.cookie=n+'='+encodeURIComponent(JSON.stringify(v))+';expires='+new Date(Date.now()+365*864e5).toUTCString()+';path=/;SameSite=Lax'}
-function getCookie(n){const v=document.cookie.split('; ').find(r=>r.startsWith(n+'='));if(v)try{return JSON.parse(decodeURIComponent(v.split('=')[1]))}catch(e){}return null}
-function delCookie(n){document.cookie=n+'=;expires=Thu,01 Jan 1970 00:00:00 GMT;path=/'}
+function setCookie(n,v){
+  const payload=encodeURIComponent(JSON.stringify(v));
+  document.cookie=`${n}=${payload};expires=${new Date(Date.now()+365*864e5).toUTCString()};path=/;SameSite=Lax`;
+  try{localStorage.setItem(n,payload);}catch(e){}
+}
+function getCookie(n){
+  const v=document.cookie.split('; ').find(r=>r.startsWith(n+'='));
+  if(v)try{return JSON.parse(decodeURIComponent(v.split('=')[1]))}catch(e){}
+  try{const backup=localStorage.getItem(n);if(backup)return JSON.parse(decodeURIComponent(backup));}catch(e){}
+  return null;
+}
+function delCookie(n){
+  document.cookie=n+'=;expires=Thu,01 Jan 1970 00:00:00 GMT;path=/';
+  try{localStorage.removeItem(n);}catch(e){}
+}
 function save(){G.lastUpdate=Date.now();setCookie('birdG3',G)}
 function load(){
   const s=getCookie('birdG3');
@@ -1020,7 +1032,7 @@ async function sendChatMessage(){
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div>v2.3.1 変更ログ</div><ul><li>天気エフェクトを軽量化し、画面サイズに合わせて調整</li><li>3D回転の操作状態を保存</li><li>ショップ/持ち物/ミニゲーム/ミッションをスクロール化</li></ul>`;
+  el.innerHTML=`<div>v2.3.2 変更ログ</div><ul><li>保存処理を強化（Cookie + localStorage）</li><li>ページ離脱時に自動保存</li><li>軽量化/スクロール化の調整を継続</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
@@ -1091,6 +1103,7 @@ function init(){
   chatInput.addEventListener('keypress',e=>{if(e.key==='Enter')sendChatMessage()});
   window.addEventListener('error',e=>logError('window',e.message||'unknown'));
   window.addEventListener('unhandledrejection',e=>logError('promise',String(e.reason||'rejection')));
+  window.addEventListener('beforeunload',save);
   init3dControl();renderChangeLog();renderErrorLogs();renderChat();
   if(G.autoTheme)applyAutoTheme();
   if(G.autoWeather&&(!G.lastWeatherFetch||Date.now()-G.lastWeatherFetch>30*60*1000))getGeoAndWeather();
