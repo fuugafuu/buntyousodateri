@@ -65,6 +65,10 @@
     @keyframes rain{to{transform:translateY(250px)}}
     .snowflake{position:absolute;color:white;animation:snow 4s linear infinite;opacity:0.7}
     @keyframes snow{to{transform:translateY(250px) rotate(360deg)}}
+    .sleet{position:absolute;color:#e3f2fd;opacity:0.75;animation:sleet 2.2s linear infinite;font-size:0.9rem}
+    @keyframes sleet{to{transform:translateY(250px) translateX(30px) rotate(30deg)}}
+    .hail{position:absolute;width:6px;height:6px;border-radius:50%;background:radial-gradient(circle,#ffffff,#b3e5fc);animation:hail 1s linear infinite;opacity:0.9}
+    @keyframes hail{to{transform:translateY(260px)}}
     .toast{position:fixed;top:calc(65px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-80px);opacity:0;pointer-events:none;background:linear-gradient(135deg,#4caf50,#2e7d32);color:white;padding:9px 18px;border-radius:22px;font-weight:600;font-size:0.8rem;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:1000;transition:transform 0.3s,opacity 0.3s;white-space:nowrap}
     .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
     .toast.achievement{background:linear-gradient(135deg,#ffd700,#ff8c00)}
@@ -86,8 +90,8 @@
     body.night .stat-bar{background:rgba(255,255,255,0.1)}
     .stat-fill{height:100%;border-radius:2px;transition:width 0.3s}
     .stat-value{font-size:0.55rem;font-weight:600}
-    .actions-grid{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding:8px;max-width:500px;margin:0 auto}
-    .action-btn{padding:9px 12px;font-size:0.75rem;font-weight:600;font-family:inherit;border:none;border-radius:12px;color:white;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,0.2);transition:all 0.2s}
+    .actions-grid{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;padding:6px;max-width:500px;margin:0 auto}
+    .action-btn{padding:7px 10px;font-size:0.7rem;font-weight:600;font-family:inherit;border:none;border-radius:10px;color:white;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,0.2);transition:all 0.2s}
     .action-btn:hover:not(:disabled){transform:translateY(-2px)}
     .action-btn:disabled{opacity:0.5;cursor:not-allowed}
     .action-btn.feed{background:linear-gradient(135deg,#ff9800,#f57c00)}
@@ -99,7 +103,7 @@
     .action-btn.train{background:linear-gradient(135deg,#00bcd4,#0097a7)}
     .action-btn.sing{background:linear-gradient(135deg,#ffeb3b,#ffc107);color:#333}
     .quick-actions{display:flex;gap:5px;justify-content:center;padding:5px 8px;flex-wrap:wrap}
-    .quick-btn{padding:6px 10px;font-size:0.75rem;font-family:inherit;border-radius:8px;cursor:pointer;transition:all 0.2s}
+    .quick-btn{padding:5px 8px;font-size:0.7rem;font-family:inherit;border-radius:8px;cursor:pointer;transition:all 0.2s}
     .quick-btn.shop{background:transparent;border:2px solid var(--primary);color:var(--primary)}
     body.night .quick-btn.shop{border-color:#aaa;color:#aaa}
     .quick-btn.inventory{background:#8bc34a;border:none;color:white}
@@ -248,14 +252,6 @@ body.night .changelog,body.night .error-log{background:rgba(255,255,255,0.08)}
 :root{--radius:14px}
 .header,.panel,.message-bubble,.stat-card,.shop-item,.inventory-item{backdrop-filter:blur(8px)}
 body.day .panel,body.sunset .panel,body.day .message-bubble,body.sunset .message-bubble{box-shadow:0 8px 24px rgba(0,0,0,0.08)}
-.quick-btn.story{background:linear-gradient(135deg,#ff7043,#d84315);border:none;color:#fff}
-.story-scene{min-height:120px;border-radius:12px;padding:10px;line-height:1.5;font-size:.78rem}
-.story-status{margin-top:8px;font-size:.73rem;opacity:.9}
-.story-actions{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.story-btn{padding:9px;border:none;border-radius:10px;font-family:inherit;font-size:.75rem;cursor:pointer;background:rgba(0,0,0,0.08)}
-body.night .story-btn{background:rgba(255,255,255,0.12);color:#fff}
-body.day .story-scene,body.sunset .story-scene{background:rgba(0,0,0,0.04)}
-body.night .story-scene{background:rgba(255,255,255,0.08)}
 @media (min-width:780px){
   body{max-width:900px;margin:0 auto}
   .stats-grid{grid-template-columns:repeat(5,minmax(90px,1fr));gap:8px}
@@ -268,45 +264,10 @@ body.day .panel,body.sunset .panel{background:linear-gradient(180deg,rgba(255,25
 body.night .panel{background:linear-gradient(180deg,rgba(31,35,54,0.92),rgba(28,31,49,0.9))}
 .quick-actions{gap:8px}
 .quick-btn{border:none;box-shadow:0 6px 16px rgba(0,0,0,.18)}
-.adventure-stage{position:relative;height:180px;border-radius:14px;overflow:hidden;margin-bottom:10px}
-.adventure-bg-layer{position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.25),transparent 35%),linear-gradient(180deg,#8ec5ff 0%,#9be7b7 58%,#7ecf8d 100%)}
-body.night .adventure-bg-layer{background:radial-gradient(circle at 70% 15%,rgba(255,255,255,.22),transparent 30%),linear-gradient(180deg,#1d2b4f 0%,#182138 60%,#111a2e 100%)}
-.story-player,.story-enemy{position:absolute;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;font-size:1.2rem;box-shadow:0 4px 10px rgba(0,0,0,.2)}
-.story-player{left:24px;top:110px;background:rgba(255,255,255,.8)}
-.story-enemy{right:26px;top:70px;background:rgba(255,180,180,.78)}
-.story-joystick{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.joy-base{width:92px;height:92px;border-radius:50%;position:relative;background:radial-gradient(circle,#ffffff88,#00000022);touch-action:none;user-select:none}
-.joy-stick{position:absolute;left:31px;top:31px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4caf50,#2e7d32);box-shadow:0 2px 8px rgba(0,0,0,.28)}
-.battle-ui{margin-top:8px;padding:8px;border-radius:10px}
-body.day .battle-ui,body.sunset .battle-ui{background:rgba(255,255,255,.55)}
-body.night .battle-ui{background:rgba(0,0,0,.25)}
-.battle-title{font-size:.78rem;font-weight:700;margin-bottom:8px}
-.story-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.story-btn{background:linear-gradient(135deg,#1e88e5,#1565c0);color:#fff;font-weight:700}
-.story-btn[data-kind='peace']{background:linear-gradient(135deg,#66bb6a,#2e7d32)}
-.story-btn[data-kind='fight']{background:linear-gradient(135deg,#ff7043,#d84315)}
-
-
-#birdSvg.bird-3d-real{will-change:transform;transition:none}
-.soul-box{position:relative;height:120px;border:4px solid #fff;background:#000;margin:8px 0;border-radius:2px;overflow:hidden}
-.soul-bird{position:absolute;left:44px;top:44px;font-size:1rem;filter:drop-shadow(0 0 3px #ff6b6b)}
-.bullet{position:absolute;width:8px;height:8px;border-radius:50%;background:#fff}
-.adventure-stage{border:2px solid rgba(255,255,255,.35)}
-.story-player,.story-enemy{image-rendering:pixelated}
-
-
-.quick-dock{position:sticky;bottom:8px;z-index:30;padding:8px 10px;border-radius:14px;background:rgba(0,0,0,0.1);backdrop-filter:blur(8px);animation:dockIn .35s ease}
+.quick-dock{position:sticky;bottom:8px;z-index:30;padding:6px 8px;border-radius:14px;background:rgba(0,0,0,0.1);backdrop-filter:blur(8px);animation:dockIn .35s ease}
 @keyframes dockIn{from{transform:translateY(8px);opacity:.4}to{transform:translateY(0);opacity:1}}
 .quick-dock .quick-btn{transform:translateY(0);transition:transform .18s ease,filter .18s ease}
 .quick-dock .quick-btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
-.story-joystick{align-items:flex-start}
-.dpad{display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,34px);gap:4px;margin-top:2px}
-.dpad-btn{border:none;border-radius:8px;background:linear-gradient(135deg,#455a64,#263238);color:#fff;font-size:.72rem;font-family:inherit}
-.dpad-btn.up{grid-column:2;grid-row:1}.dpad-btn.left{grid-column:1;grid-row:2}.dpad-btn.right{grid-column:3;grid-row:2}.dpad-btn.down{grid-column:2;grid-row:3}
-.story-next{width:100%;margin-top:8px;padding:8px 10px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffa726,#f57c00);color:#fff;font-family:inherit;font-size:.75rem;font-weight:700;animation:pulseStory 1.6s ease-in-out infinite}
-@keyframes pulseStory{0%,100%{box-shadow:0 0 0 0 rgba(255,167,38,.35)}50%{box-shadow:0 0 0 8px rgba(255,167,38,0)}}
-
-.story-next:disabled{opacity:.6;filter:grayscale(.25);animation:none}
 
 .mission-list{display:grid;gap:10px}
 .mission-card{padding:10px;border-radius:12px;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.06)}

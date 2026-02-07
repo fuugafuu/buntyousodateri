@@ -128,7 +128,6 @@
     <button class="quick-btn minigame" onclick="togglePanel('minigame')">🎮ミニゲーム</button>
     <button class="quick-btn chat" id="chatOpenBtn" onclick="togglePanel('chat')" style="display:none">💬AI会話</button>
     <button class="quick-btn logs" onclick="togglePanel('logs')">🧰ログ</button>
-    <button class="quick-btn story" onclick="togglePanel('story')">🗺️文鳥の冒険</button>
     <button class="quick-btn mission" onclick="togglePanel('missions')">✅ミニミッション</button>
   </div>
   <div class="panel" id="shopPanel">
@@ -190,32 +189,6 @@
   <div class="panel" id="missionsPanel">
     <div class="panel-title">✅ ミニミッション</div>
     <div class="mission-list" id="missionList"></div>
-  </div>
-
-  <div class="panel" id="storyPanel">
-    <div class="panel-title">🗺️ 文鳥の冒険 - 第一章: すべての始まり</div>
-    <div class="adventure-stage" id="adventureStage">
-      <div class="adventure-bg-layer"></div>
-      <div class="story-player" id="storyPlayer">🐦</div>
-      <div class="story-enemy" id="storyEnemy">👤</div>
-    </div>
-    <div class="story-joystick" id="storyJoystick">
-      <div class="joy-base" id="joyBase"><div class="joy-stick" id="joyStick"></div></div>
-      <div class="dpad" id="dpad">
-        <button class="dpad-btn up" onpointerdown="setJoyDir(0,-1)" onpointerup="resetJoyDir()" ontouchstart="setJoyDir(0,-1)" ontouchend="resetJoyDir()">▲</button>
-        <button class="dpad-btn left" onpointerdown="setJoyDir(-1,0)" onpointerup="resetJoyDir()" ontouchstart="setJoyDir(-1,0)" ontouchend="resetJoyDir()">◀</button>
-        <button class="dpad-btn right" onpointerdown="setJoyDir(1,0)" onpointerup="resetJoyDir()" ontouchstart="setJoyDir(1,0)" ontouchend="resetJoyDir()">▶</button>
-        <button class="dpad-btn down" onpointerdown="setJoyDir(0,1)" onpointerup="resetJoyDir()" ontouchstart="setJoyDir(0,1)" ontouchend="resetJoyDir()">▼</button>
-      </div>
-      <div class="story-status" id="storyStatus"></div>
-    </div>
-    <div class="story-scene" id="storyScene"></div>
-    <button class="story-next" id="storyNextBtn" onclick="advanceStory()">▶ 会話を進める</button>
-    <div class="battle-ui" id="battleUi" style="display:none">
-      <div class="battle-title">⚔️ 遭遇: 迷いの精 ルーン</div>
-      <div class="soul-box" id="soulBox"><div class="soul-bird" id="soulBird">🐦</div></div>
-      <div class="story-actions" id="storyActions"></div>
-    </div>
   </div>
 
   <div class="panel" id="customizePanel">
