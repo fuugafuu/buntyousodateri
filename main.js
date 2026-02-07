@@ -110,6 +110,7 @@ const missionCatalog=buildMissionCatalog();
 let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',chatApiDraft:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,autoTheme:true,autoWeather:false,geo:null,missions:{active:[],completed:0,history:[]},lastWeatherFetch:0,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
 let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBird=null,shopTab='food',selItem=null;
 let currentMg=null,mgData={},mgInterval=null;
+let lastWeatherRender={type:null,mode:null};
 
 function setCookie(n,v){document.cookie=n+'='+encodeURIComponent(JSON.stringify(v))+';expires='+new Date(Date.now()+365*864e5).toUTCString()+';path=/;SameSite=Lax'}
 function getCookie(n){const v=document.cookie.split('; ').find(r=>r.startsWith(n+'='));if(v)try{return JSON.parse(decodeURIComponent(v.split('=')[1]))}catch(e){}return null}
@@ -234,7 +235,9 @@ function updateUI(){
   document.body.className=G.theme;
   const svg=document.getElementById('birdSvg');svg.setAttribute('width',String(220*G.resolutionScale));svg.setAttribute('height',String(242*G.resolutionScale));svg.style.imageRendering=G.resolutionScale>1?'auto':'-webkit-optimize-contrast';svg.classList.toggle('bird-3d',G.beta3d===true);svg.classList.toggle('bird-3d-real',G.beta3d===true);svg.style.setProperty('--rx',`${G.threeDRotX}deg`);svg.style.setProperty('--ry',`${G.threeDRotY}deg`);
   const chatBtn=document.getElementById('chatOpenBtn');if(chatBtn)chatBtn.style.display=(G.chatApiEnabled&&G.chatApiKey)?'inline-block':'none';
-  renderWeather();renderCustomize();
+  renderWeather();
+  const customizePanel=document.getElementById('customizePanel');
+  if(customizePanel&&customizePanel.classList.contains('show'))renderCustomize();
 }
 function renderStats(){
   const s=[{l:'空腹',v:G.hunger,c:'#ef6c00',i:'🍚'},{l:'幸福',v:G.happiness,c:'#e91e63',i:'💖'},{l:'健康',v:G.health,c:'#4caf50',i:'💪'},{l:'元気',v:G.energy,c:'#2196f3',i:'⚡'},{l:'清潔',v:G.cleanliness,c:'#00bcd4',i:'✨'}];
@@ -302,12 +305,19 @@ function confirmUseItem(){
   }
   hideModal('useItemModal');save();updateUI();renderInv();
 }
+function getWeatherCount(base){
+  const quality=G.animationMode==='ultra'?1:G.animationMode==='fine'?0.85:G.animationMode==='simple'?0.55:0.7;
+  const screenFactor=Math.min(1,(window.innerWidth||360)/420);
+  return Math.max(4,Math.round(base*quality*screenFactor));
+}
 function renderWeather(){
+  if(lastWeatherRender.type===G.weather&&lastWeatherRender.mode===G.animationMode)return;
+  lastWeatherRender={type:G.weather,mode:G.animationMode};
   const c=document.getElementById('weatherEffects');c.innerHTML='';
-  if(G.weather==='rain')for(let i=0;i<20;i++){const d=document.createElement('div');d.className='raindrop';d.style.left=Math.random()*100+'%';d.style.animationDelay=Math.random()*2+'s';d.style.animationDuration=(0.4+Math.random()*0.3)+'s';c.appendChild(d)}
-  else if(G.weather==='snow')for(let i=0;i<12;i++){const f=document.createElement('div');f.className='snowflake';f.textContent='❄';f.style.left=Math.random()*100+'%';f.style.fontSize=(5+Math.random()*8)+'px';f.style.animationDelay=Math.random()*4+'s';f.style.animationDuration=(3+Math.random()*3)+'s';c.appendChild(f)}
-  else if(G.weather==='sleet')for(let i=0;i<14;i++){const s=document.createElement('div');s.className='sleet';s.textContent='❅';s.style.left=Math.random()*100+'%';s.style.animationDelay=Math.random()*2+'s';s.style.animationDuration=(1.4+Math.random()*1.4)+'s';c.appendChild(s)}
-  else if(G.weather==='hail')for(let i=0;i<16;i++){const h=document.createElement('div');h.className='hail';h.style.left=Math.random()*100+'%';h.style.animationDelay=Math.random()*1.6+'s';h.style.animationDuration=(0.8+Math.random()*0.8)+'s';c.appendChild(h)}
+  if(G.weather==='rain')for(let i=0;i<getWeatherCount(18);i++){const d=document.createElement('div');d.className='raindrop';d.style.left=Math.random()*100+'%';d.style.animationDelay=Math.random()*2+'s';d.style.animationDuration=(0.4+Math.random()*0.3)+'s';c.appendChild(d)}
+  else if(G.weather==='snow')for(let i=0;i<getWeatherCount(12);i++){const f=document.createElement('div');f.className='snowflake';f.textContent='❄';f.style.left=Math.random()*100+'%';f.style.fontSize=(5+Math.random()*8)+'px';f.style.animationDelay=Math.random()*4+'s';f.style.animationDuration=(3+Math.random()*3)+'s';c.appendChild(f)}
+  else if(G.weather==='sleet')for(let i=0;i<getWeatherCount(14);i++){const s=document.createElement('div');s.className='sleet';s.textContent='❅';s.style.left=Math.random()*100+'%';s.style.animationDelay=Math.random()*2+'s';s.style.animationDuration=(1.4+Math.random()*1.4)+'s';c.appendChild(s)}
+  else if(G.weather==='hail')for(let i=0;i<getWeatherCount(16);i++){const h=document.createElement('div');h.className='hail';h.style.left=Math.random()*100+'%';h.style.animationDelay=Math.random()*1.6+'s';h.style.animationDuration=(0.8+Math.random()*0.8)+'s';c.appendChild(h)}
 }
 function renderStars(){const c=document.getElementById('stars');for(let i=0;i<35;i++){const s=document.createElement('div');s.className='star';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*50+'%';s.style.width=s.style.height=(1+Math.random()*2)+'px';s.style.animationDelay=Math.random()*2+'s';c.appendChild(s)}}
 function renderCustomize(){
@@ -921,7 +931,7 @@ function getGeoAndWeather(){
 }
 function setTheme(t){G.autoTheme=false;G.theme=t;addMissionProgress('customize',1);document.body.className=t;save();renderCustomize()}
 function setWeather(w){G.autoWeather=false;G.weather=w;addMissionProgress('customize',1);save();renderCustomize();renderWeather()}
-function setAnimationMode(m){G.animationMode=m;addMissionProgress('customize',1);save();renderCustomize()}
+function setAnimationMode(m){G.animationMode=m;addMissionProgress('customize',1);save();renderCustomize();renderWeather()}
 function setResolution(scale){G.resolutionScale=scale;addMissionProgress('customize',1);const svg=document.getElementById('birdSvg');svg.setAttribute('viewBox',scale>=1.6?'0 0 200 220':'0 0 200 220');save();updateUI()}
 function setSoundMode(mode){G.soundMode=mode;addMissionProgress('customize',1);save();renderCustomize()}
 function setBeta3d(v){G.beta3d=v===true||v==='true';addMissionProgress('customize',1);save();updateUI()}
@@ -1010,7 +1020,7 @@ async function sendChatMessage(){
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div>v2.3.0 変更ログ</div><ul><li>ストーリーモードを一旦非表示</li><li>鳥の見た目とアニメーションを滑らかに調整</li><li>ミニミッション/ミニゲームUIをコンパクト化</li><li>天気に「みぞれ/ひょう」を追加</li></ul>`;
+  el.innerHTML=`<div>v2.3.1 変更ログ</div><ul><li>天気エフェクトを軽量化し、画面サイズに合わせて調整</li><li>3D回転の操作状態を保存</li><li>ショップ/持ち物/ミニゲーム/ミッションをスクロール化</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
@@ -1037,7 +1047,7 @@ function init3dControl(){
   const area=document.querySelector('.main-display');let down=false,lastX=0,lastY=0;
   area.addEventListener('pointerdown',e=>{if(!G.beta3d)return;down=true;lastX=e.clientX;lastY=e.clientY;area.setPointerCapture(e.pointerId);});
   area.addEventListener('pointermove',e=>{if(!G.beta3d||!down)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;G.threeDRotY=Math.max(-35,Math.min(35,G.threeDRotY+dx*0.25));G.threeDRotX=Math.max(-25,Math.min(35,G.threeDRotX-dy*0.2));updateUI();});
-  area.addEventListener('pointerup',()=>{down=false;});
+  area.addEventListener('pointerup',()=>{down=false;save();});
 }
 
 function addExp(a){

@@ -118,7 +118,7 @@
     .shop-tab{padding:5px 12px;border:none;border-radius:16px;font-size:0.75rem;font-family:inherit;cursor:pointer;background:rgba(0,0,0,0.05)}
     body.night .shop-tab{background:rgba(255,255,255,0.1)}
     .shop-tab.active{background:var(--primary);color:white}
-    .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+    .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;max-height:260px;overflow:auto;padding-right:4px}
     .shop-item{padding:8px;border-radius:10px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all 0.2s}
     body.day .shop-item,body.sunset .shop-item{background:rgba(0,0,0,0.03)}
     body.night .shop-item{background:rgba(255,255,255,0.05)}
@@ -128,7 +128,7 @@
     .shop-item-desc{font-size:0.6rem;opacity:0.7;margin-bottom:4px;line-height:1.2}
     .shop-item-price{font-size:0.75rem;font-weight:700;color:var(--primary)}
     body.night .shop-item-price{color:#ffd700}
-    .inventory-grid{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+    .inventory-grid{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-height:240px;overflow:auto;padding-right:4px}
     .inventory-item{width:58px;padding:6px;border-radius:8px;text-align:center;position:relative;cursor:pointer}
     body.day .inventory-item,body.sunset .inventory-item{background:rgba(0,0,0,0.03)}
     body.night .inventory-item{background:rgba(255,255,255,0.05)}
@@ -136,7 +136,7 @@
     .inventory-item-icon{font-size:1.2rem}
     .inventory-item-count{position:absolute;top:1px;right:1px;background:var(--accent);color:white;font-size:0.55rem;font-weight:700;padding:1px 4px;border-radius:6px}
     .inventory-item-name{font-size:0.5rem;margin-top:1px;opacity:0.8}
-    .minigame-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .minigame-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:260px;overflow:auto;padding-right:4px}
     .minigame-card{padding:12px 8px;border-radius:12px;text-align:center;cursor:pointer;transition:all 0.2s;border:2px solid transparent}
     body.day .minigame-card,body.sunset .minigame-card{background:rgba(0,0,0,0.05)}
     body.night .minigame-card{background:rgba(255,255,255,0.08)}
@@ -269,7 +269,7 @@ body.night .panel{background:linear-gradient(180deg,rgba(31,35,54,0.92),rgba(28,
 .quick-dock .quick-btn{transform:translateY(0);transition:transform .18s ease,filter .18s ease}
 .quick-dock .quick-btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
 
-.mission-list{display:grid;gap:10px}
+    .mission-list{display:grid;gap:10px;max-height:240px;overflow:auto;padding-right:4px}
 .mission-card{padding:10px;border-radius:12px;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.06)}
 body.night .mission-card{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.1)}
 .mission-card.done{opacity:.65}
