@@ -112,20 +112,38 @@ let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBir
 let currentMg=null,mgData={},mgInterval=null;
 let lastWeatherRender={type:null,mode:null};
 
+function persistBackup(key,json){
+  try{localStorage.setItem(key,json);}catch(e){}
+  try{sessionStorage.setItem(key,json);}catch(e){}
+}
 function setCookie(n,v){
-  const payload=encodeURIComponent(JSON.stringify(v));
+  const json=JSON.stringify(v);
+  const payload=encodeURIComponent(json);
   document.cookie=`${n}=${payload};expires=${new Date(Date.now()+365*864e5).toUTCString()};path=/;SameSite=Lax`;
-  try{localStorage.setItem(n,payload);}catch(e){}
+  persistBackup(n,json);
+}
+function parseStoredValue(raw){
+  if(!raw)return null;
+  try{return JSON.parse(raw);}catch(e){}
+  try{return JSON.parse(decodeURIComponent(raw));}catch(e){}
+  return null;
 }
 function getCookie(n){
   const v=document.cookie.split('; ').find(r=>r.startsWith(n+'='));
-  if(v)try{return JSON.parse(decodeURIComponent(v.split('=')[1]))}catch(e){}
-  try{const backup=localStorage.getItem(n);if(backup)return JSON.parse(decodeURIComponent(backup));}catch(e){}
+  if(v){
+    const parsed=parseStoredValue(v.split('=')[1]);
+    if(parsed)return parsed;
+  }
+  const fromLocal=parseStoredValue(localStorage.getItem(n));
+  if(fromLocal)return fromLocal;
+  const fromSession=parseStoredValue(sessionStorage.getItem(n));
+  if(fromSession)return fromSession;
   return null;
 }
 function delCookie(n){
   document.cookie=n+'=;expires=Thu,01 Jan 1970 00:00:00 GMT;path=/';
   try{localStorage.removeItem(n);}catch(e){}
+  try{sessionStorage.removeItem(n);}catch(e){}
 }
 function save(){G.lastUpdate=Date.now();setCookie('birdG3',G)}
 function load(){
@@ -1032,7 +1050,7 @@ async function sendChatMessage(){
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div>v2.3.2 変更ログ</div><ul><li>保存処理を強化（Cookie + localStorage）</li><li>ページ離脱時に自動保存</li><li>軽量化/スクロール化の調整を継続</li></ul>`;
+  el.innerHTML=`<div>v2.3.3 変更ログ</div><ul><li>保存処理を多重化（Cookie + localStorage + sessionStorage）</li><li>復元のフォールバックを強化</li><li>継続的な安定化調整</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
@@ -1104,6 +1122,7 @@ function init(){
   window.addEventListener('error',e=>logError('window',e.message||'unknown'));
   window.addEventListener('unhandledrejection',e=>logError('promise',String(e.reason||'rejection')));
   window.addEventListener('beforeunload',save);
+  setInterval(save,5000);
   init3dControl();renderChangeLog();renderErrorLogs();renderChat();
   if(G.autoTheme)applyAutoTheme();
   if(G.autoWeather&&(!G.lastWeatherFetch||Date.now()-G.lastWeatherFetch>30*60*1000))getGeoAndWeather();
