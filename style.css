@@ -243,6 +243,7 @@ body.night .changelog,body.night .error-log{background:rgba(255,255,255,0.08)}
 .main-display{perspective:950px}
 
 .quick-btn.share{background:linear-gradient(135deg,#00acc1,#00838f);border:none;color:#fff}
+.quick-btn.mission{background:linear-gradient(135deg,#66bb6a,#2e7d32);border:none;color:#fff}
 
 :root{--radius:14px}
 .header,.panel,.message-bubble,.stat-card,.shop-item,.inventory-item{backdrop-filter:blur(8px)}
@@ -274,7 +275,7 @@ body.night .adventure-bg-layer{background:radial-gradient(circle at 70% 15%,rgba
 .story-player{left:24px;top:110px;background:rgba(255,255,255,.8)}
 .story-enemy{right:26px;top:70px;background:rgba(255,180,180,.78)}
 .story-joystick{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.joy-base{width:92px;height:92px;border-radius:50%;position:relative;background:radial-gradient(circle,#ffffff88,#00000022);touch-action:none}
+.joy-base{width:92px;height:92px;border-radius:50%;position:relative;background:radial-gradient(circle,#ffffff88,#00000022);touch-action:none;user-select:none}
 .joy-stick{position:absolute;left:31px;top:31px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4caf50,#2e7d32);box-shadow:0 2px 8px rgba(0,0,0,.28)}
 .battle-ui{margin-top:8px;padding:8px;border-radius:10px}
 body.day .battle-ui,body.sunset .battle-ui{background:rgba(255,255,255,.55)}
@@ -306,3 +307,25 @@ body.night .battle-ui{background:rgba(0,0,0,.25)}
 @keyframes pulseStory{0%,100%{box-shadow:0 0 0 0 rgba(255,167,38,.35)}50%{box-shadow:0 0 0 8px rgba(255,167,38,0)}}
 
 .story-next:disabled{opacity:.6;filter:grayscale(.25);animation:none}
+
+.mission-list{display:grid;gap:10px}
+.mission-card{padding:10px;border-radius:12px;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.06)}
+body.night .mission-card{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.1)}
+.mission-card.done{opacity:.65}
+.mission-title{font-weight:700;font-size:.78rem;margin-bottom:2px}
+.mission-desc{font-size:.7rem;opacity:.85}
+.mission-bar{height:6px;border-radius:999px;background:rgba(0,0,0,0.1);margin:8px 0;overflow:hidden}
+body.night .mission-bar{background:rgba(255,255,255,0.12)}
+.mission-bar span{display:block;height:100%;background:linear-gradient(90deg,#66bb6a,#2e7d32)}
+.mission-meta{font-size:.68rem;opacity:.8}
+.mission-empty{font-size:.75rem;opacity:.7}
+
+.dodge-area{position:relative;height:140px;border-radius:12px;background:linear-gradient(180deg,#0b1b2b,#15324f);overflow:hidden;border:1px solid rgba(255,255,255,0.15)}
+.dodge-bird{position:absolute;left:50%;top:70%;transform:translate(-50%,-50%);font-size:1.2rem;transition:left .08s ease}
+.dodge-obstacle{position:absolute;font-size:1rem}
+.dodge-controls{display:flex;justify-content:center;gap:12px;margin-top:10px}
+
+.path-area{position:relative;height:150px;border-radius:12px;background:linear-gradient(180deg,#1b1b2a,#2b2b3a);overflow:hidden;border:1px solid rgba(255,255,255,0.12)}
+.path-target{position:absolute;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:#fff;background:radial-gradient(circle,#ffca28,#f57f17);box-shadow:0 4px 10px rgba(0,0,0,.3);cursor:pointer}
+.path-target.done{background:radial-gradient(circle,#81c784,#388e3c)}
+.path-hint{margin-top:8px;font-size:.72rem;opacity:.85}

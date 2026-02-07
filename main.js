@@ -6,23 +6,46 @@ const birds={
   canary:{name:'カナリア',icon:'🐥',price:500,curr:'coins',colors:{head:'#ffeb3b',cheek:'#fff59d',body:'#ffeb3b',belly:'#fff9c4',wing:'#fdd835',tail:'#f9a825',beak:'#ff8a65',eyeRing:'#ffab91',feet:'#ffcc80'},hasCheek:false,defaultNames:['カナリア','ひまわり','レモン','こがね','ソレイユ','ひなた','サニー']},
   inko_green:{name:'セキセイインコ',icon:'🦜',price:800,curr:'coins',colors:{head:'#c8e6c9',cheek:'#a5d6a7',body:'#66bb6a',belly:'#a5d6a7',wing:'#43a047',tail:'#2e7d32',beak:'#ffb74d',eyeRing:'#fff59d',feet:'#bcaaa4'},hasCheek:false,defaultNames:['みどり','わかば','リーフ','メロン','キウイ','ミント','モス']},
   inko_blue:{name:'青インコ',icon:'💙',price:800,curr:'coins',colors:{head:'#bbdefb',cheek:'#90caf9',body:'#42a5f5',belly:'#90caf9',wing:'#1e88e5',tail:'#1565c0',beak:'#ffb74d',eyeRing:'#fff59d',feet:'#bcaaa4'},hasCheek:false,defaultNames:['そら','あお','スカイ','うみ','アクア','ブルー','セイラ']},
+  buncho_pied:{name:'白黒文鳥',icon:'🤍',price:950,curr:'coins',colors:{head:'#2b2b2b',cheek:'#ffffff',body:'#dadada',belly:'#f1ece6',wing:'#707070',tail:'#1b1b1b',beak:'#ff7b7b',eyeRing:'#ff8a8a',feet:'#ffc0c0'},hasCheek:true,defaultNames:['パンダ','ゴマ','ミル','ダンゴ','黒豆','こはく','しろくろ']},
+  buncho_black:{name:'黒文鳥',icon:'🖤',price:1100,curr:'coins',colors:{head:'#0b0b0b',cheek:'#3b3b3b',body:'#1d1d1d',belly:'#2a2a2a',wing:'#111',tail:'#050505',beak:'#ff7b7b',eyeRing:'#ff6b6b',feet:'#ffb0b0'},hasCheek:false,defaultNames:['くろ','よぞら','カゲ','ルーク','しぐれ','ナイト','ビター']},
+  finch_zebra:{name:'キンカチョウ',icon:'🤎',price:1200,curr:'coins',colors:{head:'#cfcfcf',cheek:'#ff6b6b',body:'#b0b0b0',belly:'#f0ece6',wing:'#7d7d7d',tail:'#4a4a4a',beak:'#ff8a65',eyeRing:'#ffd180',feet:'#ffb0b0'},hasCheek:true,defaultNames:['しま','ゼブラ','カノン','ラテ','モノ','ビス','マーブル']},
+  lovebird:{name:'コザクラインコ',icon:'💚',price:6,curr:'gems',colors:{head:'#ff9ea8',cheek:'#ffd1d9',body:'#7ed957',belly:'#b6f18c',wing:'#54c45c',tail:'#2e7d32',beak:'#ffb74d',eyeRing:'#ffeb3b',feet:'#bcaaa4'},hasCheek:false,defaultNames:['ラブ','ハート','ピーチ','さくら','メロ','ルル','ハニー']},
   cockatiel:{name:'オカメインコ',icon:'🧡',price:5,curr:'gems',colors:{head:'#ffcc80',cheek:'#ff8a65',body:'#bdbdbd',belly:'#e0e0e0',wing:'#9e9e9e',tail:'#757575',beak:'#8d6e63',eyeRing:'#ffcc80',feet:'#bcaaa4'},hasCheek:true,defaultNames:['オカメ','ピーチ','サンセット','あかり','コーラル','もみじ','ルビー']},
   owl:{name:'フクロウ',icon:'🦉',price:15,curr:'gems',colors:{head:'#8d6e63',cheek:'#d7ccc8',body:'#6d4c41',belly:'#bcaaa4',wing:'#5d4037',tail:'#4e342e',beak:'#ffd54f',eyeRing:'#ffd54f',feet:'#a1887f'},hasCheek:false,isOwl:true,defaultNames:['ふくろう','ホー太','ミミズク','よる','ウィズダム','アウル','ナイト']}
 };
 const minigames=[
-  {id:'catch',name:'シードキャッチ',icon:'🌾',desc:'落ちるシードをキャッチ！',cost:10},
-  {id:'timing',name:'タイミングバー',icon:'🎯',desc:'ぴったりタイミングで！',cost:10},
-  {id:'memory',name:'神経衰弱',icon:'🧠',desc:'絵柄を覚えてペアを探せ！',cost:15},
-  {id:'rhythm',name:'リズムゲーム',icon:'🎵',desc:'リズムに合わせてタップ！',cost:10},
-  {id:'tap',name:'連打チャレンジ',icon:'👆',desc:'とにかく連打！',cost:10},
-  {id:'quiz',name:'鳥クイズ',icon:'❓',desc:'鳥に関するクイズ！',cost:15},
-  {id:'fly',name:'フライトラン',icon:'🕊️',desc:'障害物を避けて飛べ！',cost:15},
-  {id:'sing',name:'音あてゲーム',icon:'🎹',desc:'鳴き声を覚えて再現！',cost:15},
-  {id:'balance',name:'バランス',icon:'⚖️',desc:'バランスを保って立て！',cost:10},
-  {id:'treasure',name:'宝探し',icon:'💎',desc:'隠れたシードを探せ！',cost:10}
+  {id:'catch',name:'シードキャッチ',icon:'🌾',desc:'落ちるシードをキャッチ！',cost:10,type:'catch'},
+  {id:'timing',name:'タイミングバー',icon:'🎯',desc:'ぴったりタイミングで！',cost:10,type:'timing'},
+  {id:'memory',name:'神経衰弱',icon:'🧠',desc:'絵柄を覚えてペアを探せ！',cost:15,type:'memory'},
+  {id:'rhythm',name:'リズムゲーム',icon:'🎵',desc:'リズムに合わせてタップ！',cost:10,type:'rhythm'},
+  {id:'tap',name:'連打チャレンジ',icon:'👆',desc:'とにかく連打！',cost:10,type:'tap'},
+  {id:'quiz',name:'鳥クイズ',icon:'❓',desc:'鳥に関するクイズ！',cost:15,type:'quiz'},
+  {id:'fly',name:'フライトラン',icon:'🕊️',desc:'障害物を避けて飛べ！',cost:15,type:'fly'},
+  {id:'sing',name:'音あてゲーム',icon:'🎹',desc:'鳴き声を覚えて再現！',cost:15,type:'sing'},
+  {id:'balance',name:'バランス',icon:'⚖️',desc:'バランスを保って立て！',cost:10,type:'balance'},
+  {id:'treasure',name:'宝探し',icon:'💎',desc:'隠れたシードを探せ！',cost:10,type:'treasure'}
 ];
-const extraMinigameThemes=['スターラッシュ','スカイグライド','トリックループ','ソウルダッシュ','フォーカス','スパーク','ダイブ','ノヴァ','パルス','ミラージュ'];
-for(let i=1;i<=30;i++){const t=extraMinigameThemes[i%extraMinigameThemes.length];minigames.push({id:`extra_${i}`,name:`${t} ${i}`,icon:['✨','🌀','⚡','🎯','🧩'][i%5],desc:'追加チャレンジモード',cost:10+(i%4)*2});}
+const extraMinigameThemes=['スターラッシュ','スカイグライド','トリックループ','ソウルダッシュ','フォーカス','スパーク','ダイブ','ノヴァ','パルス','ミラージュ','グリント','オーロラ'];
+const extraMinigameTypes=['catch','timing','tap','rhythm','balance','treasure','fly','memory','quiz','sing','dodge','path'];
+const extraMinigameDescs={
+  catch:'落ちるアイテムをすばやくキャッチ！',
+  timing:'狭いゾーンを狙え！',
+  tap:'リズムに合わせて連打！',
+  rhythm:'ノーツを正確にタップ！',
+  balance:'姿勢を崩さず耐えろ！',
+  treasure:'隠れたアイテムを探し出せ！',
+  fly:'障害物をすり抜けろ！',
+  memory:'短い時間で覚えよう！',
+  quiz:'知識で勝負！',
+  sing:'順番を真似しよう！',
+  dodge:'落下物を避け続けろ！',
+  path:'光る順番をたどろう！'
+};
+for(let i=1;i<=30;i++){
+  const t=extraMinigameThemes[i%extraMinigameThemes.length];
+  const type=extraMinigameTypes[i%extraMinigameTypes.length];
+  minigames.push({id:`extra_${i}`,name:`${t} ${i}`,icon:['✨','🌀','⚡','🎯','🧩','🌟'][i%6],desc:extraMinigameDescs[type]||'追加チャレンジモード',cost:10+(i%4)*2,type,variant:i});
+}
 const shopData={
   food:[
     {id:'seeds',name:'シード',desc:'基本のえさ×10',price:30,icon:'🌾',curr:'coins',amt:10},
@@ -61,7 +84,33 @@ const itemInfo={
   swing:{name:'ブランコ',icon:'🎠',usable:false},
   sleep_box:{name:'スリープボックス',icon:'🛏️',usable:true,effect:'1〜10時間の状態維持スリープ'}
 };
-let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',chatApiDraft:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,autoTheme:true,autoWeather:false,geo:null,story:{ep:1,step:0,hp:20,trust:0,enemyHp:18,state:'field',x:24,y:110,enemySeen:false},lastWeatherFetch:0,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
+function buildMissionCatalog(){
+  const list=[];
+  const push=(id,title,desc,type,goal,reward)=>list.push({id,title,desc,type,goal,reward});
+  const rewardFor=(goal,base)=>Math.max(8,Math.round(goal*base));
+  [3,6,10,15].forEach(n=>push(`feed_${n}`,`ごはん${n}回`,`シードやおやつを${n}回あげる`, 'feed',n,rewardFor(n,3)));
+  [4,8,12].forEach(n=>push(`pet_${n}`,`なでなで${n}回`,`なでるを${n}回行う`,'pet',n,rewardFor(n,2.5)));
+  [3,6,9].forEach(n=>push(`play_${n}`,`遊び${n}回`,`遊ぶを${n}回行う`,'play',n,rewardFor(n,3.5)));
+  [2,4,6].forEach(n=>push(`bath_${n}`,`お風呂${n}回`,`お風呂に${n}回入れる`,'bath',n,rewardFor(n,4)));
+  [3,6,9].forEach(n=>push(`sing_${n}`,`歌${n}回`,`歌うを${n}回行う`,'sing',n,rewardFor(n,3)));
+  [2,4,7].forEach(n=>push(`train_${n}`,`訓練${n}回`,`訓練を${n}回行う`,'train',n,rewardFor(n,4)));
+  [2,4,6].forEach(n=>push(`treat_${n}`,`おやつ${n}回`,`おやつを${n}回あげる`,'treat',n,rewardFor(n,5)));
+  [2,4,6,8].forEach(n=>push(`minigame_${n}`,`ミニゲーム${n}回`,`ミニゲームを${n}回遊ぶ`,'minigame',n,rewardFor(n,6)));
+  [30,60,90].forEach(n=>push(`mg_score_${n}`,`ハイスコア${n}`,`ミニゲームで合計${n}点稼ぐ`,'minigame_score',n,rewardFor(n,1)));
+  [50,100,150].forEach(n=>push(`coins_${n}`,`コイン${n}`,`コインを合計${n}獲得する`,'coins',n,rewardFor(n,0.8)));
+  [120,240].forEach(n=>push(`story_move_${n}`,`冒険${n}歩`,`冒険で${n}歩進む`,'story_move',n,rewardFor(n,0.4)));
+  [1,2,3].forEach(n=>push(`battle_${n}`,`戦闘アクション${n}`,`戦闘コマンドを${n}回実行`,'battle',n,rewardFor(n,12)));
+  [1,2,3].forEach(n=>push(`sleep_${n}`,`おやすみ${n}回`,`睡眠を${n}回行う`,'sleep',n,rewardFor(n,8)));
+  push('share_1','共有チャレンジ','共有ボタンを1回押す','share',1,25);
+  [1,3].forEach(n=>push(`custom_${n}`,`カスタム${n}回`,`カスタマイズを${n}回変更`,'customize',n,rewardFor(n,6)));
+  push('adventure_clear','第一章踏破','冒険 第一章をクリア','adventure',1,60);
+  [1,3,5].forEach(n=>push(`buy_${n}`,`買い物${n}回`,`ショップで${n}回購入`,'buy',n,rewardFor(n,7)));
+  push('bug_1','不具合報告','バグ報告を1回保存','bug_report',1,20);
+  [2,4].forEach(n=>push(`chat_${n}`,`AI会話${n}回`,`AIに${n}回送信`,'chat',n,rewardFor(n,10)));
+  return list;
+}
+const missionCatalog=buildMissionCatalog();
+let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',chatApiDraft:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,autoTheme:true,autoWeather:false,geo:null,story:{ep:1,step:0,hp:20,trust:0,enemyHp:18,state:'field',x:24,y:110,enemySeen:false},storyMove:0,missions:{active:[],completed:0,history:[]},lastWeatherFetch:0,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
 let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBird=null,shopTab='food',selItem=null;
 let currentMg=null,mgData={},mgInterval=null;
 
@@ -122,6 +171,11 @@ function ensureNewSettings(){
   if(typeof G.story.x!=='number')G.story.x=24;
   if(typeof G.story.y!=='number')G.story.y=110;
   if(typeof G.story.enemySeen!=='boolean')G.story.enemySeen=false;
+  if(typeof G.storyMove!=='number')G.storyMove=0;
+  if(!G.missions||typeof G.missions!=='object')G.missions={active:[],completed:0,history:[]};
+  if(!Array.isArray(G.missions.active))G.missions.active=[];
+  if(!Array.isArray(G.missions.history))G.missions.history=[];
+  if(typeof G.missions.completed!=='number')G.missions.completed=0;
   if(typeof G.lastWeatherFetch!=='number')G.lastWeatherFetch=0;
 }
 let audioCtx=null;
@@ -164,7 +218,7 @@ function selectNameSuggestion(name){document.getElementById('nameInput').value=n
 function hideModal(id){document.getElementById(id).classList.remove('show')}
 function showInstallGuide(){hideInstallBanner();showModal('installModal')}
 function hideInstallBanner(){document.getElementById('installBanner').classList.remove('show');G.bannerDismissed=true;save()}
-function togglePanel(p){['shop','inventory','minigame','customize','chat','logs','story'].forEach(x=>{const el=document.getElementById(x+'Panel');if(!el)return;el.classList.toggle('show',x===p&&!el.classList.contains('show'))});if(p==='shop')renderShop();if(p==='inventory')renderInv();if(p==='minigame'){renderMinigameGrid();document.getElementById('minigameSelect').style.display='block';document.getElementById('minigamePlay').style.display='none';currentMg=null;}if(p==='chat')renderChat();if(p==='logs'){renderChangeLog();renderErrorLogs();}if(p==='story')renderStory();}
+function togglePanel(p){['shop','inventory','minigame','customize','chat','logs','story','missions'].forEach(x=>{const el=document.getElementById(x+'Panel');if(!el)return;el.classList.toggle('show',x===p&&!el.classList.contains('show'))});if(p==='shop')renderShop();if(p==='inventory')renderInv();if(p==='minigame'){renderMinigameGrid();document.getElementById('minigameSelect').style.display='block';document.getElementById('minigamePlay').style.display='none';currentMg=null;}if(p==='chat')renderChat();if(p==='logs'){renderChangeLog();renderErrorLogs();}if(p==='story')renderStory();if(p==='missions')renderMissions();}
 
 function updateUI(){
   const b=birds[G.species];
@@ -279,19 +333,79 @@ function renderCustomize(){
   if(!shouldPreserve)keyInput.value=(G.chatApiDraft||G.chatApiKey||'');
   document.getElementById('chatApiHint').textContent=G.chatApiEnabled?'APIキーはCookieに保存されます。':'OFF中はAPIを使いません。';
 }
+function initMissions(){
+  if(!G.missions||!Array.isArray(G.missions.active))G.missions={active:[],completed:0,history:[]};
+  if(G.missions.active.length===0)rollMissions();
+}
+function rollMissions(){
+  const pool=missionCatalog.filter(m=>!G.missions.history.includes(m.id));
+  const source=pool.length>=5?pool:missionCatalog;
+  if(pool.length<5)G.missions.history=[];
+  const picks=[];
+  const used=new Set();
+  while(picks.length<5&&used.size<source.length){
+    const m=source[Math.floor(Math.random()*source.length)];
+    if(used.has(m.id))continue;
+    used.add(m.id);
+    picks.push({...m,progress:0,done:false});
+  }
+  G.missions.active=picks;
+  save();
+  renderMissions();
+}
+function addMissionProgress(type,amount=1){
+  if(amount<=0)return;
+  if(!G.missions||!Array.isArray(G.missions.active))return;
+  let changed=false;
+  G.missions.active.forEach(m=>{
+    if(m.done||m.type!==type)return;
+    m.progress=Math.min(m.goal,m.progress+amount);
+    if(m.progress>=m.goal){
+      m.done=true;
+      addCoins(m.reward,{ignoreMission:true});
+      showToast(`✅ ミッション達成！${m.title} +${m.reward}💰`,'achievement');
+      G.missions.completed++;
+    }
+    changed=true;
+  });
+  if(changed){
+    if(G.missions.active.length&&G.missions.active.every(m=>m.done)){
+      showToast('全ミッション達成！新しいミッションが出現','achievement');
+      rollMissions();
+    }else{
+      save();
+      renderMissions();
+    }
+  }
+}
+function renderMissions(){
+  const list=document.getElementById('missionList');
+  if(!list)return;
+  if(!G.missions||!Array.isArray(G.missions.active))return;
+  if(G.missions.active.length===0){list.innerHTML='<div class="mission-empty">ミッションがありません</div>';return;}
+  list.innerHTML=G.missions.active.map(m=>{
+    const pct=Math.min(100,Math.round((m.progress/m.goal)*100));
+    return `<div class="mission-card ${m.done?'done':''}">
+      <div class="mission-title">${m.title}</div>
+      <div class="mission-desc">${m.desc}</div>
+      <div class="mission-bar"><span style="width:${pct}%"></span></div>
+      <div class="mission-meta">${m.progress}/${m.goal} ・ 報酬 ${m.reward}💰</div>
+    </div>`;
+  }).join('');
+}
 function renderBird(){
   const b=birds[G.species],c=b.colors,svg=document.getElementById('birdSvg');
-  const speed=G.animationMode==='ultra'?1.35:G.animationMode==='fine'?1.2:G.animationMode==='simple'?0.7:1;
-  const amp=G.animationMode==='ultra'?1.35:G.animationMode==='fine'?1.2:G.animationMode==='simple'?0.75:1;
+  const speed=G.animationMode==='ultra'?1.05:G.animationMode==='fine'?0.95:G.animationMode==='simple'?0.6:0.8;
+  const amp=G.animationMode==='ultra'?1.2:G.animationMode==='fine'?1.05:G.animationMode==='simple'?0.7:0.9;
   const quality=G.resolutionScale>=1.6?1:0;
-  const bounce=Math.sin(animF*0.2*speed)*4*amp,tilt=Math.sin(animF*0.1*speed)*2*amp;
-  const wingFlap=action==='play'||action==='bath'||action==='sing'?Math.sin(animF*0.48*speed)*15*amp:Math.sin(animF*0.05*speed)*2.4*amp;
-  const headTilt=action==='pet'?Math.sin(animF*0.24*speed)*8*amp:tilt;
+  const bounce=Math.sin(animF*0.14*speed)*3.2*amp,tilt=Math.sin(animF*0.07*speed)*2*amp;
+  const wingFlap=action==='play'||action==='bath'||action==='sing'?Math.sin(animF*0.38*speed)*12*amp:Math.sin(animF*0.04*speed)*2*amp;
+  const headTilt=action==='pet'?Math.sin(animF*0.18*speed)*6*amp:tilt;
   const eyesClosed=G.isSleeping||blink||action==='pet';
-  const jumpY=action==='play'?Math.abs(Math.sin(animF*0.36*speed))*21*amp:0;
-  const eatBob=action==='feed'||action==='treat'?Math.max(0,Math.sin(animF*0.45*speed))*4*amp:0;
-  const shake=action==='bath'?Math.sin(animF*0.65*speed)*5*amp:0;
-  const singBob=action==='sing'?Math.sin(animF*0.45*speed)*5*amp:0;
+  const jumpY=action==='play'?Math.abs(Math.sin(animF*0.28*speed))*16*amp:0;
+  const eatBob=action==='feed'||action==='treat'?Math.max(0,Math.sin(animF*0.32*speed))*3*amp:0;
+  const shake=action==='bath'?Math.sin(animF*0.5*speed)*4*amp:0;
+  const singBob=action==='sing'?Math.sin(animF*0.32*speed)*4*amp:0;
   svg.innerHTML=`
     <defs>
       <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c.body}"/><stop offset="100%" stop-color="${c.wing}"/></linearGradient>
@@ -329,20 +443,26 @@ function renderBird(){
     </g>`;
 }
 function doAction(n,cb){if(action||(G.isSleeping&&n!=='wake')){if(G.isSleeping)setMsg('Zzz...寝てるよ...');return false}action=n;cb();setTimeout(()=>action=null,2000);return true}
-function feedBird(){if(G.inv.seeds<=0){playBirdSound('feed');setMsg('シードがない！');return}doAction('feed',()=>{playBirdSound('feed');G.inv.seeds--;G.hunger=Math.min(100,G.hunger+18);G.happiness=Math.min(100,G.happiness+3);G.tFeeds++;addExp(2);setMsg(['パクパク...おいしい！🌾','チュン♪ありがとう！','カリカリ最高！'][Math.floor(Math.random()*3)]);save()})}
-function petBird(){doAction('pet',()=>{playBirdSound('pet');G.happiness=Math.min(100,G.happiness+10+(G.inv.mirror>0?5:0));G.tPets++;addExp(1);setMsg(['チュンチュン♪うれしい！','もっとなでて〜💕','眠れる...'][Math.floor(Math.random()*3)]);save()})}
-function playBird(){if(G.energy<20){playBirdSound('feed');setMsg('疲れてる...休ませて...');return}doAction('play',()=>{playBirdSound('play');const b=G.inv.swing>0?2:1,tb=G.inv.toys>0?5:0;G.happiness=Math.min(100,G.happiness+(15+tb)*b);G.energy=Math.max(0,G.energy-12);G.hunger=Math.max(0,G.hunger-5);G.tPlays++;G.coins+=2;addExp(3);setMsg(['わーい！楽しい！🎉','もっと遊ぼう！'][Math.floor(Math.random()*2)]);save()})}
-function bathBird(){doAction('bath',()=>{playBirdSound('bath');const b=G.inv.shampoo>0;if(b)G.inv.shampoo--;G.cleanliness=100;G.happiness=Math.min(100,G.happiness+(b?15:8));G.tBaths++;addExp(2);setMsg(b?'シャンプーでピカピカ！✨':['バシャバシャ！💦','きれいになった〜'][Math.floor(Math.random()*2)]);save()})}
+function addCoins(amount,opts={}){
+  if(!amount)return;
+  G.coins=Math.max(0,G.coins+amount);
+  if(amount>0&&!opts.ignoreMission)addMissionProgress('coins',amount);
+}
+function spendCoins(amount){G.coins=Math.max(0,G.coins-amount);}
+function feedBird(){if(G.inv.seeds<=0){playBirdSound('feed');setMsg('シードがない！');return}doAction('feed',()=>{playBirdSound('feed');G.inv.seeds--;G.hunger=Math.min(100,G.hunger+18);G.happiness=Math.min(100,G.happiness+3);G.tFeeds++;addMissionProgress('feed',1);addExp(2);setMsg(['パクパク...おいしい！🌾','チュン♪ありがとう！','カリカリ最高！'][Math.floor(Math.random()*3)]);save()})}
+function petBird(){doAction('pet',()=>{playBirdSound('pet');G.happiness=Math.min(100,G.happiness+10+(G.inv.mirror>0?5:0));G.tPets++;addMissionProgress('pet',1);addExp(1);setMsg(['チュンチュン♪うれしい！','もっとなでて〜💕','眠れる...'][Math.floor(Math.random()*3)]);save()})}
+function playBird(){if(G.energy<20){playBirdSound('feed');setMsg('疲れてる...休ませて...');return}doAction('play',()=>{playBirdSound('play');const b=G.inv.swing>0?2:1,tb=G.inv.toys>0?5:0;G.happiness=Math.min(100,G.happiness+(15+tb)*b);G.energy=Math.max(0,G.energy-12);G.hunger=Math.max(0,G.hunger-5);G.tPlays++;addMissionProgress('play',1);addCoins(2);addExp(3);setMsg(['わーい！楽しい！🎉','もっと遊ぼう！'][Math.floor(Math.random()*2)]);save()})}
+function bathBird(){doAction('bath',()=>{playBirdSound('bath');const b=G.inv.shampoo>0;if(b)G.inv.shampoo--;G.cleanliness=100;G.happiness=Math.min(100,G.happiness+(b?15:8));G.tBaths++;addMissionProgress('bath',1);addExp(2);setMsg(b?'シャンプーでピカピカ！✨':['バシャバシャ！💦','きれいになった〜'][Math.floor(Math.random()*2)]);save()})}
 function toggleSleep(){
   if(G.sleepBoxUntil&&Date.now()<G.sleepBoxUntil){cancelSleepBox();return;}
   if(G.isSleeping){G.isSleeping=false;G.sleepStart=null;playBirdSound('feed');setMsg('おはよう！🌅')}
-  else{G.isSleeping=true;G.sleepStart=Date.now();playBirdSound('feed');setMsg('おやすみ...💤 閉じても元気が回復！')}
+  else{G.isSleeping=true;G.sleepStart=Date.now();addMissionProgress('sleep',1);playBirdSound('feed');setMsg('おやすみ...💤 閉じても元気が回復！')}
   save();updateUI();
 }
-function giveTreat(){if(G.inv.treats<=0){playBirdSound('feed');setMsg('おやつがない！');return}doAction('treat',()=>{playBirdSound('feed');G.inv.treats--;G.happiness=Math.min(100,G.happiness+25);G.hunger=Math.min(100,G.hunger+10);addExp(4);setMsg('わーい！おやつ！🍬');save()})}
-function trainBird(){if(G.energy<25){playBirdSound('feed');setMsg('疲れてる...訓練は無理...');return}doAction('train',()=>{playBirdSound('play');G.energy=Math.max(0,G.energy-15);G.coins+=3;addExp(4);setMsg(['賢くなった！📚','新しいこと覚えた！'][Math.floor(Math.random()*2)]);save()})}
-function singBird(){if(G.energy<15){playBirdSound('feed');setMsg('疲れて歌えない...');return}doAction('sing',()=>{playBirdSound('sing');G.happiness=Math.min(100,G.happiness+12);G.energy=Math.max(0,G.energy-8);G.tSings++;G.coins+=2;addExp(3);setMsg(['チュンチュン〜♪🎵','上手に歌えた！','いい鳴き声でしょ？🎤'][Math.floor(Math.random()*3)]);save()})}
-function buyItem(id,price,curr,amt){if(G[curr]<price){showToast(curr==='gems'?'💎が足りません':'💰が足りません','warning');return}G[curr]-=price;G.inv[id]=(G.inv[id]||0)+amt;showToast('購入しました！');playBirdSound('feed');setMsg('お買い物ありがとう！🛒');save();updateUI();renderInv()}
+function giveTreat(){if(G.inv.treats<=0){playBirdSound('feed');setMsg('おやつがない！');return}doAction('treat',()=>{playBirdSound('feed');G.inv.treats--;G.happiness=Math.min(100,G.happiness+25);G.hunger=Math.min(100,G.hunger+10);addMissionProgress('treat',1);addExp(4);setMsg('わーい！おやつ！🍬');save()})}
+function trainBird(){if(G.energy<25){playBirdSound('feed');setMsg('疲れてる...訓練は無理...');return}doAction('train',()=>{playBirdSound('play');G.energy=Math.max(0,G.energy-15);addMissionProgress('train',1);addCoins(3);addExp(4);setMsg(['賢くなった！📚','新しいこと覚えた！'][Math.floor(Math.random()*2)]);save()})}
+function singBird(){if(G.energy<15){playBirdSound('feed');setMsg('疲れて歌えない...');return}doAction('sing',()=>{playBirdSound('sing');G.happiness=Math.min(100,G.happiness+12);G.energy=Math.max(0,G.energy-8);G.tSings++;addMissionProgress('sing',1);addCoins(2);addExp(3);setMsg(['チュンチュン〜♪🎵','上手に歌えた！','いい鳴き声でしょ？🎤'][Math.floor(Math.random()*3)]);save()})}
+function buyItem(id,price,curr,amt){if(G[curr]<price){showToast(curr==='gems'?'💎が足りません':'💰が足りません','warning');return}G[curr]-=price;G.inv[id]=(G.inv[id]||0)+amt;addMissionProgress('buy',1);showToast('購入しました！');playBirdSound('feed');setMsg('お買い物ありがとう！🛒');save();updateUI();renderInv()}
 
 // Minigame System
 function renderMinigameGrid(){
@@ -373,39 +493,37 @@ function backToMinigameList(){
 }
 function startCurrentMinigame(){
   if(!currentMg||G.coins<currentMg.cost){setMsg('コインが足りない...');return}
-  G.coins-=currentMg.cost;mgActive=true;mgScore=0;mgData={time:15};
+  spendCoins(currentMg.cost);mgActive=true;mgScore=0;mgData={time:15};
   document.getElementById('mgScore').textContent=0;document.getElementById('mgTime').textContent=15;
   document.getElementById('startMgBtn').style.display='none';
   save();updateUI();
-  switch(currentMg.id){
-    case'catch':startCatchGame();break;
-    case'timing':startTimingGame();break;
-    case'memory':startMemoryGame();break;
-    case'rhythm':startRhythmGame();break;
-    case'tap':startTapGame();break;
-    case'quiz':startQuizGame();break;
-    case'fly':startFlyGame();break;
-    case'sing':startSingGame();break;
-    case'balance':startBalanceGame();break;
-    case'treasure':startTreasureGame();break;
-    default:startExtraMinigame(currentMg.id);break;
+  const type=currentMg.type||currentMg.id;
+  switch(type){
+    case'catch':startCatchGame(currentMg.variant);break;
+    case'timing':startTimingGame(currentMg.variant);break;
+    case'memory':startMemoryGame(currentMg.variant);break;
+    case'rhythm':startRhythmGame(currentMg.variant);break;
+    case'tap':startTapGame(currentMg.variant);break;
+    case'quiz':startQuizGame(currentMg.variant);break;
+    case'fly':startFlyGame(currentMg.variant);break;
+    case'sing':startSingGame(currentMg.variant);break;
+    case'balance':startBalanceGame(currentMg.variant);break;
+    case'treasure':startTreasureGame(currentMg.variant);break;
+    case'dodge':startDodgeGame(currentMg.variant);break;
+    case'path':startPathGame(currentMg.variant);break;
+    default:startTapGame(currentMg.variant);break;
   }
   mgTimer=setInterval(()=>{mgData.time--;document.getElementById('mgTime').textContent=mgData.time;if(mgData.time<=0)endMinigame()},1000);
 }
 
-function startExtraMinigame(id){
-  const type=Number(id.split('_')[1]||0)%5;
-  if(type===0){startTapGame();return;}
-  if(type===1){startTimingGame();return;}
-  if(type===2){startCatchGame();return;}
-  if(type===3){startBalanceGame();return;}
-  startRhythmGame();
-}
+function startExtraMinigame(){startTapGame();}
 
 function endMinigame(){
   mgActive=false;clearInterval(mgTimer);if(mgInterval)clearInterval(mgInterval);mgInterval=null;
   document.removeEventListener('keydown',flyKeyHandler);
-  const r=Math.floor(mgScore*3);G.coins+=r;G.happiness=Math.min(100,G.happiness+Math.min(mgScore,10));
+  const r=Math.floor(mgScore*3);addCoins(r);G.happiness=Math.min(100,G.happiness+Math.min(mgScore,10));
+  addMissionProgress('minigame',1);
+  addMissionProgress('minigame_score',mgScore);
   addExp(Math.floor(mgScore/2));
   document.getElementById('startMgBtn').style.display='block';
   document.getElementById('mgTarget').style.display='none';
@@ -415,15 +533,23 @@ function endMinigame(){
 }
 
 // 1. Seed Catch Game
-function startCatchGame(){
-  const tg=document.getElementById('mgTarget');tg.style.display='flex';tg.textContent='🌾';moveTarget();
+function startCatchGame(variant=0){
+  const tg=document.getElementById('mgTarget');tg.style.display='flex';
+  const emojis=['🌾','🍎','🌻','🫘','🥜','💎'];
+  mgData.catchEmoji=emojis[variant%emojis.length];
+  mgData.catchScore=1+(variant%3);
+  tg.textContent=mgData.catchEmoji;
+  moveTarget();
 }
 function moveTarget(){const tg=document.getElementById('mgTarget'),a=document.getElementById('minigameArea');tg.style.left=(15+Math.random()*(a.offsetWidth-80))+'px';tg.style.top=(25+Math.random()*90)+'px'}
-function catchSeed(){if(!mgActive||currentMg?.id!=='catch')return;mgScore++;document.getElementById('mgScore').textContent=mgScore;moveTarget()}
+function catchSeed(){if(!mgActive||currentMg?.type!=='catch')return;mgScore+=mgData.catchScore||1;document.getElementById('mgScore').textContent=mgScore;moveTarget()}
 
 // 2. Timing Game
-function startTimingGame(){
-  mgData.cursorPos=0;mgData.dir=1;mgData.zoneStart=35;mgData.zoneEnd=65;
+function startTimingGame(variant=0){
+  mgData.cursorPos=0;mgData.dir=1;
+  mgData.zoneStart=30+((variant*7)%25);
+  mgData.zoneEnd=mgData.zoneStart+(12+(variant%5)*3);
+  mgData.timingSpeed=2.2+(variant%4)*0.6;
   document.getElementById('mgContent').innerHTML=`
     <div class="timing-bar">
       <div class="timing-zone" style="left:${mgData.zoneStart}%;width:${mgData.zoneEnd-mgData.zoneStart}%"></div>
@@ -432,7 +558,7 @@ function startTimingGame(){
     <button class="action-btn play" onclick="hitTiming()" style="margin-top:15px">タップ！</button>
   `;
   mgInterval=setInterval(()=>{
-    mgData.cursorPos+=mgData.dir*3;
+    mgData.cursorPos+=mgData.dir*mgData.timingSpeed;
     if(mgData.cursorPos>=100||mgData.cursorPos<=0)mgData.dir*=-1;
     document.getElementById('timingCursor').style.left=mgData.cursorPos+'%';
   },30);
@@ -448,8 +574,10 @@ function hitTiming(){
 }
 
 // 3. Memory Game
-function startMemoryGame(){
-  const emojis=['🌾','🍎','🌻','🐛','💧','🌿'];
+function startMemoryGame(variant=0){
+  const base=['🌾','🍎','🌻','🐛','💧','🌿','🍇','🌰'];
+  const count=6+(variant%3)*2;
+  const emojis=base.slice(0,count);
   const pairs=[...emojis,...emojis].sort(()=>Math.random()-0.5);
   mgData.cards=pairs.map((e,i)=>({id:i,emoji:e,flipped:false,matched:false}));
   mgData.flippedCards=[];mgData.time=30;document.getElementById('mgTime').textContent=30;
@@ -476,18 +604,20 @@ function flipCard(i){
 }
 
 // 4. Rhythm Game
-function startRhythmGame(){
+function startRhythmGame(variant=0){
   mgData.notes=[];mgData.time=20;document.getElementById('mgTime').textContent=20;
+  mgData.rhythmRate=0.22+(variant%5)*0.05;
+  mgData.rhythmSpeed=3+(variant%4)*0.6;
   document.getElementById('mgContent').innerHTML=`
     <div class="rhythm-lane" id="rhythmLane" onclick="hitRhythm(event)">
       <div class="rhythm-target"></div>
     </div>
   `;
   mgInterval=setInterval(()=>{
-    if(Math.random()<0.3){
+    if(Math.random()<mgData.rhythmRate){
       const note={x:20+Math.random()*60,y:-20,id:Date.now()};mgData.notes.push(note);
     }
-    mgData.notes=mgData.notes.filter(n=>{n.y+=4;return n.y<150;});
+    mgData.notes=mgData.notes.filter(n=>{n.y+=mgData.rhythmSpeed;return n.y<150;});
     renderRhythmNotes();
   },50);
 }
@@ -515,8 +645,8 @@ function hitRhythm(e){
 }
 
 // 5. Tap Game
-function startTapGame(){
-  mgData.taps=0;mgData.time=10;document.getElementById('mgTime').textContent=10;
+function startTapGame(variant=0){
+  mgData.taps=0;mgData.time=8+(variant%5)*2;document.getElementById('mgTime').textContent=mgData.time;
   document.getElementById('mgContent').innerHTML=`
     <div class="tap-area" id="tapArea" onclick="doTap()">👆</div>
     <div style="margin-top:10px;font-size:0.8rem">タップ数: <span id="tapCount">0</span></div>
@@ -540,8 +670,8 @@ const quizQuestions=[
   {q:'鳥が持っていない器官は？',a:['歯','翼','くちばし','羽毛'],c:0},
   {q:'セキセイインコの「セキセイ」の意味は？',a:['背黄青','積青','石青','昔青'],c:0},
 ];
-function startQuizGame(){
-  mgData.qIdx=0;mgData.answered=0;mgData.time=30;document.getElementById('mgTime').textContent=30;
+function startQuizGame(variant=0){
+  mgData.qIdx=0;mgData.answered=0;mgData.time=24+(variant%4)*3;document.getElementById('mgTime').textContent=mgData.time;
   showQuiz();
 }
 function showQuiz(){
@@ -564,8 +694,10 @@ function answerQuiz(i){
 }
 
 // 7. Fly Game
-function startFlyGame(){
-  mgData.birdY=50;mgData.obstacles=[];mgData.time=20;document.getElementById('mgTime').textContent=20;
+function startFlyGame(variant=0){
+  mgData.birdY=50;mgData.obstacles=[];mgData.time=18+(variant%4)*3;document.getElementById('mgTime').textContent=mgData.time;
+  mgData.flySpeed=2.4+(variant%4)*0.4;
+  mgData.flySpawn=0.07+(variant%3)*0.02;
   document.getElementById('mgContent').innerHTML=`<div class="fly-area" id="flyArea"><div class="fly-bird" id="flyBird">🐦</div></div>`;
   document.addEventListener('keydown',flyKeyHandler);
   document.getElementById('flyArea').addEventListener('touchstart',flyUp);
@@ -577,8 +709,8 @@ function flyUp(){if(!mgActive)return;mgData.birdY=Math.max(10,mgData.birdY-15);}
 function flyTick(){
   if(!mgActive)return;
   mgData.birdY=Math.min(90,mgData.birdY+2);
-  if(Math.random()<0.08){mgData.obstacles.push({x:100,y:20+Math.random()*60,emoji:['🌲','☁️','⛰️','🌸'][Math.floor(Math.random()*4)]});}
-  mgData.obstacles=mgData.obstacles.filter(o=>{o.x-=3;return o.x>-10;});
+  if(Math.random()<mgData.flySpawn){mgData.obstacles.push({x:100,y:20+Math.random()*60,emoji:['🌲','☁️','⛰️','🌸'][Math.floor(Math.random()*4)]});}
+  mgData.obstacles=mgData.obstacles.filter(o=>{o.x-=mgData.flySpeed;return o.x>-10;});
   const bird=document.getElementById('flyBird');if(bird)bird.style.top=mgData.birdY+'%';
   const area=document.getElementById('flyArea');if(!area)return;
   area.querySelectorAll('.fly-obstacle').forEach(e=>e.remove());
@@ -589,10 +721,11 @@ function flyTick(){
 }
 
 // 8. Sing Game
-function startSingGame(){
+function startSingGame(variant=0){
   const notes=['ド','レ','ミ','ファ','ソ'];
-  mgData.sequence=[];mgData.playerSeq=[];mgData.showing=true;mgData.time=30;document.getElementById('mgTime').textContent=30;
-  for(let i=0;i<3;i++)mgData.sequence.push(Math.floor(Math.random()*5));
+  mgData.sequence=[];mgData.playerSeq=[];mgData.showing=true;mgData.time=24+(variant%4)*3;document.getElementById('mgTime').textContent=mgData.time;
+  const len=3+(variant%3);
+  for(let i=0;i<len;i++)mgData.sequence.push(Math.floor(Math.random()*5));
   document.getElementById('mgContent').innerHTML=`
     <div style="margin-bottom:10px;font-size:0.8rem" id="singInstruction">覚えてね...</div>
     <div class="sing-notes">${notes.map((n,i)=>`<div class="sing-note" id="note${i}" onclick="playNote(${i})">${n}</div>`).join('')}</div>
@@ -620,11 +753,13 @@ function playNote(n){
 }
 
 // 9. Balance Game
-function startBalanceGame(){
-  mgData.pos=50;mgData.vel=0;mgData.time=15;document.getElementById('mgTime').textContent=15;mgData.balanceScore=0;
+function startBalanceGame(variant=0){
+  mgData.pos=50;mgData.vel=0;mgData.time=12+(variant%4)*2;document.getElementById('mgTime').textContent=mgData.time;mgData.balanceScore=0;
+  mgData.zoneStart=32+(variant%3)*6;
+  mgData.zoneWidth=26-(variant%3)*4;
   document.getElementById('mgContent').innerHTML=`
     <div class="balance-bar">
-      <div class="balance-zone" style="left:35%;width:30%"></div>
+      <div class="balance-zone" style="left:${mgData.zoneStart}%;width:${mgData.zoneWidth}%"></div>
       <div class="balance-bird" id="balanceBird">🐦</div>
     </div>
     <div style="display:flex;gap:20px;margin-top:15px">
@@ -634,17 +769,17 @@ function startBalanceGame(){
   `;
   mgInterval=setInterval(()=>{
     if(!mgActive)return;
-    mgData.vel+=(Math.random()-0.5)*0.8;mgData.pos+=mgData.vel;mgData.pos=Math.max(5,Math.min(95,mgData.pos));mgData.vel*=0.95;
+    mgData.vel+=(Math.random()-0.5)*(0.7+(variant%4)*0.2);mgData.pos+=mgData.vel;mgData.pos=Math.max(5,Math.min(95,mgData.pos));mgData.vel*=0.95;
     document.getElementById('balanceBird').style.left=mgData.pos+'%';
-    if(mgData.pos>35&&mgData.pos<65){mgData.balanceScore++;if(mgData.balanceScore%20===0){mgScore++;document.getElementById('mgScore').textContent=mgScore;}}
+    if(mgData.pos>mgData.zoneStart&&mgData.pos<(mgData.zoneStart+mgData.zoneWidth)){mgData.balanceScore++;if(mgData.balanceScore%20===0){mgScore++;document.getElementById('mgScore').textContent=mgScore;}}
   },50);
 }
 function nudgeBalance(dir){if(!mgActive)return;mgData.vel+=dir*2;}
 
 // 10. Treasure Game
-function startTreasureGame(){
-  mgData.grid=Array(16).fill(null);mgData.treasures=[];mgData.tries=0;mgData.time=20;document.getElementById('mgTime').textContent=20;
-  const tCount=4+Math.floor(Math.random()*3);
+function startTreasureGame(variant=0){
+  mgData.grid=Array(16).fill(null);mgData.treasures=[];mgData.tries=0;mgData.time=18+(variant%4)*2;document.getElementById('mgTime').textContent=mgData.time;
+  const tCount=3+(variant%4);
   while(mgData.treasures.length<tCount){const p=Math.floor(Math.random()*16);if(!mgData.treasures.includes(p))mgData.treasures.push(p);}
   renderTreasureGrid();
 }
@@ -662,6 +797,61 @@ function digTreasure(i){
   if(mgData.tries>=8||mgData.treasures.every(t=>mgData.grid[t])){setTimeout(()=>{if(mgActive)endMinigame();},500);}
 }
 
+// 11. Dodge Game
+function startDodgeGame(variant=0){
+  mgData.dodgeX=50;mgData.dodgeY=70;mgData.obstacles=[];mgData.time=16+(variant%4)*2;document.getElementById('mgTime').textContent=mgData.time;
+  mgData.dodgeSpeed=1.6+(variant%4)*0.4;mgData.dodgeSpawn=0.08+(variant%3)*0.03;
+  document.getElementById('mgContent').innerHTML=`
+    <div class="dodge-area" id="dodgeArea"><div class="dodge-bird" id="dodgeBird">🐦</div></div>
+    <div class="dodge-controls">
+      <button class="action-btn pet" onclick="moveDodge(-1)">◀ 左へ</button>
+      <button class="action-btn play" onclick="moveDodge(1)">右へ ▶</button>
+    </div>
+  `;
+  const bird=document.getElementById('dodgeBird');if(bird)bird.style.left=mgData.dodgeX+'%';
+  mgInterval=setInterval(dodgeTick,50);
+}
+function moveDodge(dir){
+  if(!mgActive)return;
+  mgData.dodgeX=Math.max(6,Math.min(94,mgData.dodgeX+dir*8));
+  const bird=document.getElementById('dodgeBird');if(bird)bird.style.left=mgData.dodgeX+'%';
+}
+function dodgeTick(){
+  if(!mgActive)return;
+  if(Math.random()<mgData.dodgeSpawn){mgData.obstacles.push({x:8+Math.random()*84,y:-8,vy:mgData.dodgeSpeed,hit:false});}
+  mgData.obstacles=mgData.obstacles.filter(o=>{o.y+=o.vy;return o.y<120;});
+  const area=document.getElementById('dodgeArea');if(!area)return;
+  area.querySelectorAll('.dodge-obstacle').forEach(e=>e.remove());
+  mgData.obstacles.forEach(o=>{
+    const el=document.createElement('div');el.className='dodge-obstacle';el.style.left=o.x+'%';el.style.top=o.y+'%';el.textContent='💧';area.appendChild(el);
+    if(!o.hit&&Math.abs(o.x-mgData.dodgeX)<6&&Math.abs(o.y-70)<10){o.hit=true;mgScore=Math.max(0,mgScore-1);document.getElementById('mgScore').textContent=mgScore;}
+    if(o.y>110&&!o.hit){mgScore++;document.getElementById('mgScore').textContent=mgScore;o.hit=true;}
+  });
+}
+
+// 12. Path Game
+function startPathGame(variant=0){
+  mgData.pathIndex=0;mgData.pathCount=4+(variant%4);mgData.time=18+(variant%4)*2;document.getElementById('mgTime').textContent=mgData.time;
+  mgData.pathTargets=Array.from({length:mgData.pathCount},(_,i)=>({id:i,x:10+Math.random()*80,y:10+Math.random()*70}));
+  renderPathTargets();
+}
+function renderPathTargets(){
+  document.getElementById('mgContent').innerHTML=`
+    <div class="path-area">${mgData.pathTargets.map(t=>`<div class="path-target ${t.id<mgData.pathIndex?'done':''}" style="left:${t.x}%;top:${t.y}%" onclick="hitPath(${t.id})">${t.id+1}</div>`).join('')}</div>
+    <div class="path-hint">順番にタップ: ${mgData.pathIndex+1} / ${mgData.pathCount}</div>
+  `;
+}
+function hitPath(id){
+  if(!mgActive)return;
+  if(id!==mgData.pathIndex){showToast('順番が違う...');return;}
+  mgData.pathIndex++;mgScore+=2;document.getElementById('mgScore').textContent=mgScore;
+  if(mgData.pathIndex>=mgData.pathCount){
+    mgScore+=3;document.getElementById('mgScore').textContent=mgScore;
+    mgData.pathIndex=0;mgData.pathTargets=mgData.pathTargets.map(t=>({id:t.id,x:10+Math.random()*80,y:10+Math.random()*70}));
+  }
+  renderPathTargets();
+}
+
 function startSleepBoxPrompt(){
   const hoursRaw=prompt('スリープボックス何時間？ (1〜10)');
   if(hoursRaw===null){renderInv();return;}
@@ -669,7 +859,7 @@ function startSleepBoxPrompt(){
   if(!hours){showToast('1〜10時間で入力してください','warning');renderInv();return;}
   const cost=hours*hours*12;
   if(G.coins<cost){showToast('💰が足りません','warning');renderInv();return;}
-  G.coins-=cost;
+  spendCoins(cost);
   G.inv.sleep_box=Math.max(0,(G.inv.sleep_box||0)-1);
   G.sleepBoxUntil=Date.now()+hours*3600000;
   G.sleepBoxRate=hours;
@@ -790,19 +980,28 @@ function storyAction(type){
   if(type==='mercy'){st.trust+=3;st.enemyHp=Math.max(0,st.enemyHp-2);setMsg('武器を下ろした。静けさが戻る。');}
   if(type==='fight'){st.enemyHp=Math.max(0,st.enemyHp-5);st.hp=Math.max(0,st.hp-2);setMsg('鋭い一撃。だが心はまだ迷っている。');}
   if(type==='guard'){st.hp=Math.min(20,st.hp+1);setMsg('呼吸を整え、防御の構えを取った。');}
+  addMissionProgress('battle',1);
   if(st.enemyHp<=0||st.trust>=10){
     st.state='clear';
     st.step=3;
     document.getElementById('storyScene').textContent='第一章クリア：ルーンは門を開き、文鳥の冒険は次の地へ。\n「優しさもまた、強さだ。」';
     showToast('🗺️ 文鳥の冒険 第一章クリア！','achievement');
+    addMissionProgress('adventure',1);
   }
   renderStory();save();
 }
 function runStoryTick(){
   const st=G.story;
   if(st.state==='clear')return;
-  st.x=Math.max(6,Math.min(300,st.x+joyState.dx*2.2));
-  st.y=Math.max(12,Math.min(136,st.y+joyState.dy*2.2));
+  const moveX=joyState.dx*2.2,moveY=joyState.dy*2.2;
+  const dist=Math.hypot(moveX,moveY);
+  if(dist>0){
+    G.storyMove+=dist;
+    const steps=Math.floor(G.storyMove/30);
+    if(steps>0){addMissionProgress('story_move',steps);G.storyMove-=steps*30;}
+  }
+  st.x=Math.max(6,Math.min(300,st.x+moveX));
+  st.y=Math.max(12,Math.min(136,st.y+moveY));
   if(st.step<1&&st.x>70)st.step=1;
   if(st.step<2&&st.x>120)st.step=2;
   const ex=250,ey=70;
@@ -815,6 +1014,7 @@ function runStoryTick(){
 function bindJoystick(){
   const base=document.getElementById('joyBase'),stick=document.getElementById('joyStick');
   if(!base||!stick)return;
+  base.style.touchAction='none';
   const reset=()=>{joyState.active=false;joyState.dx=0;joyState.dy=0;stick.style.left='31px';stick.style.top='31px';};
   const move=(clientX,clientY)=>{
     const r=base.getBoundingClientRect();
@@ -825,20 +1025,20 @@ function bindJoystick(){
     const px=(dx/len)*Math.min(max,len),py=(dy/len)*Math.min(max,len);
     stick.style.left=`${31+px}px`;stick.style.top=`${31+py}px`;
   };
-  base.addEventListener('pointerdown',e=>{joyState.active=true;base.setPointerCapture(e.pointerId);move(e.clientX,e.clientY);});
+  base.addEventListener('pointerdown',e=>{e.preventDefault();joyState.active=true;base.setPointerCapture(e.pointerId);move(e.clientX,e.clientY);});
   base.addEventListener('pointermove',e=>{if(!joyState.active)return;move(e.clientX,e.clientY);});
   base.addEventListener('pointerup',reset);base.addEventListener('pointercancel',reset);
   window.addEventListener('pointerup',reset);
-  base.addEventListener('touchstart',e=>{const t=e.touches[0];if(!t)return;joyState.active=true;move(t.clientX,t.clientY);},{passive:true});
-  base.addEventListener('touchmove',e=>{const t=e.touches[0];if(!t||!joyState.active)return;move(t.clientX,t.clientY);},{passive:true});
+  base.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];if(!t)return;joyState.active=true;move(t.clientX,t.clientY);},{passive:false});
+  base.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];if(!t||!joyState.active)return;move(t.clientX,t.clientY);},{passive:false});
   base.addEventListener('touchend',reset);
 }
-function setTheme(t){G.autoTheme=false;G.theme=t;document.body.className=t;save();renderCustomize()}
-function setWeather(w){G.autoWeather=false;G.weather=w;save();renderCustomize();renderWeather()}
-function setAnimationMode(m){G.animationMode=m;save();renderCustomize()}
-function setResolution(scale){G.resolutionScale=scale;const svg=document.getElementById('birdSvg');svg.setAttribute('viewBox',scale>=1.6?'0 0 200 220':'0 0 200 220');save();updateUI()}
-function setSoundMode(mode){G.soundMode=mode;save();renderCustomize()}
-function setBeta3d(v){G.beta3d=v===true||v==='true';save();updateUI()}
+function setTheme(t){G.autoTheme=false;G.theme=t;addMissionProgress('customize',1);document.body.className=t;save();renderCustomize()}
+function setWeather(w){G.autoWeather=false;G.weather=w;addMissionProgress('customize',1);save();renderCustomize();renderWeather()}
+function setAnimationMode(m){G.animationMode=m;addMissionProgress('customize',1);save();renderCustomize()}
+function setResolution(scale){G.resolutionScale=scale;addMissionProgress('customize',1);const svg=document.getElementById('birdSvg');svg.setAttribute('viewBox',scale>=1.6?'0 0 200 220':'0 0 200 220');save();updateUI()}
+function setSoundMode(mode){G.soundMode=mode;addMissionProgress('customize',1);save();renderCustomize()}
+function setBeta3d(v){G.beta3d=v===true||v==='true';addMissionProgress('customize',1);save();updateUI()}
 function setChatApi(enabled){G.chatApiEnabled=enabled===true||enabled==='true';
   const keyInput=document.getElementById('chatApiKey');
   if(G.chatApiEnabled&&!((keyInput.value||G.chatApiDraft||G.chatApiKey||'').trim())){
@@ -860,10 +1060,12 @@ function shareGame(){
   const text=`🐦 ${getCurrentBirdName()} を育成中！ Lv.${G.level} / 💰${Math.round(G.coins)} / 😊${document.getElementById('mood').textContent}`;
   if(navigator.share){
     navigator.share({title:'鳥育成ゲーム',text,url:location.href}).catch(()=>{});
+    addMissionProgress('share',1);
     return;
   }
   navigator.clipboard?.writeText(`${text}
 ${location.href}`);
+  addMissionProgress('share',1);
   showToast('共有文をコピーしました');
 }
 
@@ -891,6 +1093,7 @@ async function sendChatMessage(){
   if(!text)return;
   input.value='';
   G.chatHistory.push({role:'user',text});
+  addMissionProgress('chat',1);
   renderChat();
   const thinking=document.getElementById('chatThinking');thinking.style.display='flex';
   try{
@@ -921,12 +1124,13 @@ async function sendChatMessage(){
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div>v2.1.0 変更ログ</div><ul><li>鳥ごとの名前保持を改善</li><li>3D表示ON時にドラッグ回転</li><li>AI会話UIと考え中アニメ追加</li><li>バグ報告・エラーログ表示追加</li><li>アニメーション設定に「最高」追加</li></ul>`;
+  el.innerHTML=`<div>v2.2.0 変更ログ</div><ul><li>ミニミッション（50種）と報酬システム追加</li><li>ミニゲームのバリエーション拡張</li><li>ジョイスティック操作の挙動を安定化</li><li>鳥アニメの速度を見直し</li><li>新しい鳥の種類を追加</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
   const item={at:new Date().toISOString(),bird:getCurrentBirdName(),text};
   G.bugReports.push(item);if(G.bugReports.length>30)G.bugReports.shift();inp.value='';save();showToast('バグ報告を保存しました');
+  addMissionProgress('bug_report',1);
 }
 function copyBugReport(){
   const last=G.bugReports[G.bugReports.length-1];if(!last){showToast('報告がありません','warning');return;}
@@ -950,7 +1154,16 @@ function init3dControl(){
   area.addEventListener('pointerup',()=>{down=false;});
 }
 
-function addExp(a){G.exp+=a;const need=G.level*50;if(G.exp>=need){G.exp-=need;G.level++;G.coins+=G.level*10;G.gems++;showToast(`レベルアップ！Lv.${G.level}`,'levelup')}}
+function addExp(a){
+  G.exp+=a;
+  const need=G.level*50;
+  if(G.exp>=need){
+    G.exp-=need;G.level++;
+    addCoins(G.level*10);
+    G.gems++;
+    showToast(`レベルアップ！Lv.${G.level}`,'levelup');
+  }
+}
 function gameTick(){
   if(G.autoTheme)applyAutoTheme();
   if(G.autoWeather&&Date.now()-G.lastWeatherFetch>30*60*1000)getGeoAndWeather();
@@ -961,11 +1174,16 @@ function gameTick(){
   }else{G.energy=Math.min(100,G.energy+0.12);if(G.energy>=100){G.isSleeping=false;G.sleepStart=null;setMsg('ぐっすり眠れた！🌅')}}
   G.age++;if(G.age%30===0)save();updateUI();
 }
-function animLoop(){animF++;if(G.beta3d&&!joyState.active){G.threeDRotY+=(Math.sin(animF*0.02)*0.08);const svg=document.getElementById('birdSvg');if(svg)svg.style.setProperty('--ry',`${G.threeDRotY}deg`);}renderBird();requestAnimationFrame(animLoop)}
+function animLoop(){
+  const step=G.animationMode==='ultra'?0.85:G.animationMode==='fine'?0.7:G.animationMode==='simple'?0.45:0.6;
+  animF+=step;
+  if(G.beta3d&&!joyState.active){G.threeDRotY+=(Math.sin(animF*0.02)*0.08);const svg=document.getElementById('birdSvg');if(svg)svg.style.setProperty('--ry',`${G.threeDRotY}deg`);}
+  renderBird();requestAnimationFrame(animLoop);
+}
 function blinkLoop(){if(!G.isSleeping&&Math.random()<0.3){blink=true;setTimeout(()=>blink=false,150)}}
 function resetGame(){if(!confirm('本当にリセットしますか？'))return;delCookie('birdG3');location.reload()}
 function init(){
-  load();renderStars();renderShop();renderInv();renderCustomize();updateUI();
+  load();initMissions();renderStars();renderShop();renderInv();renderCustomize();renderMissions();updateUI();
   setInterval(gameTick,1000);setInterval(blinkLoop,2500);animLoop();
   document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)hideModal(m.id)}));
   document.getElementById('nameInput').addEventListener('keypress',e=>{if(e.key==='Enter')saveName()});
