@@ -103,7 +103,6 @@ function buildMissionCatalog(){
   [1,3].forEach(n=>push(`custom_${n}`,`カスタム${n}回`,`カスタマイズを${n}回変更`,'customize',n,rewardFor(n,6)));
   [1,3,5].forEach(n=>push(`buy_${n}`,`買い物${n}回`,`ショップで${n}回購入`,'buy',n,rewardFor(n,7)));
   push('bug_1','不具合報告','バグ報告を1回保存','bug_report',1,20);
-  [2,4].forEach(n=>push(`chat_${n}`,`AI会話${n}回`,`AIに${n}回送信`,'chat',n,rewardFor(n,10)));
   return list;
 }
 const missionCatalog=buildMissionCatalog();
@@ -497,9 +496,9 @@ function renderBird(){
       <linearGradient id="bel" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${c.belly}"/><stop offset="100%" stop-color="${c.body}" stop-opacity="0.7"/></linearGradient>
       <filter id="sh"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-opacity="0.2"/></filter>
     </defs>
+    <rect x="28" y="188" width="144" height="10" rx="5" fill="#a07818"/>
     <g transform="translate(0,${-bounce-jumpY+eatBob+singBob}) rotate(${shake},100,120)" filter="url(#sh)">
       <ellipse cx="100" cy="198" rx="${50+jumpY/2}" ry="7" fill="rgba(0,0,0,0.1)"/>
-      <rect x="28" y="188" width="144" height="10" rx="5" fill="#a07818"/>
       <g transform="translate(100,158) rotate(${-10+tilt})"><path d="M0,0 L-18,42 L0,44 L18,42 Z" fill="${c.tail}"/></g>
       <g transform="translate(82,175)"><path d="M0,0 L-9,16 M0,0 L0,18 M0,0 L9,16" stroke="${c.feet}" stroke-width="4" stroke-linecap="round" fill="none"/></g>
       <g transform="translate(118,175)"><path d="M0,0 L-9,16 M0,0 L0,18 M0,0 L9,16" stroke="${c.feet}" stroke-width="4" stroke-linecap="round" fill="none"/></g>
@@ -523,7 +522,7 @@ function renderBird(){
         ${action==='sing'?`<text x="145" y="50" font-size="16" fill="#ff6b9d" opacity="${0.4+Math.sin(animF*0.25)*0.6}">♪</text><text x="158" y="35" font-size="12" fill="#9c27b0" opacity="${0.4+Math.sin(animF*0.25+1)*0.6}">♫</text>`:''}
       </g>
       ${G.isSleeping?`<text x="152" y="46" font-size="22" fill="#6a6aff" font-weight="bold" opacity="${0.35+Math.sin(animF*0.12)*0.65}">Z</text><text x="170" y="28" font-size="15" fill="#6a6aff" font-weight="bold" opacity="${0.35+Math.sin(animF*0.12+1)*0.65}">z</text>`:''}
-      ${action==='feed'||action==='treat'?[0,1,2,3,4].map(i=>`<ellipse cx="${78+i*10+Math.sin(animF*0.12+i)*2}" cy="${165+(animF*0.8+i*7)%22}" rx="${1.8+((i%2)*0.6)}" ry="${1.2+((i%3)*0.4)}" fill="#c89a62" opacity="${0.9-((animF*0.8+i*7)%22)/24}"/>`).join(''):''}
+      ${action==='feed'||action==='treat'?[0,1,2,3,4].map(i=>`<ellipse cx="${90+i*6+Math.sin(animF*0.12+i)*2}" cy="${108+((animF*0.8+i*7)%16)}" rx="${1.6+((i%2)*0.5)}" ry="${1.1+((i%3)*0.3)}" fill="#c89a62" opacity="${0.9-((animF*0.8+i*7)%16)/18}"/>`).join(''):''}
       ${action==='pet'?[0,1,2].map(i=>`<text x="${55+i*42}" y="${38+Math.sin(animF*0.2+i)*12}" font-size="18" opacity="${0.45+Math.sin(animF*0.2+i)*0.55}">💕</text>`).join(''):''}
       ${action==='play'?[0,1,2,3].map(i=>`<text x="${44+i*38}" y="${28+Math.abs(Math.sin(animF*0.3+i*0.6))*30}" font-size="15">✨</text>`).join(''):''}
       ${G.animationMode==='ultra'?[0,1,2,3,4].map(i=>`<circle cx="${52+i*26}" cy="${56+Math.sin(animF*0.17+i)*18}" r="${1.5+Math.sin(animF*0.08+i)*0.8}" fill="rgba(255,255,255,0.5)"/>`).join(''):''}
@@ -998,15 +997,23 @@ function weatherCodeToType(code){
   if((code>=51&&code<=67)||(code>=80&&code<=82)||code===95)return'rain';
   return'none';
 }
+async function fetchWeather(lat,lon){
+  const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code`);
+  const d=await r.json();
+  const code=d.current&&typeof d.current.weather_code==='number'?d.current.weather_code:0;
+  G.weather=weatherCodeToType(code);
+  G.lastWeatherFetch=Date.now();save();updateUI();
+}
 function getGeoAndWeather(){
+  if(G.geo&&typeof G.geo.lat==='number'&&typeof G.geo.lon==='number'){
+    fetchWeather(G.geo.lat,G.geo.lon).catch(e=>{logError('weather',String(e));showToast('天気取得に失敗','warning');});
+    return;
+  }
   if(!navigator.geolocation){showToast('位置情報が使えません','warning');return;}
   navigator.geolocation.getCurrentPosition(async pos=>{
     const lat=pos.coords.latitude,lon=pos.coords.longitude;G.geo={lat,lon};
     try{
-      const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code`);
-      const d=await r.json();
-      const code=d.current&&typeof d.current.weather_code==='number'?d.current.weather_code:0;
-      G.weather=weatherCodeToType(code);G.lastWeatherFetch=Date.now();save();updateUI();
+      await fetchWeather(lat,lon);
     }catch(e){logError('weather',String(e));showToast('天気取得に失敗','warning');}
   },err=>{logError('geolocation',err.message||'geo error');showToast('位置情報が拒否されました','warning');});
 }
