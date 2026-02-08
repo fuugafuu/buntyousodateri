@@ -111,6 +111,7 @@ let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},
 let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBird=null,shopTab='food',selItem=null;
 let currentMg=null,mgData={},mgInterval=null;
 let lastWeatherRender={type:null,mode:null};
+let scanCache={};
 
 function persistBackup(key,json){
   try{localStorage.setItem(key,json);}catch(e){}
@@ -120,6 +121,8 @@ function setCookie(n,v){
   const json=JSON.stringify(v);
   const payload=encodeURIComponent(json);
   document.cookie=`${n}=${payload};expires=${new Date(Date.now()+365*864e5).toUTCString()};path=/;SameSite=Lax`;
+  if(!document.cookie.split('; ').some(r=>r.startsWith(n+'='))){logError('storage','cookie_write_failed');}
+  if(payload.length>3600){logError('storage','cookie_size_warning');}
   persistBackup(n,json);
 }
 function parseStoredValue(raw){
@@ -134,10 +137,14 @@ function getCookie(n){
     const parsed=parseStoredValue(v.split('=')[1]);
     if(parsed)return parsed;
   }
-  const fromLocal=parseStoredValue(localStorage.getItem(n));
-  if(fromLocal)return fromLocal;
-  const fromSession=parseStoredValue(sessionStorage.getItem(n));
-  if(fromSession)return fromSession;
+  try{
+    const fromLocal=parseStoredValue(localStorage.getItem(n));
+    if(fromLocal)return fromLocal;
+  }catch(e){}
+  try{
+    const fromSession=parseStoredValue(sessionStorage.getItem(n));
+    if(fromSession)return fromSession;
+  }catch(e){}
   return null;
 }
 function delCookie(n){
@@ -278,11 +285,11 @@ function renderBirdGrid(){
   document.getElementById('birdGrid').innerHTML=Object.entries(birds).map(([id,b])=>{
     const owned=G.unlocked.includes(id),sel=G.species===id;
     const pr=b.price===0?'無料':b.price+(b.curr==='gems'?'💎':'💰');
-    return`<div class="bird-option ${sel?'selected':''} ${owned?'':'locked'}" onclick="selectBird('${id}')">${owned?'':`<span class="lock-icon">🔒</span>`}<div class="bird-option-icon">${b.icon}</div><div class="bird-option-name">${b.name}</div><div class="bird-option-price">${owned?'所持中':pr}</div></div>`;
+    return`<div class="bird-option ${sel?'selected':''} ${owned?'':'locked'}" onclick="selectBird(event,'${id}')">${owned?'':`<span class="lock-icon">🔒</span>`}<div class="bird-option-icon">${b.icon}</div><div class="bird-option-name">${b.name}</div><div class="bird-option-price">${owned?'所持中':pr}</div></div>`;
   }).join('');
   updateBuyBtn();
 }
-function selectBird(id){selBird=id;document.querySelectorAll('.bird-option').forEach(e=>e.classList.remove('selected'));event.currentTarget.classList.add('selected');updateBuyBtn()}
+function selectBird(evt,id){selBird=id;document.querySelectorAll('.bird-option').forEach(e=>e.classList.remove('selected'));if(evt&&evt.currentTarget)evt.currentTarget.classList.add('selected');updateBuyBtn()}
 function updateBuyBtn(){
   const btn=document.getElementById('buyBirdBtn'),b=birds[selBird],owned=G.unlocked.includes(selBird);
   btn.textContent=owned?(selBird===G.species?'選択中':'この鳥にする'):`購入(${b.price}${b.curr==='gems'?'💎':'💰'})`;
@@ -1050,7 +1057,7 @@ async function sendChatMessage(){
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div>v2.3.3 変更ログ</div><ul><li>保存処理を多重化（Cookie + localStorage + sessionStorage）</li><li>復元のフォールバックを強化</li><li>継続的な安定化調整</li></ul>`;
+  el.innerHTML=`<div>v2.3.4 変更ログ</div><ul><li>保存エラー検知と自動スキャンを追加</li><li>鳥選択のクリック不具合を修正</li><li>継続的な安定化調整</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
@@ -1072,6 +1079,19 @@ function renderErrorLogs(){
   const el=document.getElementById('errorLogArea');if(!el)return;
   const rows=G.errorLogs.slice().reverse().slice(0,14).map(e=>`<div>• [${e.at}] (${e.src}) ${e.msg}</div>`).join('');
   el.innerHTML=rows||'エラーログはまだありません。';
+}
+function runErrorScan(){
+  const requiredIds=['birdSvg','shopPanel','inventoryPanel','minigamePanel','customizePanel'];
+  requiredIds.forEach(id=>{
+    if(!document.getElementById(id)){
+      if(!scanCache[id]){logError('scan',`missing:${id}`);scanCache[id]=true;}
+    }else{
+      scanCache[id]=false;
+    }
+  });
+  if(G.chatApiEnabled&&!G.chatApiKey){
+    if(!scanCache.chatApi){logError('scan','chat_api_missing_key');scanCache.chatApi=true;}
+  }else{scanCache.chatApi=false;}
 }
 function init3dControl(){
   const area=document.querySelector('.main-display');let down=false,lastX=0,lastY=0;
@@ -1123,7 +1143,8 @@ function init(){
   window.addEventListener('unhandledrejection',e=>logError('promise',String(e.reason||'rejection')));
   window.addEventListener('beforeunload',save);
   setInterval(save,5000);
-  init3dControl();renderChangeLog();renderErrorLogs();renderChat();
+  setInterval(runErrorScan,20000);
+  init3dControl();renderChangeLog();renderErrorLogs();renderChat();runErrorScan();
   if(G.autoTheme)applyAutoTheme();
   if(G.autoWeather&&(!G.lastWeatherFetch||Date.now()-G.lastWeatherFetch>30*60*1000))getGeoAndWeather();
   document.addEventListener('visibilitychange',()=>{
