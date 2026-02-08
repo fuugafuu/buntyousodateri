@@ -117,12 +117,41 @@ function persistBackup(key,json){
   try{localStorage.setItem(key,json);}catch(e){}
   try{sessionStorage.setItem(key,json);}catch(e){}
 }
+function writeCookie(name,value){
+  document.cookie=`${name}=${value};expires=${new Date(Date.now()+365*864e5).toUTCString()};path=/;SameSite=Lax`;
+}
+function readCookie(name){
+  const row=document.cookie.split('; ').find(r=>r.startsWith(name+'='));
+  return row?row.split('=')[1]:null;
+}
+function setCookieChunks(n,payload){
+  const maxLen=3000;
+  const parts=Math.ceil(payload.length/maxLen);
+  for(let i=0;i<parts;i++){
+    const slice=payload.slice(i*maxLen,(i+1)*maxLen);
+    writeCookie(`${n}_p${i}`,slice);
+  }
+  writeCookie(`${n}_parts`,String(parts));
+}
+function clearCookieChunks(n){
+  const partsRaw=readCookie(`${n}_parts`);
+  const parts=partsRaw?parseInt(partsRaw,10):0;
+  if(parts){
+    for(let i=0;i<parts;i++)writeCookie(`${n}_p${i}`,'');
+    writeCookie(`${n}_parts`,'');
+  }
+}
 function setCookie(n,v){
   const json=JSON.stringify(v);
   const payload=encodeURIComponent(json);
-  document.cookie=`${n}=${payload};expires=${new Date(Date.now()+365*864e5).toUTCString()};path=/;SameSite=Lax`;
-  if(!document.cookie.split('; ').some(r=>r.startsWith(n+'='))){logError('storage','cookie_write_failed');}
-  if(payload.length>3600){logError('storage','cookie_size_warning');}
+  clearCookieChunks(n);
+  if(payload.length>3000){
+    setCookieChunks(n,payload);
+  }else{
+    writeCookie(n,payload);
+  }
+  if(!document.cookie.split('; ').some(r=>r.startsWith(n+'='))&&!readCookie(`${n}_parts`)){logError('storage','cookie_write_failed');}
+  if(payload.length>12000){logError('storage','cookie_size_warning');}
   persistBackup(n,json);
 }
 function parseStoredValue(raw){
@@ -132,9 +161,23 @@ function parseStoredValue(raw){
   return null;
 }
 function getCookie(n){
-  const v=document.cookie.split('; ').find(r=>r.startsWith(n+'='));
+  const partsRaw=readCookie(`${n}_parts`);
+  if(partsRaw){
+    const parts=parseInt(partsRaw,10);
+    if(parts>0){
+      let combined='';
+      for(let i=0;i<parts;i++){
+        const chunk=readCookie(`${n}_p${i}`);
+        if(chunk===null)break;
+        combined+=chunk;
+      }
+      const parsed=parseStoredValue(combined);
+      if(parsed)return parsed;
+    }
+  }
+  const v=readCookie(n);
   if(v){
-    const parsed=parseStoredValue(v.split('=')[1]);
+    const parsed=parseStoredValue(v);
     if(parsed)return parsed;
   }
   try{
@@ -149,6 +192,7 @@ function getCookie(n){
 }
 function delCookie(n){
   document.cookie=n+'=;expires=Thu,01 Jan 1970 00:00:00 GMT;path=/';
+  clearCookieChunks(n);
   try{localStorage.removeItem(n);}catch(e){}
   try{sessionStorage.removeItem(n);}catch(e){}
 }
@@ -1057,7 +1101,7 @@ async function sendChatMessage(){
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div>v2.3.4 変更ログ</div><ul><li>保存エラー検知と自動スキャンを追加</li><li>鳥選択のクリック不具合を修正</li><li>継続的な安定化調整</li></ul>`;
+  el.innerHTML=`<div>v2.3.5 変更ログ</div><ul><li>保存Cookieを分割して大きさ問題を回避</li><li>保存の復元処理を強化</li><li>継続的な安定化調整</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
