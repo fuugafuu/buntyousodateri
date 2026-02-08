@@ -2,19 +2,19 @@ const birds={
   buncho_sakura:{name:'桜文鳥',icon:'🐦',price:0,curr:'coins',colors:{head:'#1a1a1a',cheek:'#fff',body:'#7a7a7a',belly:'#e8d8d0',wing:'#5a5a5a',tail:'#2a2a2a',beak:'#ff6b6b',eyeRing:'#ff5555',feet:'#ffb8b8'},hasCheek:true,defaultNames:['さくら','ピーちゃん','ブンちゃん','チュン太','もち','おもち','ぴよ']},
   buncho_white:{name:'白文鳥',icon:'🕊️',price:200,curr:'coins',colors:{head:'#fefefe',cheek:'#fefefe',body:'#faf8f5',belly:'#fff5f0',wing:'#f0f0f0',tail:'#e8e8e8',beak:'#ff7777',eyeRing:'#ff6666',feet:'#ffc0c0'},hasCheek:false,defaultNames:['しろ','ゆき','ましろ','ミルク','とうふ','しらたま','もふ']},
   buncho_cinnamon:{name:'シナモン',icon:'🐤',price:300,curr:'coins',colors:{head:'#8b6914',cheek:'#fff5e6',body:'#c9a070',belly:'#f0e0d0',wing:'#b08050',tail:'#7b5414',beak:'#ffa080',eyeRing:'#ff7755',feet:'#ffc8b0'},hasCheek:true,defaultNames:['シナモン','きなこ','モカ','くるみ','あずき','ココア','チャイ']},
-  buncho_silver:{name:'シルバー',icon:'🪿',price:400,curr:'coins',colors:{head:'#505050',cheek:'#f8f8f8',body:'#a8a8a8',belly:'#e0d8d0',wing:'#888',tail:'#404040',beak:'#ff8080',eyeRing:'#ff6060',feet:'#ffb0b0'},hasCheek:true,defaultNames:['シルバー','ぎん','ルナ','プラチナ','しずく','ぺる','アッシュ']},
-  canary:{name:'カナリア',icon:'🐥',price:500,curr:'coins',colors:{head:'#ffeb3b',cheek:'#fff59d',body:'#ffeb3b',belly:'#fff9c4',wing:'#fdd835',tail:'#f9a825',beak:'#ff8a65',eyeRing:'#ffab91',feet:'#ffcc80'},hasCheek:false,defaultNames:['カナリア','ひまわり','レモン','こがね','ソレイユ','ひなた','サニー']},
-  inko_green:{name:'セキセイインコ',icon:'🦜',price:800,curr:'coins',colors:{head:'#c8e6c9',cheek:'#a5d6a7',body:'#66bb6a',belly:'#a5d6a7',wing:'#43a047',tail:'#2e7d32',beak:'#ffb74d',eyeRing:'#fff59d',feet:'#bcaaa4'},hasCheek:false,defaultNames:['みどり','わかば','リーフ','メロン','キウイ','ミント','モス']},
-  inko_blue:{name:'青インコ',icon:'💙',price:800,curr:'coins',colors:{head:'#bbdefb',cheek:'#90caf9',body:'#42a5f5',belly:'#90caf9',wing:'#1e88e5',tail:'#1565c0',beak:'#ffb74d',eyeRing:'#fff59d',feet:'#bcaaa4'},hasCheek:false,defaultNames:['そら','あお','スカイ','うみ','アクア','ブルー','セイラ']},
-  buncho_pied:{name:'白黒文鳥',icon:'🤍',price:950,curr:'coins',colors:{head:'#2b2b2b',cheek:'#ffffff',body:'#dadada',belly:'#f1ece6',wing:'#707070',tail:'#1b1b1b',beak:'#ff7b7b',eyeRing:'#ff8a8a',feet:'#ffc0c0'},hasCheek:true,defaultNames:['パンダ','ゴマ','ミル','ダンゴ','黒豆','こはく','しろくろ']},
-  buncho_black:{name:'黒文鳥',icon:'🖤',price:1100,curr:'coins',colors:{head:'#0b0b0b',cheek:'#3b3b3b',body:'#1d1d1d',belly:'#2a2a2a',wing:'#111',tail:'#050505',beak:'#ff7b7b',eyeRing:'#ff6b6b',feet:'#ffb0b0'},hasCheek:false,defaultNames:['くろ','よぞら','カゲ','ルーク','しぐれ','ナイト','ビター']},
-  finch_zebra:{name:'キンカチョウ',icon:'🤎',price:1200,curr:'coins',colors:{head:'#cfcfcf',cheek:'#ff6b6b',body:'#b0b0b0',belly:'#f0ece6',wing:'#7d7d7d',tail:'#4a4a4a',beak:'#ff8a65',eyeRing:'#ffd180',feet:'#ffb0b0'},hasCheek:true,defaultNames:['しま','ゼブラ','カノン','ラテ','モノ','ビス','マーブル']},
-  lovebird:{name:'コザクラインコ',icon:'💚',price:6,curr:'gems',colors:{head:'#ff9ea8',cheek:'#ffd1d9',body:'#7ed957',belly:'#b6f18c',wing:'#54c45c',tail:'#2e7d32',beak:'#ffb74d',eyeRing:'#ffeb3b',feet:'#bcaaa4'},hasCheek:false,defaultNames:['ラブ','ハート','ピーチ','さくら','メロ','ルル','ハニー']},
-  cockatiel:{name:'オカメインコ',icon:'🧡',price:5,curr:'gems',colors:{head:'#ffcc80',cheek:'#ff8a65',body:'#bdbdbd',belly:'#e0e0e0',wing:'#9e9e9e',tail:'#757575',beak:'#8d6e63',eyeRing:'#ffcc80',feet:'#bcaaa4'},hasCheek:true,defaultNames:['オカメ','ピーチ','サンセット','あかり','コーラル','もみじ','ルビー']},
-  owl:{name:'フクロウ',icon:'🦉',price:15,curr:'gems',colors:{head:'#8d6e63',cheek:'#d7ccc8',body:'#6d4c41',belly:'#bcaaa4',wing:'#5d4037',tail:'#4e342e',beak:'#ffd54f',eyeRing:'#ffd54f',feet:'#a1887f'},hasCheek:false,isOwl:true,defaultNames:['ふくろう','ホー太','ミミズク','よる','ウィズダム','アウル','ナイト']},
-  cat:{name:'ねこ',icon:'🐱',price:1400,curr:'coins',colors:{head:'#e0c39a',cheek:'#f5e2c6',body:'#cfa67a',belly:'#f2dec8',wing:'#b78961',tail:'#b07b51',beak:'#d07a4a',eyeRing:'#ffd39d',feet:'#c98d6c'},hasCheek:false,isCat:true,defaultNames:['みけ','こむぎ','そら','もか','こはく','あんず','まる']},
-  fox:{name:'きつね',icon:'🦊',price:8,curr:'gems',colors:{head:'#e07a3f',cheek:'#ffe0c4',body:'#d2652f',belly:'#ffe8d6',wing:'#c35628',tail:'#b24b1f',beak:'#d26839',eyeRing:'#ffd6b8',feet:'#b35b32'},hasCheek:false,isFox:true,defaultNames:['こん','おこん','あさひ','ひばり','こはる','ほたる','しの']},
-  penguin:{name:'ペンギン',icon:'🐧',price:1600,curr:'coins',colors:{head:'#1f2b3a',cheek:'#dfe9f2',body:'#1b2633',belly:'#f4f7fb',wing:'#101820',tail:'#1f2b3a',beak:'#f3c05a',eyeRing:'#d5dee8',feet:'#f0c872'},hasCheek:false,isPenguin:true,defaultNames:['ペン','ゆきまる','こおり','ましろ','しらたま','あお','ちる']}
+  buncho_silver:{name:'シルバー',icon:'🪿',price:320,curr:'coins',colors:{head:'#505050',cheek:'#f8f8f8',body:'#a8a8a8',belly:'#e0d8d0',wing:'#888',tail:'#404040',beak:'#ff8080',eyeRing:'#ff6060',feet:'#ffb0b0'},hasCheek:true,defaultNames:['シルバー','ぎん','ルナ','プラチナ','しずく','ぺる','アッシュ']},
+  canary:{name:'カナリア',icon:'🐥',price:420,curr:'coins',colors:{head:'#ffeb3b',cheek:'#fff59d',body:'#ffeb3b',belly:'#fff9c4',wing:'#fdd835',tail:'#f9a825',beak:'#ff8a65',eyeRing:'#ffab91',feet:'#ffcc80'},hasCheek:false,defaultNames:['カナリア','ひまわり','レモン','こがね','ソレイユ','ひなた','サニー']},
+  inko_green:{name:'セキセイインコ',icon:'🦜',price:520,curr:'coins',colors:{head:'#c8e6c9',cheek:'#a5d6a7',body:'#66bb6a',belly:'#a5d6a7',wing:'#43a047',tail:'#2e7d32',beak:'#ffb74d',eyeRing:'#fff59d',feet:'#bcaaa4'},hasCheek:false,defaultNames:['みどり','わかば','リーフ','メロン','キウイ','ミント','モス']},
+  inko_blue:{name:'青インコ',icon:'💙',price:520,curr:'coins',colors:{head:'#bbdefb',cheek:'#90caf9',body:'#42a5f5',belly:'#90caf9',wing:'#1e88e5',tail:'#1565c0',beak:'#ffb74d',eyeRing:'#fff59d',feet:'#bcaaa4'},hasCheek:false,defaultNames:['そら','あお','スカイ','うみ','アクア','ブルー','セイラ']},
+  buncho_pied:{name:'白黒文鳥',icon:'🤍',price:620,curr:'coins',colors:{head:'#2b2b2b',cheek:'#ffffff',body:'#dadada',belly:'#f1ece6',wing:'#707070',tail:'#1b1b1b',beak:'#ff7b7b',eyeRing:'#ff8a8a',feet:'#ffc0c0'},hasCheek:true,defaultNames:['パンダ','ゴマ','ミル','ダンゴ','黒豆','こはく','しろくろ']},
+  buncho_black:{name:'黒文鳥',icon:'🖤',price:760,curr:'coins',colors:{head:'#0b0b0b',cheek:'#3b3b3b',body:'#1d1d1d',belly:'#2a2a2a',wing:'#111',tail:'#050505',beak:'#ff7b7b',eyeRing:'#ff6b6b',feet:'#ffb0b0'},hasCheek:false,defaultNames:['くろ','よぞら','カゲ','ルーク','しぐれ','ナイト','ビター']},
+  finch_zebra:{name:'キンカチョウ',icon:'🤎',price:840,curr:'coins',colors:{head:'#cfcfcf',cheek:'#ff6b6b',body:'#b0b0b0',belly:'#f0ece6',wing:'#7d7d7d',tail:'#4a4a4a',beak:'#ff8a65',eyeRing:'#ffd180',feet:'#ffb0b0'},hasCheek:true,defaultNames:['しま','ゼブラ','カノン','ラテ','モノ','ビス','マーブル']},
+  lovebird:{name:'コザクラインコ',icon:'💚',price:3,curr:'gems',colors:{head:'#ff9ea8',cheek:'#ffd1d9',body:'#7ed957',belly:'#b6f18c',wing:'#54c45c',tail:'#2e7d32',beak:'#ffb74d',eyeRing:'#ffeb3b',feet:'#bcaaa4'},hasCheek:false,defaultNames:['ラブ','ハート','ピーチ','さくら','メロ','ルル','ハニー']},
+  cockatiel:{name:'オカメインコ',icon:'🧡',price:3,curr:'gems',colors:{head:'#ffcc80',cheek:'#ff8a65',body:'#bdbdbd',belly:'#e0e0e0',wing:'#9e9e9e',tail:'#757575',beak:'#8d6e63',eyeRing:'#ffcc80',feet:'#bcaaa4'},hasCheek:true,defaultNames:['オカメ','ピーチ','サンセット','あかり','コーラル','もみじ','ルビー']},
+  owl:{name:'フクロウ',icon:'🦉',price:6,curr:'gems',colors:{head:'#8d6e63',cheek:'#d7ccc8',body:'#6d4c41',belly:'#bcaaa4',wing:'#5d4037',tail:'#4e342e',beak:'#ffd54f',eyeRing:'#ffd54f',feet:'#a1887f'},hasCheek:false,isOwl:true,defaultNames:['ふくろう','ホー太','ミミズク','よる','ウィズダム','アウル','ナイト']},
+  cat:{name:'ねこ',icon:'🐱',price:720,curr:'coins',colors:{head:'#e0c39a',cheek:'#f5e2c6',body:'#cfa67a',belly:'#f2dec8',wing:'#b78961',tail:'#b07b51',beak:'#d07a4a',eyeRing:'#ffd39d',feet:'#c98d6c'},hasCheek:false,isCat:true,defaultNames:['みけ','こむぎ','そら','もか','こはく','あんず','まる']},
+  fox:{name:'きつね',icon:'🦊',price:4,curr:'gems',colors:{head:'#e07a3f',cheek:'#ffe0c4',body:'#d2652f',belly:'#ffe8d6',wing:'#c35628',tail:'#b24b1f',beak:'#d26839',eyeRing:'#ffd6b8',feet:'#b35b32'},hasCheek:false,isFox:true,defaultNames:['こん','おこん','あさひ','ひばり','こはる','ほたる','しの']},
+  penguin:{name:'ペンギン',icon:'🐧',price:880,curr:'coins',colors:{head:'#1f2b3a',cheek:'#dfe9f2',body:'#1b2633',belly:'#f4f7fb',wing:'#101820',tail:'#1f2b3a',beak:'#f3c05a',eyeRing:'#d5dee8',feet:'#f0c872'},hasCheek:false,isPenguin:true,defaultNames:['ペン','ゆきまる','こおり','ましろ','しらたま','あお','ちる']}
 };
 const minigames=[
   {id:'catch',name:'シードキャッチ',icon:'🌾',desc:'落ちるシードをキャッチ！',cost:10,type:'catch'},
@@ -167,15 +167,32 @@ let lastWeatherRender={type:null,mode:null};
 let scanCache={};
 
 function persistBackup(key,json){
-  try{localStorage.setItem(key,json);}catch(e){}
-  try{sessionStorage.setItem(key,json);}catch(e){}
+  const encoded=encPayload(json);
+  try{localStorage.setItem(key,encoded);}catch(e){}
+  try{sessionStorage.setItem(key,encoded);}catch(e){}
+}
+function encPayload(payload){
+  const salt=String(G.level||1);
+  const key=(salt+G.name).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%97+13;
+  const bytes=Array.from(payload).map(ch=>String.fromCharCode(ch.charCodeAt(0)^(key)));
+  return btoa(bytes.join(''));
+}
+function decPayload(payload){
+  try{
+    const raw=atob(payload);
+    const salt=String(G.level||1);
+    const key=(salt+G.name).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%97+13;
+    return Array.from(raw).map(ch=>String.fromCharCode(ch.charCodeAt(0)^(key))).join('');
+  }catch(e){return null;}
 }
 function writeCookie(name,value){
-  document.cookie=`${name}=${value};expires=${new Date(Date.now()+365*864e5).toUTCString()};path=/;SameSite=Lax`;
+  document.cookie=`${name}=${encPayload(value)};expires=${new Date(Date.now()+365*864e5).toUTCString()};path=/;SameSite=Lax`;
 }
 function readCookie(name){
   const row=document.cookie.split('; ').find(r=>r.startsWith(name+'='));
-  return row?row.split('=')[1]:null;
+  if(!row)return null;
+  const encoded=row.split('=')[1];
+  return decPayload(encoded);
 }
 function setCookieChunks(n,payload){
   const maxLen=3000;
@@ -209,6 +226,10 @@ function setCookie(n,v){
 }
 function parseStoredValue(raw){
   if(!raw)return null;
+  const decoded=decPayload(raw);
+  if(decoded){
+    try{return JSON.parse(decoded);}catch(e){}
+  }
   try{return JSON.parse(raw);}catch(e){}
   try{return JSON.parse(decodeURIComponent(raw));}catch(e){}
   return null;
@@ -574,7 +595,7 @@ function renderBird(){
         ${isCat?`<path d="M68,52 L82,30 L94,56 Z" fill="${c.head}"/><path d="M132,52 L118,30 L106,56 Z" fill="${c.head}"/>`:''}
         ${isFox?`<path d="M66,54 L82,26 L96,56 Z" fill="${c.head}"/><path d="M134,54 L118,26 L104,56 Z" fill="${c.head}"/>`:''}
         ${isPenguin?`<path d="M100,44 C84,40 76,30 74,22 C86,26 94,30 100,36 C106,30 114,26 126,22 C124,30 116,40 100,44 Z" fill="${c.head}"/>`:''}
-        ${b.hasCheek?`<ellipse cx="67" cy="88" rx="20" ry="18" fill="${c.cheek}"/><ellipse cx="133" cy="88" rx="20" ry="18" fill="${c.cheek}"/>`:''}
+        ${b.hasCheek?`<ellipse cx="70" cy="88" rx="18" ry="16" fill="${c.cheek}"/><ellipse cx="130" cy="88" rx="18" ry="16" fill="${c.cheek}"/>`:''}
         <circle cx="78" cy="72" r="14" fill="${c.eyeRing}"/><circle cx="122" cy="72" r="14" fill="${c.eyeRing}"/>
         ${eyesClosed?`<path d="M67,72 Q78,82 89,72" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M111,72 Q122,82 133,72" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/>`:`<circle cx="78" cy="72" r="10" fill="#0a0505"/><circle cx="122" cy="72" r="10" fill="#0a0505"/><circle cx="82" cy="68" r="4" fill="white"/><circle cx="126" cy="68" r="4" fill="white"/>`}
         <g transform="translate(100,98) rotate(${eatBob>0?Math.sin(animF*0.5)*4:0})">
@@ -1170,7 +1191,7 @@ async function sendChatMessage(){
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div>v2.3.6 変更ログ</div><ul><li>ロード画面を追加</li><li>動物追加＆セリフ分岐</li><li>見た目のディテールを強化</li></ul>`;
+  el.innerHTML=`<div>v2.3.7 変更ログ</div><ul><li>動物図鑑表記に更新</li><li>価格調整＆ほっぺ修正</li><li>保存データを暗号化</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
