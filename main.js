@@ -62,7 +62,7 @@ const shopData={
     {id:'medicine',name:'お薬',desc:'健康全回復 ×2',price:100,icon:'💊',curr:'coins',amt:2},
     {id:'shampoo',name:'シャンプー',desc:'清潔全回復 ×3',price:50,icon:'🧴',curr:'coins',amt:3},
     {id:'toys',name:'おもちゃ',desc:'遊び効果UP',price:120,icon:'🎾',curr:'coins',amt:1},
-    {id:'sleep_box',name:'スリープボックス',desc:'状態維持スリープ 1回',price:180,icon:'🛏️',curr:'coins',amt:1}
+    {id:'sleep_box',name:'スリープボックス',desc:'状態維持スリープ 1回',price:90,icon:'🛏️',curr:'coins',amt:1}
   ],
   premium:[
     {id:'super_energy',name:'Sエナジー',desc:'元気全回復 ×2',price:3,icon:'⚡',curr:'gems',amt:2},
@@ -171,18 +171,33 @@ function persistBackup(key,json){
   try{localStorage.setItem(key,encoded);}catch(e){}
   try{sessionStorage.setItem(key,encoded);}catch(e){}
 }
+function bytesToBase64(bytes){
+  let bin='';
+  bytes.forEach(b=>{bin+=String.fromCharCode(b);});
+  return btoa(bin);
+}
+function base64ToBytes(b64){
+  const bin=atob(b64);
+  const bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  return bytes;
+}
 function encPayload(payload){
-  const salt=String(G.level||1);
-  const key=(salt+G.name).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%97+13;
-  const bytes=Array.from(payload).map(ch=>String.fromCharCode(ch.charCodeAt(0)^(key)));
-  return btoa(bytes.join(''));
+  try{
+    const salt=String(G.level||1);
+    const key=(salt+G.name).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%97+13;
+    const bytes=new TextEncoder().encode(payload);
+    const out=bytes.map(b=>b^key);
+    return bytesToBase64(out);
+  }catch(e){return payload;}
 }
 function decPayload(payload){
   try{
-    const raw=atob(payload);
+    const bytes=base64ToBytes(payload);
     const salt=String(G.level||1);
     const key=(salt+G.name).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%97+13;
-    return Array.from(raw).map(ch=>String.fromCharCode(ch.charCodeAt(0)^(key))).join('');
+    const out=bytes.map(b=>b^key);
+    return new TextDecoder().decode(out);
   }catch(e){return null;}
 }
 function writeCookie(name,value){
@@ -563,6 +578,7 @@ function renderBird(){
   const isFox=b.isFox===true;
   const isPenguin=b.isPenguin===true;
   const bounce=Math.sin(animF*0.14*speed)*3.2*amp,tilt=Math.sin(animF*0.07*speed)*2*amp;
+  const tailWiggle=Math.sin(animF*0.2*speed)*4*amp;
   const wingFlap=action==='play'||action==='bath'||action==='sing'?Math.sin(animF*0.38*speed)*12*amp:Math.sin(animF*0.04*speed)*2*amp;
   const headTilt=action==='pet'?Math.sin(animF*0.18*speed)*6*amp:tilt;
   const eyesClosed=G.isSleeping||blink||action==='pet';
@@ -570,6 +586,9 @@ function renderBird(){
   const eatBob=action==='feed'||action==='treat'?Math.max(0,Math.sin(animF*0.32*speed))*3*amp:0;
   const shake=action==='bath'?Math.sin(animF*0.5*speed)*4*amp:0;
   const singBob=action==='sing'?Math.sin(animF*0.32*speed)*4*amp:0;
+  const bellyPulse=Math.sin(animF*0.12*speed)*1.3*amp;
+  const mouthOpenBase=(action==='feed'||action==='treat'||action==='sing')?2.8:0.6;
+  const mouthOpen=G.isSleeping?0:mouthOpenBase+Math.abs(Math.sin(animF*0.5*speed))*(action==='feed'||action==='treat'||action==='sing'?3:0.8);
   svg.innerHTML=`
     <defs>
       <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c.body}"/><stop offset="100%" stop-color="${c.wing}"/></linearGradient>
@@ -579,11 +598,11 @@ function renderBird(){
     <rect x="28" y="188" width="144" height="10" rx="5" fill="#a07818"/>
     <g transform="translate(0,${-bounce-jumpY+eatBob+singBob}) rotate(${shake},100,120)" filter="url(#sh)">
       <ellipse cx="100" cy="198" rx="${50+jumpY/2}" ry="7" fill="rgba(0,0,0,0.1)"/>
-      <g transform="translate(100,158) rotate(${-10+tilt})"><path d="M0,0 L-18,42 L0,44 L18,42 Z" fill="${c.tail}"/></g>
+      <g transform="translate(100,158) rotate(${-10+tilt+tailWiggle})"><path d="M0,0 L-18,42 L0,44 L18,42 Z" fill="${c.tail}"/></g>
       <g transform="translate(82,175)"><path d="M0,0 L-9,16 M0,0 L0,18 M0,0 L9,16" stroke="${c.feet}" stroke-width="4" stroke-linecap="round" fill="none"/></g>
       <g transform="translate(118,175)"><path d="M0,0 L-9,16 M0,0 L0,18 M0,0 L9,16" stroke="${c.feet}" stroke-width="4" stroke-linecap="round" fill="none"/></g>
       <ellipse cx="100" cy="132" rx="48" ry="42" fill="url(#bg)"/>
-      <ellipse cx="100" cy="145" rx="34" ry="30" fill="url(#bel)"/>
+      <ellipse cx="100" cy="145" rx="34" ry="${30+bellyPulse}" fill="url(#bel)"/>
       <ellipse cx="92" cy="120" rx="12" ry="8" fill="rgba(255,255,255,0.14)"/>
       ${quality?'<path d="M70,128 Q100,98 132,126" stroke="rgba(255,255,255,0.16)" stroke-width="2" fill="none"/>':''}
       <path d="M72,150 Q100,164 128,150" stroke="rgba(0,0,0,0.08)" stroke-width="2" fill="none"/>
@@ -599,7 +618,7 @@ function renderBird(){
         <circle cx="78" cy="72" r="14" fill="${c.eyeRing}"/><circle cx="122" cy="72" r="14" fill="${c.eyeRing}"/>
         ${eyesClosed?`<path d="M67,72 Q78,82 89,72" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M111,72 Q122,82 133,72" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/>`:`<circle cx="78" cy="72" r="10" fill="#0a0505"/><circle cx="122" cy="72" r="10" fill="#0a0505"/><circle cx="82" cy="68" r="4" fill="white"/><circle cx="126" cy="68" r="4" fill="white"/>`}
         <g transform="translate(100,98) rotate(${eatBob>0?Math.sin(animF*0.5)*4:0})">
-          ${isCat||isFox?`<path d="M-6,-6 Q0,2 6,-6 Z" fill="${c.beak}"/><circle cx="0" cy="2" r="2.5" fill="#402318"/>`:(isPenguin?`<path d="M-6,-6 L0,8 L6,-6 Z" fill="${c.beak}"/>`:(b.isOwl?`<path d="M-5,-8 L0,6 L5,-8 Z" fill="${c.beak}"/>`:`<ellipse cx="0" cy="-3" rx="14" ry="10" fill="${c.beak}"/><ellipse cx="0" cy="4" rx="11" ry="6" fill="${c.beak}" opacity="0.85"/>`))}
+          ${isCat||isFox?`<path d="M-6,-6 Q0,${2+mouthOpen*0.4} 6,-6 Z" fill="${c.beak}"/><circle cx="0" cy="${2+mouthOpen*0.2}" r="${2.2+mouthOpen*0.1}" fill="#402318"/><path d="M-6,${2+mouthOpen*0.6} Q0,${4+mouthOpen*0.9} 6,${2+mouthOpen*0.6}" stroke="#402318" stroke-width="1.6" fill="none" stroke-linecap="round"/>`:(isPenguin?`<path d="M-6,-6 L0,${8+mouthOpen*0.3} L6,-6 Z" fill="${c.beak}"/>`:(b.isOwl?`<path d="M-5,-8 L0,${6+mouthOpen*0.4} L5,-8 Z" fill="${c.beak}"/>`:`<ellipse cx="0" cy="-3" rx="14" ry="10" fill="${c.beak}"/><ellipse cx="0" cy="${4+mouthOpen*0.2}" rx="11" ry="${6+mouthOpen*0.4}" fill="${c.beak}" opacity="0.85"/><path d="M-10,${2+mouthOpen*0.6} Q0,${5+mouthOpen} 10,${2+mouthOpen*0.6}" stroke="#b85c5c" stroke-width="1.4" fill="none" stroke-linecap="round"/>`))}
           <ellipse cx="-4" cy="-6" rx="4" ry="3" fill="rgba(255,255,255,0.35)"/>
         </g>
         ${action==='sing'?`<text x="145" y="50" font-size="16" fill="#ff6b9d" opacity="${0.4+Math.sin(animF*0.25)*0.6}">♪</text><text x="158" y="35" font-size="12" fill="#9c27b0" opacity="${0.4+Math.sin(animF*0.25+1)*0.6}">♫</text>`:''}
@@ -608,7 +627,6 @@ function renderBird(){
       ${action==='feed'||action==='treat'?[0,1,2,3,4].map(i=>`<ellipse cx="${90+i*6+Math.sin(animF*0.12+i)*2}" cy="${108+((animF*0.8+i*7)%16)}" rx="${1.6+((i%2)*0.5)}" ry="${1.1+((i%3)*0.3)}" fill="#c89a62" opacity="${0.9-((animF*0.8+i*7)%16)/18}"/>`).join(''):''}
       ${action==='pet'?[0,1,2].map(i=>`<text x="${55+i*42}" y="${38+Math.sin(animF*0.2+i)*12}" font-size="18" opacity="${0.45+Math.sin(animF*0.2+i)*0.55}">💕</text>`).join(''):''}
       ${action==='play'?[0,1,2,3].map(i=>`<text x="${44+i*38}" y="${28+Math.abs(Math.sin(animF*0.3+i*0.6))*30}" font-size="15">✨</text>`).join(''):''}
-      ${G.animationMode==='ultra'?[0,1,2,3,4].map(i=>`<circle cx="${52+i*26}" cy="${56+Math.sin(animF*0.17+i)*18}" r="${1.5+Math.sin(animF*0.08+i)*0.8}" fill="rgba(255,255,255,0.5)"/>`).join(''):''}
       ${action==='bath'?[0,1,2,3,4,5,6].map(i=>`<ellipse cx="${58+i*12+Math.sin(animF*0.25+i)*4}" cy="${154+(animF*1.4+i*9)%44}" rx="${1.4+Math.sin(animF*0.1+i)*0.6}" ry="${2.2+Math.cos(animF*0.12+i)*0.7}" fill="#9bd7ff" opacity="${1-((animF*1.4+i*9)%44)/45}"/>`).join(''):''}
     </g>`;
 }
@@ -1027,7 +1045,7 @@ function startSleepBoxPrompt(){
   if(hoursRaw===null){renderInv();return;}
   const hours=Math.max(1,Math.min(10,parseInt(hoursRaw,10)||0));
   if(!hours){showToast('1〜10時間で入力してください','warning');renderInv();return;}
-  const cost=hours*hours*12;
+  const cost=hours*hours*6;
   if(G.coins<cost){showToast('💰が足りません','warning');renderInv();return;}
   spendCoins(cost);
   G.inv.sleep_box=Math.max(0,(G.inv.sleep_box||0)-1);
@@ -1191,7 +1209,7 @@ async function sendChatMessage(){
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div>v2.3.7 変更ログ</div><ul><li>動物図鑑表記に更新</li><li>価格調整＆ほっぺ修正</li><li>保存データを暗号化</li></ul>`;
+  el.innerHTML=`<div>v2.3.8 変更ログ</div><ul><li>最高アニメの頭モヤを除去し、口の動き/尻尾/呼吸の演出を追加</li><li>保存データ暗号化のUTF-8対応でInvalidCharacterErrorを修正</li><li>スリープボックスの価格と利用コストを減額</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
