@@ -11,7 +11,10 @@ const birds={
   finch_zebra:{name:'キンカチョウ',icon:'🤎',price:1200,curr:'coins',colors:{head:'#cfcfcf',cheek:'#ff6b6b',body:'#b0b0b0',belly:'#f0ece6',wing:'#7d7d7d',tail:'#4a4a4a',beak:'#ff8a65',eyeRing:'#ffd180',feet:'#ffb0b0'},hasCheek:true,defaultNames:['しま','ゼブラ','カノン','ラテ','モノ','ビス','マーブル']},
   lovebird:{name:'コザクラインコ',icon:'💚',price:6,curr:'gems',colors:{head:'#ff9ea8',cheek:'#ffd1d9',body:'#7ed957',belly:'#b6f18c',wing:'#54c45c',tail:'#2e7d32',beak:'#ffb74d',eyeRing:'#ffeb3b',feet:'#bcaaa4'},hasCheek:false,defaultNames:['ラブ','ハート','ピーチ','さくら','メロ','ルル','ハニー']},
   cockatiel:{name:'オカメインコ',icon:'🧡',price:5,curr:'gems',colors:{head:'#ffcc80',cheek:'#ff8a65',body:'#bdbdbd',belly:'#e0e0e0',wing:'#9e9e9e',tail:'#757575',beak:'#8d6e63',eyeRing:'#ffcc80',feet:'#bcaaa4'},hasCheek:true,defaultNames:['オカメ','ピーチ','サンセット','あかり','コーラル','もみじ','ルビー']},
-  owl:{name:'フクロウ',icon:'🦉',price:15,curr:'gems',colors:{head:'#8d6e63',cheek:'#d7ccc8',body:'#6d4c41',belly:'#bcaaa4',wing:'#5d4037',tail:'#4e342e',beak:'#ffd54f',eyeRing:'#ffd54f',feet:'#a1887f'},hasCheek:false,isOwl:true,defaultNames:['ふくろう','ホー太','ミミズク','よる','ウィズダム','アウル','ナイト']}
+  owl:{name:'フクロウ',icon:'🦉',price:15,curr:'gems',colors:{head:'#8d6e63',cheek:'#d7ccc8',body:'#6d4c41',belly:'#bcaaa4',wing:'#5d4037',tail:'#4e342e',beak:'#ffd54f',eyeRing:'#ffd54f',feet:'#a1887f'},hasCheek:false,isOwl:true,defaultNames:['ふくろう','ホー太','ミミズク','よる','ウィズダム','アウル','ナイト']},
+  cat:{name:'ねこ',icon:'🐱',price:1400,curr:'coins',colors:{head:'#e0c39a',cheek:'#f5e2c6',body:'#cfa67a',belly:'#f2dec8',wing:'#b78961',tail:'#b07b51',beak:'#d07a4a',eyeRing:'#ffd39d',feet:'#c98d6c'},hasCheek:false,isCat:true,defaultNames:['みけ','こむぎ','そら','もか','こはく','あんず','まる']},
+  fox:{name:'きつね',icon:'🦊',price:8,curr:'gems',colors:{head:'#e07a3f',cheek:'#ffe0c4',body:'#d2652f',belly:'#ffe8d6',wing:'#c35628',tail:'#b24b1f',beak:'#d26839',eyeRing:'#ffd6b8',feet:'#b35b32'},hasCheek:false,isFox:true,defaultNames:['こん','おこん','あさひ','ひばり','こはる','ほたる','しの']},
+  penguin:{name:'ペンギン',icon:'🐧',price:1600,curr:'coins',colors:{head:'#1f2b3a',cheek:'#dfe9f2',body:'#1b2633',belly:'#f4f7fb',wing:'#101820',tail:'#1f2b3a',beak:'#f3c05a',eyeRing:'#d5dee8',feet:'#f0c872'},hasCheek:false,isPenguin:true,defaultNames:['ペン','ゆきまる','こおり','ましろ','しらたま','あお','ちる']}
 };
 const minigames=[
   {id:'catch',name:'シードキャッチ',icon:'🌾',desc:'落ちるシードをキャッチ！',cost:10,type:'catch'},
@@ -106,6 +109,57 @@ function buildMissionCatalog(){
   return list;
 }
 const missionCatalog=buildMissionCatalog();
+const dialogBySpecies={
+  default:{
+    idle:['鳥があなたを見ています...','チュン♪今日は何する？','のんびり過ごそう。'],
+    feed:['パクパク...おいしい！🌾','チュン♪ありがとう！','カリカリ最高！'],
+    treat:['わーい！おやつ！🍬','甘くて幸せ〜','もっとちょうだい！'],
+    pet:['チュンチュン♪うれしい！','もっとなでて〜💕','眠れる...'],
+    play:['わーい！楽しい！🎉','もっと遊ぼう！'],
+    bath:['バシャバシャ！💦','きれいになった〜'],
+    train:['賢くなった！📚','新しいこと覚えた！'],
+    sing:['チュンチュン〜♪🎵','上手に歌えた！','いい鳴き声でしょ？🎤'],
+    sleep:['おやすみ...💤','すやすや...']
+  },
+  cat:{
+    idle:['にゃ〜ん。','おひるねしたいにゃ。','そばにいて。'],
+    feed:['もぐもぐ...おいしいにゃ！','にゃにゃ♪','おかわり！'],
+    treat:['おやつ最高にゃ！','しあわせ〜','もっと欲しいにゃ'],
+    pet:['ごろごろ...','気持ちいいにゃ','もっとなでて。'],
+    play:['追いかけっこしよう！','じゃらし大好き！'],
+    bath:['お水はちょっと苦手...','さっぱりしたにゃ'],
+    train:['覚えたにゃ！','えらいでしょ？'],
+    sing:['にゃ〜ん♪','気分がいいにゃ'],
+    sleep:['まるくなって寝るにゃ','すや...']
+  },
+  fox:{
+    idle:['こんこん♪','きらきらしてるね。','冒険に出たいな。'],
+    feed:['うまうま！','元気が出たよ。','もりもり食べる！'],
+    treat:['甘いのだいすき！','しあわせ〜'],
+    pet:['ふわふわだよ。','もっとなでて。'],
+    play:['かけっこしよう！','しっぽで遊ぶ？'],
+    bath:['ちょっと冷たい...','さっぱり！'],
+    train:['うまくできた！','上達したよ。'],
+    sing:['ふふん♪','いい音だね。'],
+    sleep:['おやすみ、月夜だよ。','静かに寝るね。']
+  },
+  penguin:{
+    idle:['ペタペタ歩くよ。','氷が恋しいな。','のんびりしよう。'],
+    feed:['ぱくぱく！','おいしいね。'],
+    treat:['ひんやり最高！','うれしい〜'],
+    pet:['ふわふわ？','いい気分。'],
+    play:['すべって遊ぼう！','海が好きだよ。'],
+    bath:['水浴びは得意！','さっぱり！'],
+    train:['できた！','覚えたよ。'],
+    sing:['ぺたぺたリズム♪','いい感じ！'],
+    sleep:['おやすみ...','すやすや。']
+  }
+};
+function pickDialog(type,fallback){
+  const key=birds[G.species].isCat?'cat':birds[G.species].isFox?'fox':birds[G.species].isPenguin?'penguin':'default';
+  const options=(dialogBySpecies[key]&&dialogBySpecies[key][type])||(dialogBySpecies.default[type])||fallback;
+  return options[Math.floor(Math.random()*options.length)];
+}
 let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',chatApiDraft:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,autoTheme:true,autoWeather:false,geo:null,missions:{active:[],completed:0,history:[]},lastWeatherFetch:0,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},isSleeping:false,bannerDismissed:false};
 let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBird=null,shopTab='food',selItem=null;
 let currentMg=null,mgData={},mgInterval=null;
@@ -315,6 +369,8 @@ function updateUI(){
   document.body.className=G.theme;
   const svg=document.getElementById('birdSvg');svg.setAttribute('width',String(220*G.resolutionScale));svg.setAttribute('height',String(242*G.resolutionScale));svg.style.imageRendering=G.resolutionScale>1?'auto':'-webkit-optimize-contrast';svg.classList.toggle('bird-3d',G.beta3d===true);svg.classList.toggle('bird-3d-real',G.beta3d===true);svg.style.setProperty('--rx',`${G.threeDRotX}deg`);svg.style.setProperty('--ry',`${G.threeDRotY}deg`);
   const chatBtn=document.getElementById('chatOpenBtn');if(chatBtn)chatBtn.style.display=(G.chatApiEnabled&&G.chatApiKey)?'inline-block':'none';
+  const loadingIcon=document.getElementById('loadingIcon');
+  if(loadingIcon)loadingIcon.textContent=b.icon;
   renderWeather();
   const customizePanel=document.getElementById('customizePanel');
   if(customizePanel&&customizePanel.classList.contains('show'))renderCustomize();
@@ -482,6 +538,9 @@ function renderBird(){
   const speed=G.animationMode==='ultra'?1.05:G.animationMode==='fine'?0.95:G.animationMode==='simple'?0.6:0.8;
   const amp=G.animationMode==='ultra'?1.2:G.animationMode==='fine'?1.05:G.animationMode==='simple'?0.7:0.9;
   const quality=G.resolutionScale>=1.6?1:0;
+  const isCat=b.isCat===true;
+  const isFox=b.isFox===true;
+  const isPenguin=b.isPenguin===true;
   const bounce=Math.sin(animF*0.14*speed)*3.2*amp,tilt=Math.sin(animF*0.07*speed)*2*amp;
   const wingFlap=action==='play'||action==='bath'||action==='sing'?Math.sin(animF*0.38*speed)*12*amp:Math.sin(animF*0.04*speed)*2*amp;
   const headTilt=action==='pet'?Math.sin(animF*0.18*speed)*6*amp:tilt;
@@ -512,11 +571,14 @@ function renderBird(){
       <g transform="translate(148,120) rotate(${wingFlap})"><ellipse cx="0" cy="18" rx="14" ry="35" fill="${c.wing}"/></g>
       <g transform="rotate(${headTilt},100,78)">
         <circle cx="100" cy="78" r="42" fill="${c.head}"/>
+        ${isCat?`<path d="M68,52 L82,30 L94,56 Z" fill="${c.head}"/><path d="M132,52 L118,30 L106,56 Z" fill="${c.head}"/>`:''}
+        ${isFox?`<path d="M66,54 L82,26 L96,56 Z" fill="${c.head}"/><path d="M134,54 L118,26 L104,56 Z" fill="${c.head}"/>`:''}
+        ${isPenguin?`<path d="M100,44 C84,40 76,30 74,22 C86,26 94,30 100,36 C106,30 114,26 126,22 C124,30 116,40 100,44 Z" fill="${c.head}"/>`:''}
         ${b.hasCheek?`<ellipse cx="67" cy="88" rx="20" ry="18" fill="${c.cheek}"/><ellipse cx="133" cy="88" rx="20" ry="18" fill="${c.cheek}"/>`:''}
         <circle cx="78" cy="72" r="14" fill="${c.eyeRing}"/><circle cx="122" cy="72" r="14" fill="${c.eyeRing}"/>
         ${eyesClosed?`<path d="M67,72 Q78,82 89,72" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M111,72 Q122,82 133,72" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/>`:`<circle cx="78" cy="72" r="10" fill="#0a0505"/><circle cx="122" cy="72" r="10" fill="#0a0505"/><circle cx="82" cy="68" r="4" fill="white"/><circle cx="126" cy="68" r="4" fill="white"/>`}
         <g transform="translate(100,98) rotate(${eatBob>0?Math.sin(animF*0.5)*4:0})">
-          ${b.isOwl?`<path d="M-5,-8 L0,6 L5,-8 Z" fill="${c.beak}"/>`:`<ellipse cx="0" cy="-3" rx="14" ry="10" fill="${c.beak}"/><ellipse cx="0" cy="4" rx="11" ry="6" fill="${c.beak}" opacity="0.85"/>`}
+          ${isCat||isFox?`<path d="M-6,-6 Q0,2 6,-6 Z" fill="${c.beak}"/><circle cx="0" cy="2" r="2.5" fill="#402318"/>`:(isPenguin?`<path d="M-6,-6 L0,8 L6,-6 Z" fill="${c.beak}"/>`:(b.isOwl?`<path d="M-5,-8 L0,6 L5,-8 Z" fill="${c.beak}"/>`:`<ellipse cx="0" cy="-3" rx="14" ry="10" fill="${c.beak}"/><ellipse cx="0" cy="4" rx="11" ry="6" fill="${c.beak}" opacity="0.85"/>`))}
           <ellipse cx="-4" cy="-6" rx="4" ry="3" fill="rgba(255,255,255,0.35)"/>
         </g>
         ${action==='sing'?`<text x="145" y="50" font-size="16" fill="#ff6b9d" opacity="${0.4+Math.sin(animF*0.25)*0.6}">♪</text><text x="158" y="35" font-size="12" fill="#9c27b0" opacity="${0.4+Math.sin(animF*0.25+1)*0.6}">♫</text>`:''}
@@ -536,19 +598,19 @@ function addCoins(amount,opts={}){
   if(amount>0&&!opts.ignoreMission)addMissionProgress('coins',amount);
 }
 function spendCoins(amount){G.coins=Math.max(0,G.coins-amount);}
-function feedBird(){if(G.inv.seeds<=0){playBirdSound('feed');setMsg('シードがない！');return}doAction('feed',()=>{playBirdSound('feed');G.inv.seeds--;G.hunger=Math.min(100,G.hunger+18);G.happiness=Math.min(100,G.happiness+3);G.tFeeds++;addMissionProgress('feed',1);addExp(2);setMsg(['パクパク...おいしい！🌾','チュン♪ありがとう！','カリカリ最高！'][Math.floor(Math.random()*3)]);save()})}
-function petBird(){doAction('pet',()=>{playBirdSound('pet');G.happiness=Math.min(100,G.happiness+10+(G.inv.mirror>0?5:0));G.tPets++;addMissionProgress('pet',1);addExp(1);setMsg(['チュンチュン♪うれしい！','もっとなでて〜💕','眠れる...'][Math.floor(Math.random()*3)]);save()})}
-function playBird(){if(G.energy<20){playBirdSound('feed');setMsg('疲れてる...休ませて...');return}doAction('play',()=>{playBirdSound('play');const b=G.inv.swing>0?2:1,tb=G.inv.toys>0?5:0;G.happiness=Math.min(100,G.happiness+(15+tb)*b);G.energy=Math.max(0,G.energy-12);G.hunger=Math.max(0,G.hunger-5);G.tPlays++;addMissionProgress('play',1);addCoins(2);addExp(3);setMsg(['わーい！楽しい！🎉','もっと遊ぼう！'][Math.floor(Math.random()*2)]);save()})}
-function bathBird(){doAction('bath',()=>{playBirdSound('bath');const b=G.inv.shampoo>0;if(b)G.inv.shampoo--;G.cleanliness=100;G.happiness=Math.min(100,G.happiness+(b?15:8));G.tBaths++;addMissionProgress('bath',1);addExp(2);setMsg(b?'シャンプーでピカピカ！✨':['バシャバシャ！💦','きれいになった〜'][Math.floor(Math.random()*2)]);save()})}
+function feedBird(){if(G.inv.seeds<=0){playBirdSound('feed');setMsg('シードがない！');return}doAction('feed',()=>{playBirdSound('feed');G.inv.seeds--;G.hunger=Math.min(100,G.hunger+18);G.happiness=Math.min(100,G.happiness+3);G.tFeeds++;addMissionProgress('feed',1);addExp(2);setMsg(pickDialog('feed',['パクパク...おいしい！🌾']));save()})}
+function petBird(){doAction('pet',()=>{playBirdSound('pet');G.happiness=Math.min(100,G.happiness+10+(G.inv.mirror>0?5:0));G.tPets++;addMissionProgress('pet',1);addExp(1);setMsg(pickDialog('pet',['チュンチュン♪うれしい！']));save()})}
+function playBird(){if(G.energy<20){playBirdSound('feed');setMsg('疲れてる...休ませて...');return}doAction('play',()=>{playBirdSound('play');const b=G.inv.swing>0?2:1,tb=G.inv.toys>0?5:0;G.happiness=Math.min(100,G.happiness+(15+tb)*b);G.energy=Math.max(0,G.energy-12);G.hunger=Math.max(0,G.hunger-5);G.tPlays++;addMissionProgress('play',1);addCoins(2);addExp(3);setMsg(pickDialog('play',['わーい！楽しい！🎉']));save()})}
+function bathBird(){doAction('bath',()=>{playBirdSound('bath');const b=G.inv.shampoo>0;if(b)G.inv.shampoo--;G.cleanliness=100;G.happiness=Math.min(100,G.happiness+(b?15:8));G.tBaths++;addMissionProgress('bath',1);addExp(2);setMsg(b?'シャンプーでピカピカ！✨':pickDialog('bath',['バシャバシャ！💦']));save()})}
 function toggleSleep(){
   if(G.sleepBoxUntil&&Date.now()<G.sleepBoxUntil){cancelSleepBox();return;}
   if(G.isSleeping){G.isSleeping=false;G.sleepStart=null;playBirdSound('feed');setMsg('おはよう！🌅')}
-  else{G.isSleeping=true;G.sleepStart=Date.now();addMissionProgress('sleep',1);playBirdSound('feed');setMsg('おやすみ...💤 閉じても元気が回復！')}
+  else{G.isSleeping=true;G.sleepStart=Date.now();addMissionProgress('sleep',1);playBirdSound('feed');setMsg(pickDialog('sleep',['おやすみ...💤 閉じても元気が回復！']))}
   save();updateUI();
 }
-function giveTreat(){if(G.inv.treats<=0){playBirdSound('feed');setMsg('おやつがない！');return}doAction('treat',()=>{playBirdSound('feed');G.inv.treats--;G.happiness=Math.min(100,G.happiness+25);G.hunger=Math.min(100,G.hunger+10);addMissionProgress('treat',1);addExp(4);setMsg('わーい！おやつ！🍬');save()})}
-function trainBird(){if(G.energy<25){playBirdSound('feed');setMsg('疲れてる...訓練は無理...');return}doAction('train',()=>{playBirdSound('play');G.energy=Math.max(0,G.energy-15);addMissionProgress('train',1);addCoins(3);addExp(4);setMsg(['賢くなった！📚','新しいこと覚えた！'][Math.floor(Math.random()*2)]);save()})}
-function singBird(){if(G.energy<15){playBirdSound('feed');setMsg('疲れて歌えない...');return}doAction('sing',()=>{playBirdSound('sing');G.happiness=Math.min(100,G.happiness+12);G.energy=Math.max(0,G.energy-8);G.tSings++;addMissionProgress('sing',1);addCoins(2);addExp(3);setMsg(['チュンチュン〜♪🎵','上手に歌えた！','いい鳴き声でしょ？🎤'][Math.floor(Math.random()*3)]);save()})}
+function giveTreat(){if(G.inv.treats<=0){playBirdSound('feed');setMsg('おやつがない！');return}doAction('treat',()=>{playBirdSound('feed');G.inv.treats--;G.happiness=Math.min(100,G.happiness+25);G.hunger=Math.min(100,G.hunger+10);addMissionProgress('treat',1);addExp(4);setMsg(pickDialog('treat',['わーい！おやつ！🍬']));save()})}
+function trainBird(){if(G.energy<25){playBirdSound('feed');setMsg('疲れてる...訓練は無理...');return}doAction('train',()=>{playBirdSound('play');G.energy=Math.max(0,G.energy-15);addMissionProgress('train',1);addCoins(3);addExp(4);setMsg(pickDialog('train',['賢くなった！📚']));save()})}
+function singBird(){if(G.energy<15){playBirdSound('feed');setMsg('疲れて歌えない...');return}doAction('sing',()=>{playBirdSound('sing');G.happiness=Math.min(100,G.happiness+12);G.energy=Math.max(0,G.energy-8);G.tSings++;addMissionProgress('sing',1);addCoins(2);addExp(3);setMsg(pickDialog('sing',['チュンチュン〜♪🎵']));save()})}
 function buyItem(id,price,curr,amt){if(G[curr]<price){showToast(curr==='gems'?'💎が足りません':'💰が足りません','warning');return}G[curr]-=price;G.inv[id]=(G.inv[id]||0)+amt;addMissionProgress('buy',1);showToast('購入しました！');playBirdSound('feed');setMsg('お買い物ありがとう！🛒');save();updateUI();renderInv()}
 
 // Minigame System
@@ -1108,7 +1170,7 @@ async function sendChatMessage(){
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div>v2.3.5 変更ログ</div><ul><li>保存Cookieを分割して大きさ問題を回避</li><li>保存の復元処理を強化</li><li>継続的な安定化調整</li></ul>`;
+  el.innerHTML=`<div>v2.3.6 変更ログ</div><ul><li>ロード画面を追加</li><li>動物追加＆セリフ分岐</li><li>見た目のディテールを強化</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
@@ -1198,6 +1260,7 @@ function init(){
   init3dControl();renderChangeLog();renderErrorLogs();renderChat();runErrorScan();
   if(G.autoTheme)applyAutoTheme();
   if(G.autoWeather&&(!G.lastWeatherFetch||Date.now()-G.lastWeatherFetch>30*60*1000))getGeoAndWeather();
+  setMsg(pickDialog('idle',['鳥があなたを見ています...']));
   document.addEventListener('visibilitychange',()=>{
     if(!document.hidden&&G.isSleeping&&G.sleepStart){
       const sleepMins=(Date.now()-G.sleepStart)/60000,eBefore=G.energy;
@@ -1208,6 +1271,8 @@ function init(){
       save();updateUI();
     }
   });
+  const overlay=document.getElementById('loadingOverlay');
+  if(overlay){setTimeout(()=>overlay.classList.add('hide'),600);}
 }
 function saveName(){const n=document.getElementById('nameInput').value.trim();if(n){setCurrentBirdName(n);playBirdSound('feed');setMsg(`名前が「${n}」になった！`);save();updateUI()}hideModal('nameModal')}
 init();
