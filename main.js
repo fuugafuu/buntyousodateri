@@ -165,11 +165,46 @@ let action=null,animF=0,blink=false,mgActive=false,mgScore=0,mgTimer=null,selBir
 let currentMg=null,mgData={},mgInterval=null;
 let lastWeatherRender={type:null,mode:null};
 let scanCache={};
+const SAVE_KEY_NAME='birdG3_key';
+const SAVE_NAME_NAME='birdG3_name';
+let saveKeySeed=null;
 
 function persistBackup(key,json){
   const encoded=encPayload(json);
   try{localStorage.setItem(key,encoded);}catch(e){}
   try{sessionStorage.setItem(key,encoded);}catch(e){}
+}
+function writeRawCookie(name,value){
+  document.cookie=`${name}=${value};expires=${new Date(Date.now()+365*864e5).toUTCString()};path=/;SameSite=Lax`;
+}
+function readRawCookie(name){
+  const row=document.cookie.split('; ').find(r=>r.startsWith(name+'='));
+  if(!row)return null;
+  return row.split('=')[1];
+}
+function getSaveKeySeed(){
+  if(saveKeySeed)return saveKeySeed;
+  try{saveKeySeed=localStorage.getItem(SAVE_KEY_NAME);}catch(e){}
+  if(!saveKeySeed){
+    try{saveKeySeed=sessionStorage.getItem(SAVE_KEY_NAME);}catch(e){}
+  }
+  if(!saveKeySeed){
+    saveKeySeed=readRawCookie(SAVE_KEY_NAME);
+  }
+  if(!saveKeySeed){
+    saveKeySeed=`k${Date.now().toString(36)}${Math.random().toString(36).slice(2,8)}`;
+    try{localStorage.setItem(SAVE_KEY_NAME,saveKeySeed);}catch(e){}
+    try{sessionStorage.setItem(SAVE_KEY_NAME,saveKeySeed);}catch(e){}
+    writeRawCookie(SAVE_KEY_NAME,saveKeySeed);
+  }
+  return saveKeySeed;
+}
+function getCipherKey(seed){
+  return (seed+'|buncho_save').split('').reduce((a,c)=>a+c.charCodeAt(0),0)%131+17;
+}
+function legacyKeyFrom(name,level){
+  const salt=String(level||1);
+  return (salt+name).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%97+13;
 }
 function bytesToBase64(bytes){
   let bin='';
@@ -184,20 +219,20 @@ function base64ToBytes(b64){
 }
 function encPayload(payload){
   try{
-    const salt=String(G.level||1);
-    const key=(salt+G.name).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%97+13;
+    const key=getCipherKey(getSaveKeySeed());
     const bytes=new TextEncoder().encode(payload);
     const out=bytes.map(b=>b^key);
     return bytesToBase64(out);
   }catch(e){return payload;}
 }
+function decodeWithKey(payload,key){
+  const bytes=base64ToBytes(payload);
+  const out=bytes.map(b=>b^key);
+  return new TextDecoder().decode(out);
+}
 function decPayload(payload){
   try{
-    const bytes=base64ToBytes(payload);
-    const salt=String(G.level||1);
-    const key=(salt+G.name).split('').reduce((a,c)=>a+c.charCodeAt(0),0)%97+13;
-    const out=bytes.map(b=>b^key);
-    return new TextDecoder().decode(out);
+    return decodeWithKey(payload,getCipherKey(getSaveKeySeed()));
   }catch(e){return null;}
 }
 function writeCookie(name,value){
@@ -245,6 +280,16 @@ function parseStoredValue(raw){
   if(decoded){
     try{return JSON.parse(decoded);}catch(e){}
   }
+  const savedNameRaw=readRawCookie(SAVE_NAME_NAME);
+  const savedName=savedNameRaw?decodeURIComponent(savedNameRaw):'';
+  const legacyNames=[G.name,savedName].filter(Boolean);
+  for(const nm of legacyNames){
+    try{
+      const decodedLegacy=decodeWithKey(raw,legacyKeyFrom(nm,G.level));
+      const parsed=JSON.parse(decodedLegacy);
+      if(parsed)return parsed;
+    }catch(e){}
+  }
   try{return JSON.parse(raw);}catch(e){}
   try{return JSON.parse(decodeURIComponent(raw));}catch(e){}
   return null;
@@ -285,7 +330,11 @@ function delCookie(n){
   try{localStorage.removeItem(n);}catch(e){}
   try{sessionStorage.removeItem(n);}catch(e){}
 }
-function save(){G.lastUpdate=Date.now();setCookie('birdG3',G)}
+function save(){
+  G.lastUpdate=Date.now();
+  writeRawCookie(SAVE_NAME_NAME,encodeURIComponent(getCurrentBirdName()));
+  setCookie('birdG3',G);
+}
 function load(){
   const s=getCookie('birdG3');
   if(s){
@@ -577,6 +626,16 @@ function renderBird(){
   const isCat=b.isCat===true;
   const isFox=b.isFox===true;
   const isPenguin=b.isPenguin===true;
+  const bodyCenterY=isPenguin?140:(isCat||isFox?134:132);
+  const bodyRx=isPenguin?46:(isCat||isFox?52:48);
+  const bodyRy=isPenguin?50:(isCat||isFox?36:42);
+  const bellyRx=isPenguin?28:(isCat||isFox?30:34);
+  const bellyRy=isPenguin?34:(isCat||isFox?24:30);
+  const wingOffsetX=isPenguin?58:52;
+  const wingOffsetY=isPenguin?126:120;
+  const wingRx=isPenguin?12:14;
+  const wingRy=isPenguin?26:35;
+  const headR=isPenguin?36:(isCat||isFox?38:42);
   const bounce=Math.sin(animF*0.14*speed)*3.2*amp,tilt=Math.sin(animF*0.07*speed)*2*amp;
   const tailWiggle=Math.sin(animF*0.2*speed)*4*amp;
   const wingFlap=action==='play'||action==='bath'||action==='sing'?Math.sin(animF*0.38*speed)*12*amp:Math.sin(animF*0.04*speed)*2*amp;
@@ -601,16 +660,16 @@ function renderBird(){
       <g transform="translate(100,158) rotate(${-10+tilt+tailWiggle})"><path d="M0,0 L-18,42 L0,44 L18,42 Z" fill="${c.tail}"/></g>
       <g transform="translate(82,175)"><path d="M0,0 L-9,16 M0,0 L0,18 M0,0 L9,16" stroke="${c.feet}" stroke-width="4" stroke-linecap="round" fill="none"/></g>
       <g transform="translate(118,175)"><path d="M0,0 L-9,16 M0,0 L0,18 M0,0 L9,16" stroke="${c.feet}" stroke-width="4" stroke-linecap="round" fill="none"/></g>
-      <ellipse cx="100" cy="132" rx="48" ry="42" fill="url(#bg)"/>
-      <ellipse cx="100" cy="145" rx="34" ry="${30+bellyPulse}" fill="url(#bel)"/>
+      <ellipse cx="100" cy="${bodyCenterY}" rx="${bodyRx}" ry="${bodyRy}" fill="url(#bg)"/>
+      <ellipse cx="100" cy="${bodyCenterY+13}" rx="${bellyRx}" ry="${bellyRy+bellyPulse}" fill="url(#bel)"/>
       <ellipse cx="92" cy="120" rx="12" ry="8" fill="rgba(255,255,255,0.14)"/>
       ${quality?'<path d="M70,128 Q100,98 132,126" stroke="rgba(255,255,255,0.16)" stroke-width="2" fill="none"/>':''}
       <path d="M72,150 Q100,164 128,150" stroke="rgba(0,0,0,0.08)" stroke-width="2" fill="none"/>
       <path d="M76,160 Q100,172 124,160" stroke="rgba(0,0,0,0.06)" stroke-width="2" fill="none"/>
-      <g transform="translate(52,120) rotate(${-wingFlap})"><ellipse cx="0" cy="18" rx="14" ry="35" fill="${c.wing}"/></g>
-      <g transform="translate(148,120) rotate(${wingFlap})"><ellipse cx="0" cy="18" rx="14" ry="35" fill="${c.wing}"/></g>
+      <g transform="translate(${wingOffsetX},${wingOffsetY}) rotate(${-wingFlap})"><ellipse cx="0" cy="18" rx="${wingRx}" ry="${wingRy}" fill="${c.wing}"/></g>
+      <g transform="translate(${200-wingOffsetX},${wingOffsetY}) rotate(${wingFlap})"><ellipse cx="0" cy="18" rx="${wingRx}" ry="${wingRy}" fill="${c.wing}"/></g>
       <g transform="rotate(${headTilt},100,78)">
-        <circle cx="100" cy="78" r="42" fill="${c.head}"/>
+        <circle cx="100" cy="78" r="${headR}" fill="${c.head}"/>
         ${isCat?`<path d="M68,52 L82,30 L94,56 Z" fill="${c.head}"/><path d="M132,52 L118,30 L106,56 Z" fill="${c.head}"/>`:''}
         ${isFox?`<path d="M66,54 L82,26 L96,56 Z" fill="${c.head}"/><path d="M134,54 L118,26 L104,56 Z" fill="${c.head}"/>`:''}
         ${isPenguin?`<path d="M100,44 C84,40 76,30 74,22 C86,26 94,30 100,36 C106,30 114,26 126,22 C124,30 116,40 100,44 Z" fill="${c.head}"/>`:''}
@@ -1209,7 +1268,7 @@ async function sendChatMessage(){
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div>v2.3.8 変更ログ</div><ul><li>最高アニメの頭モヤを除去し、口の動き/尻尾/呼吸の演出を追加</li><li>保存データ暗号化のUTF-8対応でInvalidCharacterErrorを修正</li><li>スリープボックスの価格と利用コストを減額</li></ul>`;
+  el.innerHTML=`<div>v2.3.9 変更ログ</div><ul><li>保存キーを安定化し、データ消失を防ぐための復元フォールバックを追加</li><li>猫/きつね/ペンギンの体型を専用調整して鳥ベース感を軽減</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
