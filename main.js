@@ -14,7 +14,8 @@ const birds={
   owl:{name:'フクロウ',icon:'🦉',price:6,curr:'gems',colors:{head:'#8d6e63',cheek:'#d7ccc8',body:'#6d4c41',belly:'#bcaaa4',wing:'#5d4037',tail:'#4e342e',beak:'#ffd54f',eyeRing:'#ffd54f',feet:'#a1887f'},hasCheek:false,isOwl:true,defaultNames:['ふくろう','ホー太','ミミズク','よる','ウィズダム','アウル','ナイト']},
   cat:{name:'ねこ',icon:'🐱',price:720,curr:'coins',colors:{head:'#e0c39a',cheek:'#f5e2c6',body:'#cfa67a',belly:'#f2dec8',wing:'#b78961',tail:'#b07b51',beak:'#d07a4a',eyeRing:'#ffd39d',feet:'#c98d6c'},hasCheek:false,isCat:true,defaultNames:['みけ','こむぎ','そら','もか','こはく','あんず','まる']},
   fox:{name:'きつね',icon:'🦊',price:4,curr:'gems',colors:{head:'#e07a3f',cheek:'#ffe0c4',body:'#d2652f',belly:'#ffe8d6',wing:'#c35628',tail:'#b24b1f',beak:'#d26839',eyeRing:'#ffd6b8',feet:'#b35b32'},hasCheek:false,isFox:true,defaultNames:['こん','おこん','あさひ','ひばり','こはる','ほたる','しの']},
-  penguin:{name:'ペンギン',icon:'🐧',price:880,curr:'coins',colors:{head:'#1f2b3a',cheek:'#dfe9f2',body:'#1b2633',belly:'#f4f7fb',wing:'#101820',tail:'#1f2b3a',beak:'#f3c05a',eyeRing:'#d5dee8',feet:'#f0c872'},hasCheek:false,isPenguin:true,defaultNames:['ペン','ゆきまる','こおり','ましろ','しらたま','あお','ちる']}
+  penguin:{name:'ペンギン',icon:'🐧',price:880,curr:'coins',colors:{head:'#1f2b3a',cheek:'#dfe9f2',body:'#1b2633',belly:'#f4f7fb',wing:'#101820',tail:'#1f2b3a',beak:'#f3c05a',eyeRing:'#d5dee8',feet:'#f0c872'},hasCheek:false,isPenguin:true,defaultNames:['ペン','ゆきまる','こおり','ましろ','しらたま','あお','ちる']},
+  fuga:{name:'ふうが',icon:'🧑‍🎤',price:0,curr:'coins',colors:{head:'#f1d6c8',cheek:'#f6c2c2',body:'#1d2026',belly:'#3b3f48',wing:'#2b3038',tail:'#16181d',beak:'#c08778',eyeRing:'#6c7a89',feet:'#3b3b3b'},hasCheek:false,isHuman:true,hidden:true,defaultNames:['ふうが','風牙','ユウ','ソラ','レン']}
 };
 const minigames=[
   {id:'catch',name:'シードキャッチ',icon:'🌾',desc:'落ちるシードをキャッチ！',cost:10,type:'catch'},
@@ -155,10 +156,21 @@ const dialogBySpecies={
     train:['できた！','覚えたよ。'],
     sing:['ぺたぺたリズム♪','いい感じ！'],
     sleep:['おやすみ...','すやすや。']
+  },
+  human:{
+    idle:['静かに見守っている。','気分転換しよう。','少し休もう。'],
+    feed:['いただきます。','元気が出た。','ありがと。'],
+    treat:['ちょっと嬉しい。','甘いね。'],
+    pet:['やさしくしてくれてるね。','安心する。'],
+    play:['少し動こう。','いいリズムだ。'],
+    bath:['さっぱりした。','気分が変わるね。'],
+    train:['集中できた。','悪くない。'],
+    sing:['小さく口ずさむ。','いい音だ。'],
+    sleep:['おやすみ。','静かに休もう。']
   }
 };
 function pickDialog(type,fallback){
-  const key=birds[G.species].isCat?'cat':birds[G.species].isFox?'fox':birds[G.species].isPenguin?'penguin':'default';
+  const key=birds[G.species].isHuman?'human':birds[G.species].isCat?'cat':birds[G.species].isFox?'fox':birds[G.species].isPenguin?'penguin':'default';
   const options=(dialogBySpecies[key]&&dialogBySpecies[key][type])||(dialogBySpecies.default[type])||fallback;
   return options[Math.floor(Math.random()*options.length)];
 }
@@ -482,6 +494,7 @@ function togglePanel(p){['shop','inventory','minigame','customize','chat','logs'
 
 function updateUI(){
   const b=birds[G.species];
+  checkHiddenUnlocks();
   document.getElementById('headerIcon').textContent=b.icon;
   document.getElementById('birdName').textContent=getCurrentBirdName();
   document.getElementById('level').textContent=G.level;
@@ -514,7 +527,7 @@ function renderStats(){
 }
 function renderBirdGrid(){
   selBird=G.species;
-  document.getElementById('birdGrid').innerHTML=Object.entries(birds).map(([id,b])=>{
+  document.getElementById('birdGrid').innerHTML=Object.entries(birds).filter(([id,b])=>!b.hidden||G.unlocked.includes(id)).map(([id,b])=>{
     const owned=G.unlocked.includes(id),sel=G.species===id;
     const pr=b.price===0?'無料':b.price+(b.curr==='gems'?'💎':'💰');
     return`<div class="bird-option ${sel?'selected':''} ${owned?'':'locked'}" onclick="selectBird(event,'${id}')">${owned?'':`<span class="lock-icon">🔒</span>`}<div class="bird-option-icon">${b.icon}</div><div class="bird-option-name">${b.name}</div><div class="bird-option-price">${owned?'所持中':pr}</div></div>`;
@@ -538,6 +551,18 @@ function buyBird(){
   if(G[b.curr]<b.price){showToast(b.curr==='gems'?'💎が足りません':'💰が足りません','warning');return}
   G[b.curr]-=b.price;G.unlocked.push(selBird);G.species=selBird;
   G.birdNames[selBird]=G.birdNames[selBird]||b.name;showToast('🎉'+b.name+'をゲット！','achievement');playBirdSound('feed');setMsg(b.name+'がやってきた！あとで名前変更できます。');save();updateUI();renderBirdGrid();
+}
+function checkHiddenUnlocks(){
+  const hiddenId=Object.keys(birds).find(id=>birds[id].hidden);
+  if(!hiddenId||G.unlocked.includes(hiddenId))return;
+  const baseIds=Object.keys(birds).filter(id=>!birds[id].hidden);
+  const done=baseIds.every(id=>G.unlocked.includes(id));
+  if(done){
+    G.unlocked.push(hiddenId);
+    G.birdNames[hiddenId]=G.birdNames[hiddenId]||birds[hiddenId].name;
+    showToast(`🎁 隠しキャラ「${birds[hiddenId].name}」解放！`,'achievement');
+    save();
+  }
 }
 function showChangeNameModal(){
   const b=birds[G.species];
@@ -570,7 +595,7 @@ function confirmUseItem(){
     case'vitamins':G.energy=Math.min(100,G.energy+30);playBirdSound('feed');setMsg('ビタミン補給！💉');break;
     case'medicine':G.health=100;playBirdSound('feed');setMsg('健康になった！💊');break;
     case'cold_medicine':G.sickLevel=0;G.health=Math.min(100,G.health+12);playBirdSound('feed');setMsg('病気が良くなった！🧫');break;
-    case'shampoo':G.cleanliness=100;playBirdSound('feed');setMsg('ピカピカ！🧴');break;
+    case'shampoo':G.cleanliness=100;playBirdSound('feed');setMsg('清潔になった！🧴');break;
     case'super_energy':G.energy=100;playBirdSound('feed');setMsg('元気MAX！⚡');break;
   }
   hideModal('useItemModal');save();updateUI();renderInv();
@@ -639,6 +664,10 @@ function addMissionProgress(type,amount=1){
       addCoins(m.reward,{ignoreMission:true});
       showToast(`✅ ミッション達成！${m.title} +${m.reward}💰`,'achievement');
       G.missions.completed++;
+      if(G.missions.completed%5===0){
+        G.gems+=2;
+        showToast('💎 ミッション5個達成ボーナス +2','achievement');
+      }
     }
     changed=true;
   });
@@ -675,6 +704,7 @@ function renderBird(){
   const isCat=b.isCat===true;
   const isFox=b.isFox===true;
   const isPenguin=b.isPenguin===true;
+  const isHuman=b.isHuman===true;
   const bodyCenterY=isPenguin?140:(isCat||isFox?134:132);
   const bodyRx=isPenguin?46:(isCat||isFox?52:48);
   const bodyRy=isPenguin?50:(isCat||isFox?36:42);
@@ -698,6 +728,30 @@ function renderBird(){
   const mouthActive=action==='feed'||action==='treat'||action==='sing';
   const mouthOpenBase=mouthActive?1.6:0.15;
   const mouthOpen=G.isSleeping?0:mouthOpenBase+Math.abs(Math.sin(animF*0.4*speed))*(mouthActive?1.4:0.2);
+  if(isHuman){
+    const bob=bounce*0.6;
+    const armSwing=Math.sin(animF*0.2*speed)*10*amp;
+    svg.innerHTML=`
+      <defs>
+        <linearGradient id="humanBody" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${c.body}"/><stop offset="100%" stop-color="${c.wing}"/></linearGradient>
+        <filter id="sh"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-opacity="0.2"/></filter>
+      </defs>
+      <rect x="28" y="188" width="144" height="10" rx="5" fill="#5a4630"/>
+      <g transform="translate(0,${-bob})" filter="url(#sh)">
+        <rect x="58" y="120" width="84" height="78" rx="28" fill="url(#humanBody)"/>
+        <g transform="rotate(${armSwing},56,150)"><rect x="48" y="132" width="16" height="52" rx="8" fill="${c.belly}"/></g>
+        <g transform="rotate(${-armSwing},144,150)"><rect x="136" y="132" width="16" height="52" rx="8" fill="${c.belly}"/></g>
+        <circle cx="100" cy="78" r="30" fill="${c.head}"/>
+        <path d="M68,70 Q100,40 132,70 Q130,48 100,40 Q70,48 68,70 Z" fill="#1b1b1b"/>
+        <ellipse cx="88" cy="80" rx="7" ry="6" fill="#1c1c1c"/>
+        <ellipse cx="112" cy="80" rx="7" ry="6" fill="#1c1c1c"/>
+        <circle cx="90" cy="78" r="2.5" fill="#f5f5f5"/>
+        <circle cx="114" cy="78" r="2.5" fill="#f5f5f5"/>
+        <path d="M88,96 Q100,${96+mouthOpen} 112,96" stroke="#c17777" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <rect x="72" y="148" width="56" height="44" rx="14" fill="${c.belly}"/>
+      </g>`;
+    return;
+  }
   svg.innerHTML=`
     <defs>
       <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c.body}"/><stop offset="100%" stop-color="${c.wing}"/></linearGradient>
@@ -728,6 +782,9 @@ function renderBird(){
         ${b.hasCheek?`<ellipse cx="70" cy="88" rx="18" ry="16" fill="${c.cheek}"/><ellipse cx="130" cy="88" rx="18" ry="16" fill="${c.cheek}"/>`:''}
         <circle cx="78" cy="72" r="14" fill="${c.eyeRing}"/><circle cx="122" cy="72" r="14" fill="${c.eyeRing}"/>
         ${eyesClosed?`<path d="M67,72 Q78,82 89,72" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M111,72 Q122,82 133,72" stroke="#1a1a1a" stroke-width="4" fill="none" stroke-linecap="round"/>`:`<circle cx="78" cy="72" r="10" fill="#0a0505"/><circle cx="122" cy="72" r="10" fill="#0a0505"/><circle cx="82" cy="68" r="4" fill="white"/><circle cx="126" cy="68" r="4" fill="white"/>`}
+        ${isCat?`<path d="M60,84 L48,82 M60,88 L46,90 M60,92 L48,96" stroke="#6b4b3a" stroke-width="2" stroke-linecap="round"/><path d="M140,84 L152,82 M140,88 L154,90 M140,92 L152,96" stroke="#6b4b3a" stroke-width="2" stroke-linecap="round"/>`:''}
+        ${isFox?`<path d="M86,92 Q100,108 114,92 Q100,100 86,92 Z" fill="#f6e4d0"/><circle cx="100" cy="96" r="4" fill="#4b2b1e"/>`:''}
+        ${isPenguin?`<ellipse cx="100" cy="90" rx="18" ry="14" fill="#f4f7fb"/><circle cx="100" cy="94" r="4" fill="#1c1c1c"/>`:''}
         <g transform="translate(100,98) rotate(${eatBob>0?Math.sin(animF*0.5)*4:0})">
           ${isCat||isFox?`<path d="M-6,-6 Q0,${1.5+mouthOpen*0.3} 6,-6 Z" fill="${c.beak}"/><circle cx="0" cy="${1.5+mouthOpen*0.15}" r="${2+mouthOpen*0.08}" fill="#402318"/><path d="M-6,${1.8+mouthOpen*0.4} Q0,${3+mouthOpen*0.6} 6,${1.8+mouthOpen*0.4}" stroke="#402318" stroke-width="1.3" fill="none" stroke-linecap="round"/>`:(isPenguin?`<path d="M-6,-6 L0,${7+mouthOpen*0.2} L6,-6 Z" fill="${c.beak}"/>`:(b.isOwl?`<path d="M-5,-8 L0,${5.5+mouthOpen*0.25} L5,-8 Z" fill="${c.beak}"/>`:`<ellipse cx="0" cy="-3" rx="14" ry="10" fill="${c.beak}"/><ellipse cx="0" cy="${4+mouthOpen*0.15}" rx="11" ry="${5.6+mouthOpen*0.25}" fill="${c.beak}" opacity="0.85"/><path d="M-10,${2.2+mouthOpen*0.4} Q0,${4.2+mouthOpen*0.6} 10,${2.2+mouthOpen*0.4}" stroke="#b85c5c" stroke-width="1.2" fill="none" stroke-linecap="round"/>`))}
           <ellipse cx="-4" cy="-6" rx="4" ry="3" fill="rgba(255,255,255,0.35)"/>
@@ -751,7 +808,7 @@ function spendCoins(amount){G.coins=Math.max(0,G.coins-amount);}
 function feedBird(){if(G.inv.seeds<=0){playBirdSound('feed');setMsg('シードがない！');return}doAction('feed',()=>{playBirdSound('feed');G.inv.seeds--;G.hunger=Math.min(100,G.hunger+18);G.happiness=Math.min(100,G.happiness+3);G.tFeeds++;addMissionProgress('feed',1);addExp(2);setMsg(pickDialog('feed',['パクパク...おいしい！🌾']));save()})}
 function petBird(){doAction('pet',()=>{playBirdSound('pet');G.happiness=Math.min(100,G.happiness+10+(G.inv.mirror>0?5:0));G.tPets++;addMissionProgress('pet',1);addExp(1);setMsg(pickDialog('pet',['チュンチュン♪うれしい！']));save()})}
 function playBird(){if(G.energy<20){playBirdSound('feed');setMsg('疲れてる...休ませて...');return}doAction('play',()=>{playBirdSound('play');const b=G.inv.swing>0?2:1,tb=G.inv.toys>0?5:0;G.happiness=Math.min(100,G.happiness+(15+tb)*b);G.energy=Math.max(0,G.energy-12);G.hunger=Math.max(0,G.hunger-5);G.tPlays++;addMissionProgress('play',1);addCoins(2);addExp(3);setMsg(pickDialog('play',['わーい！楽しい！🎉']));save()})}
-function bathBird(){doAction('bath',()=>{playBirdSound('bath');const b=G.inv.shampoo>0;if(b)G.inv.shampoo--;G.cleanliness=100;G.happiness=Math.min(100,G.happiness+(b?15:8));G.tBaths++;addMissionProgress('bath',1);addExp(2);setMsg(b?'シャンプーでピカピカ！✨':pickDialog('bath',['バシャバシャ！💦']));save()})}
+function bathBird(){doAction('bath',()=>{playBirdSound('bath');const b=G.inv.shampoo>0;if(b)G.inv.shampoo--;G.cleanliness=100;G.happiness=Math.min(100,G.happiness+(b?15:8));G.tBaths++;addMissionProgress('bath',1);addExp(2);setMsg(b?'シャンプーで清潔になった！🧴':pickDialog('bath',['バシャバシャ！💦']));save()})}
 function toggleSleep(){
   if(G.sleepBoxUntil&&Date.now()<G.sleepBoxUntil){cancelSleepBox();return;}
   if(G.isSleeping){G.isSleeping=false;G.sleepStart=null;playBirdSound('feed');setMsg('おはよう！🌅')}
@@ -1320,7 +1377,7 @@ async function sendChatMessage(){
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div>v2.4.1 変更ログ</div><ul><li>セーブデータの書き出し/読み込み機能を追加</li><li>病気・口・尻尾の調整を維持</li></ul>`;
+  el.innerHTML=`<div>v2.4.2 変更ログ</div><ul><li>猫/きつね/ペンギンの見た目と、隠しキャラ「ふうが」を追加</li><li>ミニミッション5個ごとにダイヤ+2</li><li>シャンプーの文言を調整</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
