@@ -183,6 +183,11 @@
   <div class="panel" id="logsPanel">
     <div class="panel-title">🧰 変更ログ / バグ報告 / エラーログ</div>
     <div class="changelog" id="changeLogArea"></div>
+    <div class="customize-options">
+      <button class="customize-btn" onclick="exportSave()">💾 セーブを保存</button>
+      <button class="customize-btn" onclick="triggerImport()">📂 セーブを読み込み</button>
+      <input type="file" id="saveFileInput" accept="application/json" style="display:none" onchange="importSaveFile(event)">
+    </div>
     <textarea id="bugInput" class="bug-input" maxlength="400" placeholder="不具合の内容を書いてください (最大400文字)"></textarea>
     <div class="customize-options">
       <button class="customize-btn active" onclick="submitBugReport()">🐞 報告を保存</button>

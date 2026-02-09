@@ -337,6 +337,51 @@ function save(){
   writeRawCookie(SAVE_NAME_NAME,encodeURIComponent(getCurrentBirdName()));
   setCookie('birdG3',G);
 }
+function exportSave(){
+  const payload={version:'2.4.1',savedAt:new Date().toISOString(),data:G};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`buncho_save_${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('セーブデータを保存しました','achievement');
+}
+function triggerImport(){
+  const input=document.getElementById('saveFileInput');
+  if(input){input.value='';input.click();}
+}
+function importSaveFile(event){
+  const file=event.target.files&&event.target.files[0];
+  if(!file){return;}
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const raw=String(reader.result||'');
+      const parsed=JSON.parse(raw);
+      const data=parsed&&parsed.data?parsed.data:parsed;
+      if(!data||typeof data!=='object'){throw new Error('invalid');}
+      G={...G,...data};
+      ensureNewSettings();
+      G.name=getCurrentBirdName();
+      save();
+      updateUI();
+      renderInv();
+      renderShop();
+      renderCustomize();
+      renderMissions();
+      renderBird();
+      showToast('セーブデータを読み込みました','achievement');
+    }catch(e){
+      logError('save_import','invalid_file');
+      showToast('セーブデータの読み込みに失敗しました','warning');
+    }
+  };
+  reader.readAsText(file);
+}
 function load(){
   const s=getCookie('birdG3');
   if(s){
@@ -1275,7 +1320,7 @@ async function sendChatMessage(){
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div>v2.4.0 変更ログ</div><ul><li>尻尾を止まり木の奥に描画して見た目を改善</li><li>口の動きを自然に調整</li><li>病気の要素を追加し、かぜ薬をショップに追加</li></ul>`;
+  el.innerHTML=`<div>v2.4.1 変更ログ</div><ul><li>セーブデータの書き出し/読み込み機能を追加</li><li>病気・口・尻尾の調整を維持</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
