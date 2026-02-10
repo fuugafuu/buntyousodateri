@@ -13,6 +13,13 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="day">
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-card">
+      <div class="loading-icon" id="loadingIcon">🐦</div>
+      <div class="loading-text">読み込み中...</div>
+      <div class="loading-bar"><span></span></div>
+    </div>
+  </div>
   <div class="stars" id="stars"></div>
   <div class="toast" id="toast"></div>
   <div class="install-banner" id="installBanner">
@@ -115,17 +122,20 @@
     <button class="action-btn feed" onclick="feedBird()">🍚えさ</button>
     <button class="action-btn pet" onclick="petBird()">✋なでる</button>
     <button class="action-btn play" onclick="playBird()">🎾遊ぶ</button>
-    <button class="action-btn bath" onclick="bathBird()">💦水浴び</button>
+    <button class="action-btn bath" onclick="bathBird()">🛁水浴び</button>
     <button class="action-btn sleep" id="sleepBtn" onclick="toggleSleep()">💤寝かす</button>
     <button class="action-btn treat" onclick="giveTreat()">🍬おやつ</button>
     <button class="action-btn train" onclick="trainBird()">📚訓練</button>
     <button class="action-btn sing" onclick="singBird()">🎵歌う</button>
   </div>
-  <div class="quick-actions">
-    <button class="quick-btn birds" onclick="showModal('birdModal')">🐦鳥図鑑</button>
+  <div class="quick-actions quick-dock">
+    <button class="quick-btn birds" onclick="showModal('birdModal')">🦊動物図鑑</button>
     <button class="quick-btn shop" onclick="togglePanel('shop')">🛒ショップ</button>
     <button class="quick-btn inventory" onclick="togglePanel('inventory')">🎒持ち物</button>
     <button class="quick-btn minigame" onclick="togglePanel('minigame')">🎮ミニゲーム</button>
+    <button class="quick-btn chat" id="chatOpenBtn" onclick="togglePanel('chat')" style="display:none">💬AI会話</button>
+    <button class="quick-btn logs" onclick="togglePanel('logs')">🧰ログ</button>
+    <button class="quick-btn mission" onclick="togglePanel('missions')">✅ミニミッション</button>
   </div>
   <div class="panel" id="shopPanel">
     <div class="panel-title">🛒 ショップ</div>
@@ -159,18 +169,79 @@
       </div>
     </div>
   </div>
+
+  <div class="panel" id="chatPanel">
+    <div class="panel-title">💬 AI会話</div>
+    <div class="chat-wrap" id="chatWrap"></div>
+    <div class="thinking" id="chatThinking" style="display:none"><span></span><span></span><span></span> 考え中...</div>
+    <div class="chat-input-row">
+      <input id="chatInput" class="chat-input" maxlength="240" placeholder="AIに話しかける (最大240文字)">
+      <button class="chat-send" onclick="sendChatMessage()">送信</button>
+    </div>
+    <small class="api-hint">送信時に鳥の要約状態を一緒に送ります。</small>
+  </div>
+  <div class="panel" id="logsPanel">
+    <div class="panel-title">🧰 変更ログ / バグ報告 / エラーログ</div>
+    <div class="changelog" id="changeLogArea"></div>
+    <div class="customize-options">
+      <button class="customize-btn" onclick="exportSave()">💾 セーブを保存</button>
+      <button class="customize-btn" onclick="triggerImport()">📂 セーブを読み込み</button>
+      <input type="file" id="saveFileInput" accept="application/json" style="display:none" onchange="importSaveFile(event)">
+    </div>
+    <textarea id="bugInput" class="bug-input" maxlength="400" placeholder="不具合の内容を書いてください (最大400文字)"></textarea>
+    <div class="customize-options">
+      <button class="customize-btn active" onclick="submitBugReport()">🐞 報告を保存</button>
+      <button class="customize-btn" onclick="copyBugReport()">📋 最新報告をコピー</button>
+    </div>
+    <div class="error-log" id="errorLogArea"></div>
+  </div>
+
+
+
+  <div class="panel" id="missionsPanel">
+    <div class="panel-title">✅ ミニミッション</div>
+    <div class="mission-list" id="missionList"></div>
+  </div>
+
   <div class="panel" id="customizePanel">
+    <div class="customize-section">
+      <div class="customize-title">✨ アニメーション</div>
+      <div class="customize-options" id="animationOpts"></div>
+    </div>
+    <div class="customize-section">
+      <div class="customize-title">🖼️ 鳥の解像度</div>
+      <div class="customize-options" id="resolutionOpts"></div>
+    </div>
+    <div class="customize-section">
+      <div class="customize-title">🧪 3D表示 (β)</div>
+      <div class="customize-options" id="beta3dOpts"></div>
+    </div>
     <div class="customize-section">
       <div class="customize-title">🌤️ 背景</div>
       <div class="customize-options" id="themeOpts"></div>
+      <div class="customize-options" id="themeAutoOpts"></div>
     </div>
     <div class="customize-section">
       <div class="customize-title">🌦️ 天気</div>
       <div class="customize-options" id="weatherOpts"></div>
+      <div class="customize-options" id="weatherAutoOpts"></div>
+      <small class="api-hint" id="weatherHint">位置情報を使って実際の天気に連動できます。</small>
+    </div>
+    <div class="customize-section">
+      <div class="customize-title">🔊 サウンド</div>
+      <div class="customize-options" id="soundOpts"></div>
+    </div>
+    <div class="customize-section">
+      <div class="customize-title">🤖 ChatGPT API</div>
+      <div class="customize-options" id="chatApiOpts"></div>
+      <input type="password" id="chatApiKey" class="api-input" placeholder="APIキーを入力 (ONのとき必須)">
+      <button class="api-save-btn" onclick="saveChatApiKey()">APIキーを保存</button>
+      <small id="chatApiHint" class="api-hint">ONにするとCookieへ保存されます。</small>
     </div>
   </div>
   <div class="quick-actions">
     <button class="quick-btn shop" onclick="togglePanel('customize')">🎨カスタマイズ</button>
+    <button class="quick-btn share" onclick="shareGame()">📤共有</button>
   </div>
   <div class="footer-stats">
     <div>🍚<span id="tFeeds">0</span> ✋<span id="tPets">0</span> 🎾<span id="tPlays">0</span> 💦<span id="tBaths">0</span></div>
