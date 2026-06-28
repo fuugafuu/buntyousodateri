@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-label="temporary gacha sparkle">
+  <rect width="600" height="600" fill="#fff8dc"/>
+  <circle cx="300" cy="300" r="220" fill="#f1c35a" opacity=".3"/>
+  <circle cx="300" cy="300" r="130" fill="#ffffff" opacity=".58"/>
+  <path d="M300 40l36 160 154-56-118 110 134 82-166-11-40 160-40-160-166 11 134-82-118-110 154 56z" fill="#f0b64d" opacity=".62"/>
+  <g fill="#ffffff">
+    <circle cx="120" cy="105" r="18"/>
+    <circle cx="478" cy="136" r="14"/>
+    <circle cx="94" cy="470" r="13"/>
+    <circle cx="510" cy="452" r="19"/>
+  </g>
+</svg>
