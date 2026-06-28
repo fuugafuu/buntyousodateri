@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="temporary sakura white mix java sparrow">
+  <ellipse cx="260" cy="302" rx="128" ry="146" fill="#d8c0a8"/>
+  <path d="M183 250c42 45 106 62 179 42 22 74-20 150-92 150-70 0-122-80-87-192z" fill="#ffffff"/>
+  <circle cx="214" cy="190" r="92" fill="#6d7071"/>
+  <ellipse cx="190" cy="206" rx="34" ry="42" fill="#ffffff"/>
+  <path d="M285 185l94 35-94 37z" fill="#eba0aa"/>
+  <circle cx="237" cy="166" r="12" fill="#171c1d"/>
+  <path d="M210 432h96" stroke="#7a654f" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="345" cy="112" r="22" fill="#f0b64d" opacity=".7"/>
+</svg>

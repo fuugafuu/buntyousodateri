@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5faf7;
+  --foreground: #17211c;
+  --panel: #fffdf8;
+  --panel-strong: #ffffff;
+  --line: #cfded4;
+  --leaf: #33785b;
+  --leaf-dark: #23553f;
+  --coral: #d66559;
+  --sun: #f0b64d;
+  --sky: #497ba7;
+  --muted: #66756c;
+  --danger: #b84747;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  letter-spacing: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--sky) 65%, white);
+  outline-offset: 2px;
+}
+
+.game-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #9ab9a7 transparent;
+}
+
+.game-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.game-scrollbar::-webkit-scrollbar-thumb {
+  background: #9ab9a7;
+  border-radius: 8px;
 }

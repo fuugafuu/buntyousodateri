@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="temporary super komatsuna icon">
+  <rect width="512" height="512" fill="#f8fbf6"/>
+  <circle cx="256" cy="256" r="172" fill="#f0b64d" opacity=".18"/>
+  <path d="M254 392c-10-84 2-174 30-262" stroke="#3e8f4d" stroke-width="30" stroke-linecap="round"/>
+  <ellipse cx="196" cy="174" rx="78" ry="126" fill="#46a85a" transform="rotate(-30 196 174)"/>
+  <ellipse cx="334" cy="182" rx="78" ry="126" fill="#65c76e" transform="rotate(24 334 182)"/>
+  <ellipse cx="252" cy="252" rx="86" ry="128" fill="#79d279"/>
+  <path d="M342 84l20 58 62 2-50 34 17 60-49-37-52 35 20-59-48-37 62 1z" fill="#f0b64d"/>
+  <rect x="178" y="360" width="156" height="36" rx="18" fill="#b98a5d"/>
+</svg>
