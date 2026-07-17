@@ -6,9 +6,34 @@ const page = await browser.newPage({ viewport: { width: 390, height: 844 }, devi
 const errors = [];
 page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
 page.on('pageerror', error => errors.push(error.message));
-await page.goto('http://127.0.0.1:3101', { waitUntil: 'networkidle' });
-await page.waitForSelector('#loadingOverlay.hide', { timeout: 10_000 });
-await page.click('#socialOpenBtn');
+let ready = false;
+for (let attempt = 0; attempt < 3 && !ready; attempt++) {
+  await page.goto(`http://127.0.0.1:3101/?social-test=${attempt}`, { waitUntil: 'domcontentloaded' });
+  try {
+    await page.waitForSelector('#loadingOverlay.hide', { state: 'attached', timeout: 10_000 });
+    ready = true;
+  } catch (error) {
+    if (attempt === 2) throw error;
+  }
+}
+errors.length = 0;
+const menuButtons = page.locator('.quick-dock .quick-btn');
+assert.equal(await menuButtons.count(), 8);
+for (let index = 0; index < 8; index++) assert.equal(await menuButtons.nth(index).isVisible(), true);
+const menuBoxes = await menuButtons.evaluateAll(buttons => buttons.map(button => { const box = button.getBoundingClientRect(); return { left: box.left, right: box.right, top: Math.round(box.top) }; }));
+assert.ok(menuBoxes.every(box => box.left >= 0 && box.right <= 390));
+assert.equal(new Set(menuBoxes.map(box => box.top)).size, 2);
+await page.screenshot({ path: 'output/menu-mobile.png', fullPage: false });
+await page.click('[data-panel="shop"]');
+await page.waitForSelector('#shopPanel.show');
+assert.equal(await page.locator('[data-panel="shop"]').getAttribute('aria-pressed'), 'true');
+assert.equal(await page.locator('#accountShortcutBtn').isVisible(), true);
+assert.match(await page.locator('#accountShortcutBtn').innerText(), /ログイン/);
+await page.click('#accountShortcutBtn');
+await page.waitForSelector('#socialPanel.show');
+await page.waitForTimeout(700);
+const accountPanelBox = await page.locator('#socialPanel').boundingBox();
+assert.ok(accountPanelBox && accountPanelBox.y < 500);
 await page.click('[data-social-tab="friends"]');
 await page.fill('#friendIdInput', 'MF-MOCHI001');
 await page.click('.friend-add-row button');

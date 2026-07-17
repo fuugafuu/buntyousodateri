@@ -632,6 +632,7 @@ function togglePanel(p){
   ['shop','inventory','minigame','customize','chat','social','logs','missions'].forEach(x=>{const el=document.getElementById(x+'Panel');if(!el)return;el.classList.toggle('show',x===p&&!el.classList.contains('show'))});
   if(p==='shop')renderShop();if(p==='inventory')renderInv();if(p==='minigame'){renderMinigameGrid();document.getElementById('minigameSelect').style.display='block';document.getElementById('minigamePlay').style.display='none';currentMg=null;}if(p==='chat')renderChat();if(p==='social')renderSocial();if(p==='logs'){renderChangeLog();renderErrorLogs();}if(p==='missions')renderMissions();
   const active=document.getElementById(p+'Panel');if(active?.classList.contains('show'))setTimeout(()=>active.scrollIntoView({behavior:'smooth',block:'start'}),60);
+  document.querySelectorAll('.quick-dock [data-panel]').forEach(button=>{const selected=button.dataset.panel===p&&Boolean(active?.classList.contains('show'));button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));});
 }
 
 function updateUI(){

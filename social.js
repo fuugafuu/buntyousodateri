@@ -159,6 +159,17 @@ async function logoutGoogle(){
   try{google.accounts.id.disableAutoSelect();}catch(error){}
   renderIdentity();renderSocial();scheduleGoogleButton();showToast('ログアウトしました');
 }
+function openAccountHub(){
+  const panel=document.getElementById('socialPanel');
+  if(!panel)return;
+  if(!panel.classList.contains('show'))togglePanel('social');
+  setSocialTab('grow');
+  setTimeout(()=>{
+    panel.scrollIntoView({behavior:'smooth',block:'start'});
+    const target=identityUser?document.getElementById('googleLogoutBtn'):document.getElementById('googleSignInButton');
+    if(target)target.setAttribute('tabindex','-1');
+  },80);
+}
 function renderIdentity(){
   const name=document.getElementById('identityName'),cloud=document.getElementById('cloudSaveState'),sync=document.getElementById('socialSyncState');
   if(name)name.textContent=identityUser?.name||'ゲスト';
@@ -166,6 +177,11 @@ function renderIdentity(){
   if(sync)sync.textContent=socialState.mode==='cloud'?'クラウド同期':'端末モード';
   const signIn=document.getElementById('googleSignInButton'),logout=document.getElementById('googleLogoutBtn');
   if(signIn)signIn.style.display=identityUser?'none':'block';if(logout)logout.style.display=identityUser?'inline-flex':'none';
+  const shortcut=document.getElementById('accountShortcutBtn'),label=document.getElementById('accountShortcutLabel'),state=document.getElementById('accountShortcutState'),dock=document.getElementById('socialOpenBtn');
+  if(shortcut){shortcut.classList.toggle('signed-in',Boolean(identityUser));shortcut.setAttribute('aria-label',identityUser?'アカウントと同期状態を開く':'Googleログインとデータ同期を開く');}
+  if(label)label.textContent=identityUser?'アカウント':'ログイン';
+  if(state)state.textContent=identityUser?(document.body.dataset.sync==='cloud'?'同期済み':'端末保存'):'データ同期';
+  if(dock){const dockLabel=dock.querySelector('b'),dockIcon=dock.querySelector('.quick-nav-icon');if(dockLabel)dockLabel.textContent=identityUser?'アカウント':'ログイン';if(dockIcon)dockIcon.textContent=identityUser?'🌐':'👤';}
 }
 function recordBondAction(actionName){
   if(!G.social)G.social={bond:0,streakDays:0,lastCareDate:'',todayCare:0,todayDate:''};

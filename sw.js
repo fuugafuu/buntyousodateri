@@ -1,4 +1,4 @@
-const CACHE='mofumori-shell-v4.0.1-account-sync';
+const CACHE='mofumori-shell-v4.0.2-login-entry';
 const SHELL=['/','/index.html','/style.css','/main.js','/social.js','/manifest.webmanifest','/icon.svg','/vendor/wllama.js','/wasm/wllama.wasm'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));});
