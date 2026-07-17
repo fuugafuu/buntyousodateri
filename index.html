@@ -7,6 +7,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Mofumori">
   <meta name="theme-color" content="#102d2a">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
   <title>Mofumori - どうぶつ育成ゲーム</title>
   
@@ -110,6 +112,43 @@
       </div>
     </div>
   </div>
+  <div class="modal" id="aiModelModal">
+    <div class="modal-content ai-model-modal">
+      <div class="ai-modal-head">
+        <div><small>ON-DEVICE AI</small><div class="modal-title">🧠 端末内モデルを読み込む</div></div>
+        <button class="ai-close" onclick="hideModal('aiModelModal')" aria-label="閉じる">×</button>
+      </div>
+      <div class="ai-privacy"><span>🔒</span><div><b>モデルも会話も端末の中だけ</b><p>GGUFはサーバーへ送信しません。初回だけスマホ内のファイルを選択します。</p></div></div>
+      <ol class="ai-steps">
+        <li><b>モデルをスマホへコピー</b><span>PCの E:\qwen2.5-1.5b-instruct-q4_k_m.gguf をスマホのファイルへ移します。</span></li>
+        <li><b>利用条件を確認</b><span>約1.04GBの保存容量、発熱、電池消費が発生します。</span></li>
+        <li><b>初回だけファイル選択</b><span>ブラウザの保護領域へ保存し、次回から再選択を省けます。</span></li>
+      </ol>
+      <label class="ai-terms"><input id="aiTerms" type="checkbox" onchange="setAiTerms(this.checked)"><span>端末内AIの利用条件と上記の注意事項に同意します</span></label>
+      <div class="ai-load-status"><div><i id="aiStatusDot"></i><b id="aiStatusText">端末内AIは未読み込みです</b></div><progress id="aiLoadProgress" max="100" value="0"></progress></div>
+      <input id="aiModelFile" type="file" accept=".gguf,application/octet-stream" hidden onchange="cacheAiModel(event)">
+      <div class="ai-modal-actions">
+        <button id="aiPrimaryBtn" class="modal-btn primary" onclick="selectOrLoadAiModel()">GGUFを選んで保存</button>
+        <button id="aiDeleteBtn" class="modal-btn secondary" onclick="deleteAiModel()" style="display:none">キャッシュ削除</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="friendPetModal">
+    <div class="modal-content friend-pet-modal">
+      <div class="friend-pet-head">
+        <div><small>FRIEND'S PET</small><div class="modal-title" id="friendPetName">ともだちのどうぶつ</div></div>
+        <button class="ai-close" onclick="hideModal('friendPetModal')" aria-label="閉じる">×</button>
+      </div>
+      <div class="friend-pet-stage" id="friendPetStage"></div>
+      <div class="friend-pet-stats" id="friendPetStats"></div>
+      <label class="gift-label" for="giftItemSelect">この子の飼い主へ仕送り</label>
+      <div class="gift-row">
+        <select id="giftItemSelect" class="gift-select"></select>
+        <button class="modal-btn primary" id="giftSendBtn" onclick="sendGiftToSelectedFriend()">🎁 送る</button>
+      </div>
+      <small class="social-hint">送ったアイテムは自分の持ち物から1個減ります。</small>
+    </div>
+  </div>
   <main class="game-shell">
     <section class="habitat-card">
       <div class="habitat-toolbar">
@@ -129,7 +168,7 @@
       <div class="recovery-banner" id="recoveryBanner"></div>
       <div class="message-bubble" aria-live="polite">
         <div class="message-avatar" id="messageAvatar">🐦</div>
-        <div><small>いまの気持ち</small><div class="message-text"><span id="message">あなたを見ています...</span></div></div>
+        <div class="message-copy"><small>いまの気持ち</small><div class="message-text"><span id="message">あなたを見ています...</span></div><button id="aiRequestBtn" class="ai-request-btn" style="display:none" onclick="fulfillAiRequest()"></button></div>
       </div>
     </section>
     <aside class="care-card">
@@ -153,7 +192,8 @@
     <button class="quick-btn shop" onclick="togglePanel('shop')">🛒ショップ</button>
     <button class="quick-btn inventory" onclick="togglePanel('inventory')">🎒持ち物</button>
     <button class="quick-btn minigame" onclick="togglePanel('minigame')">🎮ミニゲーム</button>
-    <button class="quick-btn chat" id="chatOpenBtn" onclick="togglePanel('chat')">💬おしゃべり</button>
+    <button class="quick-btn chat" id="chatOpenBtn" onclick="togglePanel('chat')">🧠端末AI</button>
+    <button class="quick-btn social" id="socialOpenBtn" onclick="togglePanel('social')">🌐つながり</button>
     <button class="quick-btn logs" onclick="togglePanel('logs')">🧰ログ</button>
     <button class="quick-btn mission" onclick="togglePanel('missions')">✅ミニミッション</button>
   </div>
@@ -193,14 +233,15 @@
   </div>
 
   <div class="panel" id="chatPanel">
-    <div class="panel-title">💬 AI会話</div>
+    <div class="panel-title ai-chat-title"><span>💬 端末AIとおしゃべり</span><button onclick="showAiModelSettings()">モデル設定</button></div>
+    <div class="ai-chat-state" id="aiChatState"><span>簡易会話モード</span><button onclick="showAiModelSettings()">モデルを読み込む</button></div>
     <div class="chat-wrap" id="chatWrap"></div>
     <div class="thinking" id="chatThinking" style="display:none"><span></span><span></span><span></span> 考え中...</div>
     <div class="chat-input-row">
-      <input id="chatInput" class="chat-input" maxlength="240" placeholder="AIに話しかける (最大240文字)">
+      <input id="chatInput" class="chat-input" maxlength="240" placeholder="やさしく話しかける… (最大240文字)">
       <button class="chat-send" onclick="sendChatMessage()">送信</button>
     </div>
-    <small class="api-hint">送信時に鳥の要約状態を一緒に送ります。</small>
+    <small class="api-hint">モデル読み込み後は完全に端末内で生成します。未読込時は簡易会話で応答します。</small>
   </div>
   <div class="panel" id="logsPanel">
     <div class="panel-title">🧰 変更ログ / バグ報告 / エラーログ</div>
@@ -224,6 +265,39 @@
     <div class="panel-title">✅ ミニミッション</div>
     <div class="mission-summary" id="missionSummary"></div>
     <div class="mission-list" id="missionList"></div>
+  </div>
+
+  <div class="panel social-panel" id="socialPanel">
+    <div class="panel-title social-title"><span>🌐 みんなの森</span><span class="social-sync" id="socialSyncState">端末モード</span></div>
+    <section class="identity-card">
+      <div><small>PLAYER ACCOUNT</small><strong id="identityName">ゲスト</strong><span id="cloudSaveState">この端末に保存中</span></div>
+      <div id="googleSignInButton" class="google-signin"></div>
+      <button id="googleLogoutBtn" class="social-small-btn" onclick="logoutGoogle()" style="display:none">ログアウト</button>
+    </section>
+    <section class="player-id-card">
+      <div><small>あなたのプレイヤーID</small><strong id="playerIdText">読み込み中…</strong></div>
+      <button class="copy-id-btn" onclick="copyPlayerId()">📋 コピー</button>
+    </section>
+    <div class="social-tabs" role="tablist">
+      <button class="active" data-social-tab="grow" onclick="setSocialTab('grow')">🌱 育成</button>
+      <button data-social-tab="friends" onclick="setSocialTab('friends')">👥 フレンド</button>
+      <button data-social-tab="ranking" onclick="setSocialTab('ranking')">🏆 ランキング</button>
+      <button data-social-tab="gifts" onclick="setSocialTab('gifts')">🎁 受け取り</button>
+    </div>
+    <div class="social-tab-page active" id="socialGrowTab">
+      <div class="bond-card">
+        <div class="bond-orb">💚<strong id="bondLevel">1</strong></div>
+        <div><small>なかよし度</small><h3 id="bondTitle">はじめまして</h3><div class="bond-bar"><span id="bondBar"></span></div><p id="bondCopy"></p></div>
+      </div>
+      <div class="growth-missions" id="growthMissions"></div>
+    </div>
+    <div class="social-tab-page" id="socialFriendsTab">
+      <div class="friend-add-row"><input id="friendIdInput" maxlength="16" placeholder="MF-XXXXXXXX"><button onclick="addFriendById()">＋ 追加</button></div>
+      <small class="social-hint">ログインすると別の端末でもフレンドを共有できます。まずはお試しID「MF-MOCHI001」も使えます。</small>
+      <div class="friend-list" id="friendList"></div>
+    </div>
+    <div class="social-tab-page" id="socialRankingTab"><div class="ranking-list" id="rankingList"></div></div>
+    <div class="social-tab-page" id="socialGiftsTab"><div class="gift-inbox" id="giftInbox"></div></div>
   </div>
 
   <div class="panel" id="customizePanel">
@@ -255,11 +329,9 @@
       <div class="customize-options" id="soundOpts"></div>
     </div>
     <div class="customize-section">
-      <div class="customize-title">🤖 ChatGPT API</div>
-      <div class="customize-options" id="chatApiOpts"></div>
-      <input type="password" id="chatApiKey" class="api-input" placeholder="APIキーを入力 (ONのとき必須)">
-      <button class="api-save-btn" onclick="saveChatApiKey()">APIキーを保存</button>
-      <small id="chatApiHint" class="api-hint">APIは任意です。OFFでもキャラクターと会話できます。</small>
+      <div class="customize-title">🧠 端末内AI</div>
+      <button class="api-save-btn" onclick="showAiModelSettings()">モデルとキャッシュを管理</button>
+      <small class="api-hint">APIキーは不要です。モデルと会話はスマホの外へ送信されません。</small>
     </div>
   </div>
   <div class="quick-actions">
@@ -272,6 +344,7 @@
     <button class="reset-btn" onclick="resetGame()">🔄 リセット</button>
   </div>
 
+  <script src="social.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

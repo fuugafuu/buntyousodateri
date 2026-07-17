@@ -1,9 +1,43 @@
 Original prompt: 日本語で作業してください。まず本気で全体のバグ修正とシステムの異常、さらにテクスチャとUIの一新。ミニゲームの整理と追加。本気で改良し、最後にURLを出す。GitHub側を編集する。
 
+追加依頼: `E:\qwen2.5-1.5b-instruct-q4_k_m.gguf` をスマホ端末内で読み込み・キャッシュし、AIの要求・表情・自発吹き出しを追加。育成の楽しさ、ランキング、プレイヤーIDフレンド、文鳥閲覧、アイテム仕送り、Googleログイン、クラウド保存を追加し、公開サイトを復旧する。
+
 ## 作業メモ
 
 - 対象: `fuugafuu/buntyousodateri` の `codex/add-feature-to-name-animations-and-birds` を基点にした `codex/full-game-refresh`。
 - 既存の猫・きつね・ペンギン・隠しキャラふうが・ミッション報酬を保持しながら全体改修する。
+- 2026-07-17: 文鳥専用Next.js版を誤って対象にしたため、公開前に停止。正しい `codex/full-game-refresh` から `codex/mofumori-ai-social` を作成して再開。
+
+## 追加TODO
+
+- [x] Cookie分割・localStorage多重保存をIndexedDB＋クラウド同期へ移行
+- [x] GGUF端末AI、OPFSキャッシュ、表情、要求、自発吹き出し
+- [x] Google Identity Servicesログイン
+- [x] 絆ランク、フレンド、ランキング、仕送り
+- [x] 正しいMofumoriを実モデル・API・モバイルで再検証
+- [ ] 正しいブランチをGitHub/Vercelへ公開
+
+## 2026-07-17 追加実装メモ
+
+- ゲーム進行の保存先を `mofumori-v4` IndexedDBへ変更。旧Cookie/localStorageは初回移行の読み取り専用になり、移行後に削除する。
+- セーブJSONから旧ChatGPT APIキー項目を除外し、UIからAPIキー入力を撤去。
+- 正しいMofumoriへwllama 3.5.1ブラウザビルドと単一スレッドWASMを同梱。
+- GGUF利用条件、OPFS保存、WebGPU/WASM起動、端末AIチャット、表情、要求ボタン、自発吹き出しを追加。
+- `node --check main.js` 成功。WebゲームクライアントでMofumori本体と `localAI` 状態JSONを確認。
+- Google IDトークンをサーバーで検証するHttpOnly Cookie認証、クラウドセーブAPI、フレンド・ランキング・仕送りAPIを追加。
+- Supabase用スキーマと、仕送り送信／受け取りを二重処理させないPostgresトランザクション関数を追加。
+- プレイヤーID、なかよし度、連続お世話、育成デイリー、フレンドのどうぶつ閲覧、モバイルUIを追加。未ログイン時は端末モードで試せる。
+- PWAマニフェスト、Service Worker、ホーム画面アイコンを追加。GGUF本体は通常キャッシュと分離してOPFSへ保持する。
+- 保存データ由来の持ち物キーを許可リスト化し、動的なフレンド／仕送りボタンからインラインJavaScript生成を除去。APIの同一オリジン検査とセキュリティヘッダーを追加。
+
+## 2026-07-17 検証結果
+
+- 実モデル `E:\qwen2.5-1.5b-instruct-q4_k_m.gguf`（1,117,320,736 bytes）をWebGPUで読み込み成功。
+- 実推論結果: 「ぼくの今の気持ちが😊です。どんなことをしてほしいですか？」、`ai-happy` 表情、推論回数1を確認。
+- 端末AIのロード直後の自発推論とユーザー送信が競合する不具合を再現し、ユーザー送信優先へ修正。
+- モバイル390×844でフレンド追加、相手のどうぶつ閲覧、シード仕送り、IndexedDB再読込、なかよし度増加、空腹時のAI要求→えさ実行を確認。
+- 14種類のミニゲームすべてで開始UI、稼働状態、終了処理を再検証。コンソールエラー0。
+- `npm test`、`npm run test:ui`、`npm audit --omit=dev`（脆弱性0件）成功。
 
 ## TODO
 

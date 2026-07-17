@@ -158,7 +158,7 @@ function pickDialog(type,fallback){
   const options=(dialogBySpecies[key]&&dialogBySpecies[key][type])||(dialogBySpecies.default[type])||fallback;
   return options[Math.floor(Math.random()*options.length)];
 }
-let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',chatApiEnabled:false,chatApiKey:'',chatApiDraft:'',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,autoTheme:true,autoWeather:false,geo:null,missions:{active:[],completed:0,history:[]},minigameStats:{plays:0,bestScores:{},lastPlayed:null},lastWeatherFetch:0,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,cold_medicine:0,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},sickLevel:0,isSleeping:false,bannerDismissed:false};
+let G={name:'文鳥',species:'buncho_sakura',birdNames:{buncho_sakura:'文鳥'},unlocked:['buncho_sakura'],hunger:80,happiness:80,health:100,energy:100,cleanliness:100,age:0,theme:'day',weather:'none',animationMode:'fine',resolutionScale:1,soundMode:'chirp',beta3d:false,sleepBoxUntil:null,sleepBoxLock:null,sleepBoxRate:0,chatHistory:[],bugReports:[],errorLogs:[],threeDRotX:10,threeDRotY:-8,autoTheme:true,autoWeather:false,geo:null,missions:{active:[],completed:0,history:[]},minigameStats:{plays:0,bestScores:{},lastPlayed:null,lastPlayedDate:null},social:{bond:0,streakDays:0,lastCareDate:'',todayCare:0,todayDate:''},lastWeatherFetch:0,lastUpdate:Date.now(),sleepStart:null,tFeeds:0,tPets:0,tBaths:0,tPlays:0,tSings:0,level:1,exp:0,coins:100,gems:5,inv:{seeds:10,treats:3,fruits:0,premium_food:0,energy_drink:1,vitamins:0,medicine:1,cold_medicine:0,shampoo:2,toys:0,super_energy:0,mirror:0,bell:0,swing:0,sleep_box:0},sickLevel:0,isSleeping:false,bannerDismissed:false};
 const DEFAULT_GAME_STATE=JSON.parse(JSON.stringify(G));
 const bounded=(value,min,max,fallback)=>{
   const n=Number(value);
@@ -167,8 +167,9 @@ const bounded=(value,min,max,fallback)=>{
 function normalizeGameState(raw){
   const source=raw&&typeof raw==='object'?raw:{};
   const next={...DEFAULT_GAME_STATE,...source};
-  next.inv={...DEFAULT_GAME_STATE.inv,...(source.inv&&typeof source.inv==='object'?source.inv:{})};
-  Object.keys(next.inv).forEach(id=>{next.inv[id]=Math.floor(bounded(next.inv[id],0,9999,0));});
+  const rawInv=source.inv&&typeof source.inv==='object'?source.inv:{};
+  next.inv={...DEFAULT_GAME_STATE.inv};
+  Object.keys(next.inv).forEach(id=>{next.inv[id]=Math.floor(bounded(rawInv[id],0,9999,DEFAULT_GAME_STATE.inv[id]));});
   ['hunger','happiness','health','energy','cleanliness','sickLevel'].forEach(key=>{next[key]=bounded(next[key],0,100,DEFAULT_GAME_STATE[key]);});
   ['age','tFeeds','tPets','tBaths','tPlays','tSings'].forEach(key=>{next[key]=Math.floor(bounded(next[key],0,1e9,0));});
   next.coins=Math.floor(bounded(next.coins,0,1e9,DEFAULT_GAME_STATE.coins));
@@ -192,9 +193,6 @@ function normalizeGameState(raw){
   next.animationMode=['ultra','fine','normal','simple'].includes(source.animationMode)?source.animationMode:'fine';
   next.resolutionScale=[0.8,1,1.6].includes(Number(source.resolutionScale))?Number(source.resolutionScale):1;
   next.soundMode=['off','chirp','bell'].includes(source.soundMode)?source.soundMode:'chirp';
-  next.chatApiEnabled=source.chatApiEnabled===true;
-  next.chatApiKey=typeof source.chatApiKey==='string'?source.chatApiKey.slice(0,240):'';
-  next.chatApiDraft=typeof source.chatApiDraft==='string'?source.chatApiDraft.slice(0,240):next.chatApiKey;
   next.chatHistory=(Array.isArray(source.chatHistory)?source.chatHistory:[]).filter(m=>m&&['user','ai'].includes(m.role)&&typeof m.text==='string').slice(-24).map(m=>({role:m.role,text:m.text.slice(0,600)}));
   next.bugReports=(Array.isArray(source.bugReports)?source.bugReports:[]).filter(x=>x&&typeof x.text==='string').slice(-30);
   next.errorLogs=(Array.isArray(source.errorLogs)?source.errorLogs:[]).filter(x=>x&&typeof x.msg==='string').slice(-40);
@@ -207,8 +205,16 @@ function normalizeGameState(raw){
   };
   const rawStats=source.minigameStats&&typeof source.minigameStats==='object'?source.minigameStats:{};
   const rawBest=rawStats.bestScores&&typeof rawStats.bestScores==='object'?rawStats.bestScores:{};
-  next.minigameStats={plays:Math.floor(bounded(rawStats.plays,0,1e9,0)),bestScores:{},lastPlayed:typeof rawStats.lastPlayed==='string'?rawStats.lastPlayed:null};
+  next.minigameStats={plays:Math.floor(bounded(rawStats.plays,0,1e9,0)),bestScores:{},lastPlayed:typeof rawStats.lastPlayed==='string'?rawStats.lastPlayed:null,lastPlayedDate:typeof rawStats.lastPlayedDate==='string'?rawStats.lastPlayedDate.slice(0,10):null};
   minigames.forEach(m=>{if(Number.isFinite(Number(rawBest[m.id])))next.minigameStats.bestScores[m.id]=Math.floor(bounded(rawBest[m.id],0,1e9,0));});
+  const rawSocial=source.social&&typeof source.social==='object'?source.social:{};
+  next.social={
+    bond:Math.floor(bounded(rawSocial.bond,0,1e9,0)),
+    streakDays:Math.floor(bounded(rawSocial.streakDays,0,36500,0)),
+    lastCareDate:typeof rawSocial.lastCareDate==='string'?rawSocial.lastCareDate.slice(0,10):'',
+    todayCare:Math.floor(bounded(rawSocial.todayCare,0,10000,0)),
+    todayDate:typeof rawSocial.todayDate==='string'?rawSocial.todayDate.slice(0,10):''
+  };
   next.isSleeping=source.isSleeping===true;
   next.bannerDismissed=source.bannerDismissed===true;
   next.autoTheme=source.autoTheme!==false;
@@ -385,13 +391,65 @@ function delCookie(n){
   try{localStorage.removeItem(n);}catch(e){}
   try{sessionStorage.removeItem(n);}catch(e){}
 }
+const SAVE_DB_NAME='mofumori-v4';
+const SAVE_STORE='state';
+const SAVE_RECORD='current';
+let saveDbPromise=null,pendingSave=Promise.resolve(),cloudSaveTimer=null,identityUser=null;
+function openSaveDb(){
+  if(saveDbPromise)return saveDbPromise;
+  saveDbPromise=new Promise((resolve,reject)=>{
+    if(!window.indexedDB){reject(new Error('indexeddb_unavailable'));return;}
+    const request=indexedDB.open(SAVE_DB_NAME,1);
+    request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains(SAVE_STORE))request.result.createObjectStore(SAVE_STORE);};
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error||new Error('indexeddb_open_failed'));
+  });
+  return saveDbPromise;
+}
+async function saveDbGet(key){
+  const db=await openSaveDb();
+  return new Promise((resolve,reject)=>{const request=db.transaction(SAVE_STORE,'readonly').objectStore(SAVE_STORE).get(key);request.onsuccess=()=>resolve(request.result??null);request.onerror=()=>reject(request.error);});
+}
+async function saveDbSet(key,value){
+  const db=await openSaveDb();
+  return new Promise((resolve,reject)=>{const tx=db.transaction(SAVE_STORE,'readwrite');tx.objectStore(SAVE_STORE).put(value,key);tx.oncomplete=()=>resolve(value);tx.onerror=()=>reject(tx.error);});
+}
+async function saveDbDelete(key){
+  const db=await openSaveDb();
+  return new Promise((resolve,reject)=>{const tx=db.transaction(SAVE_STORE,'readwrite');tx.objectStore(SAVE_STORE).delete(key);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});
+}
+function stateForStorage(){
+  const data=JSON.parse(JSON.stringify(G));
+  delete data.chatApiKey;delete data.chatApiDraft;delete data.chatApiEnabled;
+  return data;
+}
+function queueCloudSave(record){
+  if(!identityUser)return;
+  if(cloudSaveTimer)clearTimeout(cloudSaveTimer);
+  cloudSaveTimer=setTimeout(async()=>{
+    try{
+      const response=await fetch('/api/cloud-save',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(record)});
+      if(!response.ok)throw new Error(`cloud_save_${response.status}`);
+      document.body.dataset.sync='cloud';
+      renderIdentity();
+    }catch(error){document.body.dataset.sync='local';console.warn('Cloud save skipped',error);renderIdentity();}
+  },1200);
+}
+function clearLegacySave(){
+  delCookie('birdG3');
+  ['birdG3_key','birdG3_name'].forEach(name=>{document.cookie=`${name}=;expires=Thu,01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax`;});
+  try{['birdG3','birdG3_key','birdG3_name'].forEach(key=>localStorage.removeItem(key));}catch(e){}
+  try{['birdG3','birdG3_key','birdG3_name'].forEach(key=>sessionStorage.removeItem(key));}catch(e){}
+}
 function save(){
   G.lastUpdate=Date.now();
-  writeRawCookie(SAVE_NAME_NAME,encodeURIComponent(getCurrentBirdName()));
-  setCookie('birdG3',G);
+  const record={version:'4.0.0',savedAt:new Date().toISOString(),data:stateForStorage()};
+  pendingSave=pendingSave.catch(()=>{}).then(()=>saveDbSet(SAVE_RECORD,record)).catch(error=>{if(!scanCache.idb){scanCache.idb=true;console.error('IndexedDB save failed',error);}});
+  queueCloudSave(record);
+  return pendingSave;
 }
 function exportSave(){
-  const payload={version:'3.0.0',savedAt:new Date().toISOString(),data:G};
+  const payload={version:'4.0.0',savedAt:new Date().toISOString(),data:stateForStorage()};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
@@ -410,6 +468,7 @@ function triggerImport(){
 function importSaveFile(event){
   const file=event.target.files&&event.target.files[0];
   if(!file){return;}
+  if(file.size>2*1024*1024){showToast('セーブファイルが大きすぎます','warning');return;}
   const reader=new FileReader();
   reader.onload=()=>{
     try{
@@ -435,8 +494,17 @@ function importSaveFile(event){
   };
   reader.readAsText(file);
 }
-function load(){
-  const s=getCookie('birdG3');
+async function load(){
+  let record=null;
+  try{record=await saveDbGet(SAVE_RECORD);}catch(error){console.error('IndexedDB load failed',error);}
+  let s=record&&record.data&&typeof record.data==='object'?record.data:null;
+  if(!s){
+    s=getCookie('birdG3');
+    if(s){
+      try{await saveDbSet(SAVE_RECORD,{version:'4.0.0',savedAt:new Date().toISOString(),data:s});clearLegacySave();showToast('新しいセーブ方式へ安全に移行しました','achievement');}
+      catch(error){console.error('Save migration failed',error);}
+    }
+  }
   if(s){
     G=normalizeGameState({...G,...s});
     const now=Date.now(),mins=Math.max(0,Math.min(10080,(now-G.lastUpdate)/60000));
@@ -460,7 +528,13 @@ function load(){
   ensureNewSettings();
   G.name=getCurrentBirdName();
   // 最初の操作を邪魔しないよう、インストール案内は十分に遊んだ後に表示する。
-  if(!G.bannerDismissed&&!isStandalone())setTimeout(()=>document.getElementById('installBanner')?.classList.add('show'),12000);
+  if(!G.bannerDismissed&&!isStandalone())setTimeout(maybeShowInstallBanner,45000);
+}
+
+function maybeShowInstallBanner(){
+  if(G.bannerDismissed||isStandalone())return;
+  if(document.querySelector('.panel.show,.modal.show')){setTimeout(maybeShowInstallBanner,30000);return;}
+  document.getElementById('installBanner')?.classList.add('show');
 }
 
 function getCurrentBirdName(){const species=birds[G.species]?G.species:'buncho_sakura';return (G.birdNames&&G.birdNames[species])||birds[species].name}
@@ -471,9 +545,6 @@ function ensureNewSettings(){
   if(!G.animationMode)G.animationMode='fine';
   if(typeof G.resolutionScale!=='number')G.resolutionScale=1;
   if(!G.soundMode)G.soundMode='chirp';
-  if(typeof G.chatApiEnabled!=='boolean')G.chatApiEnabled=false;
-  if(typeof G.chatApiKey!=='string')G.chatApiKey='';
-  if(typeof G.chatApiDraft!=='string')G.chatApiDraft=G.chatApiKey||'';
   if(typeof G.beta3d!=='boolean')G.beta3d=false;
   if(typeof G.sleepBoxUntil!=='number')G.sleepBoxUntil=null;
   if(typeof G.sleepBoxLock!=='object'&&G.sleepBoxLock!==null)G.sleepBoxLock=null;
@@ -491,9 +562,10 @@ function ensureNewSettings(){
   if(!Array.isArray(G.missions.active))G.missions.active=[];
   if(!Array.isArray(G.missions.history))G.missions.history=[];
   if(typeof G.missions.completed!=='number')G.missions.completed=0;
-  if(!G.minigameStats||typeof G.minigameStats!=='object')G.minigameStats={plays:0,bestScores:{},lastPlayed:null};
+  if(!G.minigameStats||typeof G.minigameStats!=='object')G.minigameStats={plays:0,bestScores:{},lastPlayed:null,lastPlayedDate:null};
   if(!G.minigameStats.bestScores||typeof G.minigameStats.bestScores!=='object')G.minigameStats.bestScores={};
   if(typeof G.minigameStats.plays!=='number')G.minigameStats.plays=0;
+  if(!G.social||typeof G.social!=='object')G.social={bond:0,streakDays:0,lastCareDate:'',todayCare:0,todayDate:''};
   if(typeof G.lastWeatherFetch!=='number')G.lastWeatherFetch=0;
 }
 let audioCtx=null;
@@ -537,7 +609,11 @@ function selectNameSuggestion(name){document.getElementById('nameInput').value=n
 function hideModal(id){document.getElementById(id).classList.remove('show')}
 function showInstallGuide(){hideInstallBanner();showModal('installModal')}
 function hideInstallBanner(){document.getElementById('installBanner').classList.remove('show');G.bannerDismissed=true;save()}
-function togglePanel(p){['shop','inventory','minigame','customize','chat','logs','missions'].forEach(x=>{const el=document.getElementById(x+'Panel');if(!el)return;el.classList.toggle('show',x===p&&!el.classList.contains('show'))});if(p==='shop')renderShop();if(p==='inventory')renderInv();if(p==='minigame'){renderMinigameGrid();document.getElementById('minigameSelect').style.display='block';document.getElementById('minigamePlay').style.display='none';currentMg=null;}if(p==='chat')renderChat();if(p==='logs'){renderChangeLog();renderErrorLogs();}if(p==='missions')renderMissions();}
+function togglePanel(p){
+  ['shop','inventory','minigame','customize','chat','social','logs','missions'].forEach(x=>{const el=document.getElementById(x+'Panel');if(!el)return;el.classList.toggle('show',x===p&&!el.classList.contains('show'))});
+  if(p==='shop')renderShop();if(p==='inventory')renderInv();if(p==='minigame'){renderMinigameGrid();document.getElementById('minigameSelect').style.display='block';document.getElementById('minigamePlay').style.display='none';currentMg=null;}if(p==='chat')renderChat();if(p==='social')renderSocial();if(p==='logs'){renderChangeLog();renderErrorLogs();}if(p==='missions')renderMissions();
+  const active=document.getElementById(p+'Panel');if(active?.classList.contains('show'))setTimeout(()=>active.scrollIntoView({behavior:'smooth',block:'start'}),60);
+}
 
 function updateUI(){
   const b=birds[G.species];
@@ -676,12 +752,6 @@ function renderCustomize(){
   document.getElementById('weatherAutoOpts').innerHTML=[{v:true,n:'📍実天気ON'},{v:false,n:'✋手動'}].map(o=>`<button class="customize-btn ${(G.autoWeather===o.v)?'active':''}" onclick="setAutoWeather(${o.v})">${o.n}</button>`).join('');
   document.getElementById('weatherHint').textContent=G.autoWeather?'実際の天気と連動中（位置情報）':'手動天気モードです。';
   document.getElementById('soundOpts').innerHTML=[{id:'off',n:'🔇OFF'},{id:'chirp',n:'🐤チュン'},{id:'bell',n:'🔔ベル'}].map(s=>`<button class="customize-btn ${G.soundMode===s.id?'active':''}" onclick="setSoundMode('${s.id}')">${s.n}</button>`).join('');
-  document.getElementById('chatApiOpts').innerHTML=[{v:true,n:'ON'},{v:false,n:'OFF'}].map(c=>`<button class="customize-btn ${(G.chatApiEnabled===c.v)?'active':''}" onclick="setChatApi(${c.v})">${c.n}</button>`).join('');
-  const keyInput=document.getElementById('chatApiKey');
-  keyInput.style.display='block';
-  const shouldPreserve=document.activeElement===keyInput;
-  if(!shouldPreserve)keyInput.value=(G.chatApiDraft||G.chatApiKey||'');
-  document.getElementById('chatApiHint').textContent=G.chatApiEnabled?'APIキーはCookieに保存されます。':'OFF中はAPIを使いません。';
 }
 function initMissions(){
   if(!G.missions||!Array.isArray(G.missions.active))G.missions={active:[],completed:0,history:[]};
@@ -907,7 +977,7 @@ function renderBird(){
       ${action==='bath'?[0,1,2,3,4,5,6].map(i=>`<ellipse cx="${58+i*12+Math.sin(animF*0.25+i)*4}" cy="${154+(animF*1.4+i*9)%44}" rx="${1.4+Math.sin(animF*0.1+i)*0.6}" ry="${2.2+Math.cos(animF*0.12+i)*0.7}" fill="#9bd7ff" opacity="${1-((animF*1.4+i*9)%44)/45}"/>`).join(''):''}
     </g>`;
 }
-function doAction(n,cb){if(action||(G.isSleeping&&n!=='wake')){if(G.isSleeping)setMsg('いまは眠っているよ。起こしてからお世話してね。');return false}action=n;cb();updateUI();setTimeout(()=>{action=null;updateUI();},1400);return true}
+function doAction(n,cb){if(action||(G.isSleeping&&n!=='wake')){if(G.isSleeping)setMsg('いまは眠っているよ。起こしてからお世話してね。');return false}action=n;recordBondAction(n);cb();updateUI();setTimeout(()=>{action=null;updateUI();},1400);return true}
 function addCoins(amount,opts={}){
   if(!amount)return;
   G.coins=Math.max(0,G.coins+amount);
@@ -1012,7 +1082,7 @@ function endMinigame(){
   const r=Math.floor(mgScore*3);addCoins(r);G.happiness=Math.min(100,G.happiness+Math.min(mgScore,10));
   const gameId=currentMg&&currentMg.id;
   let newBest=false;
-  if(gameId){const oldBest=G.minigameStats.bestScores[gameId]||0;newBest=mgScore>oldBest;G.minigameStats.bestScores[gameId]=Math.max(oldBest,mgScore);G.minigameStats.lastPlayed=gameId;}
+  if(gameId){const oldBest=G.minigameStats.bestScores[gameId]||0;newBest=mgScore>oldBest;G.minigameStats.bestScores[gameId]=Math.max(oldBest,mgScore);G.minigameStats.lastPlayed=gameId;G.minigameStats.lastPlayedDate=new Date().toLocaleDateString('sv-SE');}
   G.minigameStats.plays++;
   addMissionProgress('minigame',1);
   addMissionProgress('minigame_score',mgScore);
@@ -1472,23 +1542,6 @@ function setAnimationMode(m){G.animationMode=m;addMissionProgress('customize',1)
 function setResolution(scale){G.resolutionScale=scale;addMissionProgress('customize',1);save();updateUI();renderCustomize()}
 function setSoundMode(mode){G.soundMode=mode;addMissionProgress('customize',1);save();renderCustomize()}
 function setBeta3d(v){G.beta3d=v===true||v==='true';addMissionProgress('customize',1);save();updateUI()}
-function setChatApi(enabled){G.chatApiEnabled=enabled===true||enabled==='true';
-  const keyInput=document.getElementById('chatApiKey');
-  if(G.chatApiEnabled&&!((keyInput.value||G.chatApiDraft||G.chatApiKey||'').trim())){
-    G.chatApiEnabled=false;showToast('APIキーを入力してください','warning');
-  }
-  if(G.chatApiEnabled){G.chatApiKey=(keyInput.value||G.chatApiDraft||G.chatApiKey||'').trim();}
-  save();renderCustomize();updateUI();
-}
-function saveChatApiKey(){
-  const key=document.getElementById('chatApiKey').value.trim();
-  G.chatApiDraft=key;
-  if(!G.chatApiEnabled)return;
-  if(!key){showToast('APIキーが空です','warning');return;}
-  G.chatApiKey=key;save();showToast('APIキーを保存しました');
-}
-
-
 function shareGame(){
   const text=`🐦 ${getCurrentBirdName()} を育成中！ Lv.${G.level} / 💰${Math.round(G.coins)} / 😊${document.getElementById('mood').textContent}`;
   if(navigator.share){
@@ -1504,6 +1557,113 @@ ${location.href}`);
 
 function getBirdInfoCompact(){
   return `n:${getCurrentBirdName()} sp:${birds[G.species].name} lv:${G.level} mood:${document.getElementById('mood').textContent} c:${Math.round(G.coins)} g:${Math.round(G.gems)} h:${Math.round(G.hunger)} hp:${Math.round(G.health)} e:${Math.round(G.energy)} cl:${Math.round(G.cleanliness)} happy:${Math.round(G.happiness)}`;
+}
+const AI_CACHE_URL='https://local-model.mofumori.invalid/qwen2.5-1.5b-instruct-q4_k_m.gguf';
+const AI_TERMS_VERSION='local-ai-v1';
+const AI_MIN_BYTES=64*1024*1024;
+let aiModule=null,aiCache=null,aiEngine=null,aiModelBytes=0,aiStatus='idle',aiBusy=false,aiEmotion='calm',aiRequest=null,aiInferenceCount=0;
+function formatBytes(bytes){if(!Number.isFinite(bytes)||bytes<=0)return'0B';if(bytes>=1024**3)return`${(bytes/1024**3).toFixed(2)}GB`;return`${Math.round(bytes/1024**2)}MB`;}
+async function ensureAiModule(){
+  if(aiModule)return aiModule;
+  aiModule=await import('./vendor/wllama.js');
+  aiCache=new aiModule.CacheManager();
+  return aiModule;
+}
+function setAiStatus(status,text,progress=null){
+  aiStatus=status;
+  const statusText=document.getElementById('aiStatusText'),dot=document.getElementById('aiStatusDot'),bar=document.getElementById('aiLoadProgress');
+  if(statusText)statusText.textContent=text;
+  if(dot)dot.className=status==='ready'?'ready':status==='error'?'error':'';
+  if(bar){bar.classList.toggle('active',progress!==null);if(progress!==null)bar.value=Math.max(0,Math.min(100,progress));}
+  renderAiChatState();
+}
+function renderAiChatState(){
+  const box=document.getElementById('aiChatState');if(!box)return;
+  const ready=aiStatus==='ready'||aiStatus==='generating';
+  box.className=`ai-chat-state ${aiStatus}`;
+  box.innerHTML=ready?`<span>${aiStatus==='generating'?'ことばを考えています…':`端末内AI 稼働中・${formatBytes(aiModelBytes)}`}</span><button onclick="showAiModelSettings()">モデル設定</button>`:`<span>簡易会話モード</span><button onclick="showAiModelSettings()">モデルを読み込む</button>`;
+}
+async function initLocalAi(){
+  try{
+    const accepted=await saveDbGet('ai-terms');
+    const checkbox=document.getElementById('aiTerms');if(checkbox)checkbox.checked=accepted===AI_TERMS_VERSION;
+    await ensureAiModule();
+    const blob=await aiCache.open(AI_CACHE_URL);
+    if(blob&&blob.size>=AI_MIN_BYTES){aiModelBytes=blob.size;setAiStatus('idle',`端末キャッシュに ${formatBytes(blob.size)} 保存済み`);document.getElementById('aiPrimaryBtn').textContent='キャッシュから起動';document.getElementById('aiDeleteBtn').style.display='inline-flex';}
+  }catch(error){setAiStatus('error','このブラウザでは端末キャッシュを確認できませんでした');console.warn(error);}
+}
+function showAiModelSettings(){showModal('aiModelModal');renderAiChatState();}
+async function setAiTerms(accepted){if(accepted)await saveDbSet('ai-terms',AI_TERMS_VERSION);else await saveDbDelete('ai-terms');}
+async function selectOrLoadAiModel(){
+  const accepted=document.getElementById('aiTerms').checked;
+  if(!accepted){setAiStatus('error','利用条件への同意が必要です');return;}
+  if(aiModelBytes>=AI_MIN_BYTES){await loadAiModel();return;}
+  document.getElementById('aiModelFile').click();
+}
+async function cacheAiModel(event){
+  const file=event.target.files&&event.target.files[0];event.target.value='';
+  if(!file)return;
+  if(!document.getElementById('aiTerms').checked){setAiStatus('error','利用条件への同意が必要です');return;}
+  if(!file.name.toLowerCase().endsWith('.gguf')||file.size<AI_MIN_BYTES){setAiStatus('error','64MB以上のGGUFモデルを選んでください');return;}
+  try{
+    setAiStatus('caching','端末ストレージの空きを確認しています…',0);
+    await navigator.storage?.persist?.();
+    const estimate=await navigator.storage?.estimate?.(),available=(estimate?.quota??Number.MAX_SAFE_INTEGER)-(estimate?.usage??0);
+    if(available<file.size*1.08)throw new Error(`空き容量が足りません。約${formatBytes(file.size*1.08)}必要です。`);
+    await ensureAiModule();
+    let loaded=0;
+    const stream=file.stream().pipeThrough(new TransformStream({transform(chunk,controller){loaded+=chunk.byteLength;setAiStatus('caching',`端末へ保存中 ${Math.round(loaded/file.size*100)}%`,Math.round(loaded/file.size*100));controller.enqueue(chunk);}}));
+    const key=await aiCache.getNameFromURL(AI_CACHE_URL);
+    await aiCache.write(key,stream,{etag:`local-${file.size}-${file.lastModified}`,originalSize:file.size,originalURL:AI_CACHE_URL});
+    aiModelBytes=file.size;document.getElementById('aiPrimaryBtn').textContent='キャッシュから起動';document.getElementById('aiDeleteBtn').style.display='inline-flex';
+    setAiStatus('idle',`保存完了・${formatBytes(file.size)}`,100);
+    await loadAiModel();
+  }catch(error){setAiStatus('error',error instanceof Error?error.message:'モデルの保存に失敗しました');}
+}
+async function loadAiModel(){
+  if(aiEngine?.isModelLoaded()){setAiStatus('ready',`端末内AI 稼働中・${formatBytes(aiModelBytes)}`);hideModal('aiModelModal');return;}
+  try{
+    await ensureAiModule();
+    const blob=await aiCache.open(AI_CACHE_URL);if(!blob||blob.size<AI_MIN_BYTES)throw new Error('保存済みモデルがありません');
+    const instance=new aiModule.Wllama({default:'/wasm/wllama.wasm'},{allowOffline:true,logger:aiModule.LoggerWithoutDebug,suppressNativeLog:true});
+    const useWebGpu=instance.isSupportWebGPU();setAiStatus('loading',useWebGpu?'WebGPUでモデルを起動しています…':'省メモリWASMでモデルを起動しています…',15);
+    await instance.loadModel([blob],{n_ctx:2048,n_batch:256,n_threads:1,n_gpu_layers:useWebGpu?99:0,cache_type_k:'q8_0',cache_type_v:'q8_0'});
+    aiEngine=instance;aiModelBytes=blob.size;setAiStatus('ready',`端末内AI 稼働中・${useWebGpu?'WebGPU':'WASM'}`);hideModal('aiModelModal');
+    setTimeout(()=>{if(!aiBusy&&!document.getElementById('chatInput')?.matches(':focus'))generateLocalAi(null,true);},30000);
+  }catch(error){await aiEngine?.exit().catch(()=>{});aiEngine=null;setAiStatus('error',error instanceof Error?error.message:'モデルの起動に失敗しました');}
+}
+async function deleteAiModel(){
+  if(aiEngine){await aiEngine.exit().catch(()=>{});aiEngine=null;}
+  await ensureAiModule();await aiCache.delete(AI_CACHE_URL).catch(()=>{});aiModelBytes=0;document.getElementById('aiPrimaryBtn').textContent='GGUFを選んで保存';document.getElementById('aiDeleteBtn').style.display='none';setAiStatus('idle','端末キャッシュを削除しました');
+}
+function inferAiRequest(){if(G.hunger<48)return'feed';if(G.energy<40)return'sleep';if(G.happiness<48)return'pet';if(G.health>55&&G.energy>55&&G.happiness<75)return'play';return null;}
+function parseAiReply(raw){
+  const block=String(raw||'').match(/\{[\s\S]*\}/)?.[0];let parsed={};try{parsed=JSON.parse(block||'{}');}catch(e){}
+  const validEmotions=['calm','happy','excited','hungry','sleepy','lonely','curious'];
+  const emotion=validEmotions.includes(parsed.emotion)?parsed.emotion:(G.hunger<48?'hungry':G.energy<40?'sleepy':G.happiness<48?'lonely':'happy');
+  const message=String(parsed.message||raw||'').replace(/```(?:json)?/gi,'').replace(/[{}\[\]"]/g,'').replace(/\s+/g,' ').trim().slice(0,100)||`${getCurrentBirdName()}はそっとこちらを見ている。`;
+  return{message,emotion,request:inferAiRequest()};
+}
+function applyAiReply(reply,addToChat=true){
+  aiEmotion=reply.emotion;aiRequest=reply.request;setMsg(reply.message);
+  const svg=document.getElementById('birdSvg');if(svg){[...svg.classList].filter(name=>name.startsWith('ai-')).forEach(name=>svg.classList.remove(name));svg.classList.add(`ai-${aiEmotion}`);}
+  const button=document.getElementById('aiRequestBtn');if(button){const labels={feed:'🍚 ごはんをあげる',sleep:'💤 休ませる',pet:'✋ なでてあげる',play:'🎾 一緒に遊ぶ'};button.style.display=aiRequest?'inline-flex':'none';button.textContent=aiRequest?labels[aiRequest]:'';}
+  if(addToChat){G.chatHistory.push({role:'ai',text:reply.message});G.chatHistory=G.chatHistory.slice(-24);renderChat();save();}
+}
+async function generateLocalAi(userText=null,proactive=false){
+  if(!aiEngine?.isModelLoaded()||aiBusy)return null;
+  aiBusy=true;setAiStatus('generating','ことばを考えています…');
+  try{
+    const recent=G.chatHistory.slice(-6).map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}));
+    const response=await aiEngine.createChatCompletion({messages:[{role:'system',content:`あなたは育成ゲームの${birds[G.species].name}「${getCurrentBirdName()}」本人。一人称はぼく/わたし。一般AIの定型文は禁止。短くかわいい日本語で文鳥や動物らしい仕草と気持ちを話す。状態は${getBirdInfoCompact()}。必ずJSONだけ: {"message":"60文字以内","emotion":"calm|happy|excited|hungry|sleepy|lonely|curious"}`},...recent,{role:'user',content:proactive?'今の状態を見て飼い主へ自分から一言話しかけて。':userText||'今の気持ちを話して。'}],max_tokens:120,temperature:.72,top_k:40,top_p:.9,penalty_repeat:1.12});
+    const reply=parseAiReply(response.choices?.[0]?.message?.content||'');aiInferenceCount++;applyAiReply(reply,proactive);return reply;
+  }catch(error){setAiStatus('error',error instanceof Error?error.message:'AIの応答に失敗しました');return null;}
+  finally{aiBusy=false;if(aiEngine?.isModelLoaded())setAiStatus('ready',`端末内AI 稼働中・${formatBytes(aiModelBytes)}`);}
+}
+function fulfillAiRequest(){
+  const request=aiRequest;aiRequest=null;document.getElementById('aiRequestBtn').style.display='none';
+  if(request==='feed')feedBird();else if(request==='pet')petBird();else if(request==='play')playBird();else if(request==='sleep'&&!G.isSleeping)toggleSleep();
+  setTimeout(()=>{applyAiReply({message:'お願いをかなえてくれて、ありがとう！',emotion:'happy',request:null},true);},350);
 }
 function renderChat(){
   const wrap=document.getElementById('chatWrap');
@@ -1530,26 +1690,17 @@ async function sendChatMessage(){
   const thinking=document.getElementById('chatThinking');thinking.style.display='flex';
   try{
     let out='';
-    if(G.chatApiEnabled&&G.chatApiKey){
-      const recent=G.chatHistory.slice(-6).map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}));
-      const resp=await fetch('https://api.openai.com/v1/chat/completions',{
-        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+G.chatApiKey},
-        body:JSON.stringify({model:'gpt-4o-mini',temperature:0.7,max_tokens:180,messages:[
-          {role:'system',content:'あなたは優しい育成ゲームの相棒。短い日本語で返答する。'},
-          {role:'system',content:'キャラクター情報:'+getBirdInfoCompact()},...recent,{role:'user',content:text}
-        ]})
-      });
-      if(!resp.ok)throw new Error(`api_${resp.status}`);
-      const data=await resp.json();
-      out=(data.choices?.[0]?.message?.content||'').trim();
+    if(aiEngine?.isModelLoaded()){
+      const waitStarted=Date.now();while(aiBusy&&Date.now()-waitStarted<180000)await new Promise(resolve=>setTimeout(resolve,250));
+      const reply=await generateLocalAi(text,false);out=reply?.message||'';
     }
     if(!out)out=localChatReply(text);
     await typewriterAppend(out);
     G.chatHistory.push({role:'ai',text:out});
     save();
-    setMsg('AIとおしゃべりしたよ！');
+    setMsg(out);
   }catch(e){
-    logError('chat',String(e));
+    console.warn('Local AI fallback',e);
     const out=localChatReply(text);
     await typewriterAppend(out);
     G.chatHistory.push({role:'ai',text:out});
@@ -1603,9 +1754,6 @@ function runErrorScan(){
       scanCache[id]=false;
     }
   });
-  if(G.chatApiEnabled&&!G.chatApiKey){
-    if(!scanCache.chatApi){logError('scan','chat_api_missing_key');scanCache.chatApi=true;}
-  }else{scanCache.chatApi=false;}
 }
 function init3dControl(){
   const area=document.querySelector('.main-display');let down=false,lastX=0,lastY=0;
@@ -1643,7 +1791,7 @@ function animLoop(){
   renderBird();requestAnimationFrame(animLoop);
 }
 function blinkLoop(){if(!G.isSleeping&&Math.random()<0.3){blink=true;setTimeout(()=>blink=false,150)}}
-function resetGame(){if(!confirm('本当にリセットしますか？'))return;delCookie('birdG3');location.reload()}
+async function resetGame(){if(!confirm('本当にリセットしますか？'))return;await saveDbDelete(SAVE_RECORD).catch(()=>{});clearLegacySave();location.reload()}
 async function toggleFullscreen(event){
   if(event)event.stopPropagation();
   try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}
@@ -1657,6 +1805,8 @@ function renderGameToText(){
     character:{name:getCurrentBirdName(),species:G.species,speciesName:birds[G.species].name,unlocked:G.unlocked.length},
     status:{hunger:Math.round(G.hunger),happiness:Math.round(G.happiness),health:Math.round(G.health),energy:Math.round(G.energy),cleanliness:Math.round(G.cleanliness),sick:Math.round(G.sickLevel),sleeping:G.isSleeping},
     resources:{coins:G.coins,gems:G.gems,level:G.level,exp:G.exp},
+    localAI:{status:aiStatus,modelCached:aiModelBytes>0,emotion:aiEmotion,request:aiRequest,inferences:aiInferenceCount},
+    social:{playerId:socialState?.playerId||null,mode:socialState?.mode||'local',friends:socialState?.friends?.length||0,bond:G.social?.bond||0,streakDays:G.social?.streakDays||0},
     missions:{completed:G.missions.completed,active:G.missions.active.map(m=>({id:m.id,progress:m.progress,goal:m.goal,done:m.done}))},
     minigame:mgActive&&currentMg?{id:currentMg.id,name:currentMg.name,score:mgScore,time:mgData.time,player:mgData.mazePos??mgData.dodgeX??mgData.birdY??null}:null
   });
@@ -1664,15 +1814,13 @@ function renderGameToText(){
 window.render_game_to_text=renderGameToText;
 let deterministicRemainder=0;
 window.advanceTime=(ms)=>{deterministicRemainder+=Math.max(0,Number(ms)||0);while(deterministicRemainder>=1000){deterministicRemainder-=1000;gameTick();}renderBird();};
-function init(){
-  load();initMissions();renderStars();renderShop();renderInv();renderCustomize();renderMissions();updateUI();
+async function init(){
+  await load();initMissions();renderStars();renderShop();renderInv();renderCustomize();renderMissions();updateUI();
+  void initLocalAi();
+  void initIdentityAndSocial();
   setInterval(gameTick,1000);setInterval(blinkLoop,2500);animLoop();
   document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)hideModal(m.id)}));
   document.getElementById('nameInput').addEventListener('keypress',e=>{if(e.key==='Enter')saveName()});
-  const apiInput=document.getElementById('chatApiKey');
-  apiInput.addEventListener('keypress',e=>{if(e.key==='Enter')saveChatApiKey()});
-  apiInput.addEventListener('input',e=>{G.chatApiDraft=e.target.value;});
-  apiInput.addEventListener('blur',saveChatApiKey);
   const chatInput=document.getElementById('chatInput');
   chatInput.addEventListener('keypress',e=>{if(e.key==='Enter')sendChatMessage()});
   window.addEventListener('error',e=>logError('window',e.message||'unknown'));
@@ -1681,6 +1829,7 @@ function init(){
   window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='f'&&!/INPUT|TEXTAREA/.test(document.activeElement?.tagName||'')){e.preventDefault();toggleFullscreen();}});
   document.addEventListener('fullscreenchange',()=>{document.body.classList.toggle('is-fullscreen',Boolean(document.fullscreenElement));window.dispatchEvent(new Event('resize'));});
   setInterval(save,5000);
+  setInterval(()=>{if(aiStatus==='ready'&&!document.hidden&&!aiBusy)generateLocalAi(null,true);},90000);
   setInterval(runErrorScan,20000);
   init3dControl();renderChangeLog();renderErrorLogs();renderChat();runErrorScan();
   if(G.autoTheme)applyAutoTheme();
@@ -1698,6 +1847,7 @@ function init(){
   });
   const overlay=document.getElementById('loadingOverlay');
   if(overlay){setTimeout(()=>overlay.classList.add('hide'),600);}
+  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js').catch(error=>console.warn('Offline cache registration skipped',error));
 }
 function saveName(){const n=document.getElementById('nameInput').value.trim();if(n){setCurrentBirdName(n);playBirdSound('feed');setMsg(`名前が「${n}」になった！`);save();updateUI()}hideModal('nameModal')}
 init();
