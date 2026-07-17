@@ -39,21 +39,57 @@ function applyGameState(next){
   if(!next||typeof next!=='object')return;
   G=normalizeGameState(next);ensureNewSettings();updateUI();renderInv();renderSocial();save();
 }
+function renderSyncedGameState(){
+  G=normalizeGameState(G);ensureNewSettings();G.name=getCurrentBirdName();
+  updateUI();renderBird();renderInv();renderShop();renderMissions();renderCustomize();renderSocial();
+}
 async function pullCloudSave(){
+  const userId=String(identityUser?.id||'');
+  if(!userId)return false;
+  const accountKey=accountSaveRecordKey(userId);
+  const accountLocal=await saveDbGet(accountKey).catch(()=>null);
   try{
     const response=await fetch('/api/cloud-save',{headers:{Accept:'application/json'}});
-    if(!response.ok)return false;
-    const payload=await response.json(),remote=payload.data;
-    if(!remote?.data)return false;
-    const local=await saveDbGet(SAVE_RECORD).catch(()=>null);
-    const remoteTime=Date.parse(remote.savedAt||0)||0,localTime=Date.parse(local?.savedAt||0)||0;
-    if(remoteTime>localTime){
-      G=normalizeGameState(remote.data);ensureNewSettings();
-      await saveDbSet(SAVE_RECORD,{version:'4.0.0',savedAt:remote.savedAt,data:stateForStorage()});
-      updateUI();renderInv();renderShop();renderMissions();showToast('クラウドの続きから再開しました','achievement');
-    }else if(local?.data){queueCloudSave(local);}
+    const payload=await response.json().catch(()=>({}));
+    if(payload.configured===false)cloudSaveEnabled=false;
+    if(!response.ok)throw new Error(payload.message||`cloud_load_${response.status}`);
+    cloudSaveEnabled=true;
+    const remote=payload.data;
+    if(remote?.data){
+      const remoteTime=Date.parse(remote.savedAt||0)||0,accountTime=Date.parse(accountLocal?.savedAt||0)||0;
+      if(accountLocal?.data&&accountTime>remoteTime){
+        G=normalizeGameState(accountLocal.data);
+        const saved=await putCloudSave(accountLocal);
+        await saveDbSet(accountKey,{...accountLocal,savedAt:saved.savedAt||accountLocal.savedAt,data:stateForStorage()});
+        showToast('この端末に残っていたアカウントデータを同期しました','achievement');
+      }else{
+        G=normalizeGameState(remote.data);
+        await saveDbSet(accountKey,{version:'4.0.0',savedAt:remote.savedAt,data:stateForStorage()});
+        document.body.dataset.sync='cloud';
+        showToast('Googleアカウントの続きから再開しました','achievement');
+      }
+    }else{
+      const guest=await saveDbGet(SAVE_RECORD).catch(()=>null);
+      const initial=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'4.0.0',savedAt:new Date().toISOString(),data:stateForStorage()});
+      G=normalizeGameState(initial.data);
+      const saved=await putCloudSave(initial);
+      await saveDbSet(accountKey,{...initial,savedAt:saved.savedAt||initial.savedAt,data:stateForStorage()});
+      showToast('現在の育成データをGoogleアカウントへ引き継ぎました','achievement');
+    }
+    activeSaveUserId=userId;
+    renderSyncedGameState();
     return true;
-  }catch(error){return false;}
+  }catch(error){
+    const guest=await saveDbGet(SAVE_RECORD).catch(()=>null);
+    const fallback=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'4.0.0',savedAt:new Date().toISOString(),data:stateForStorage()});
+    G=normalizeGameState(fallback.data);
+    await saveDbSet(accountKey,{...fallback,data:stateForStorage()}).catch(()=>{});
+    activeSaveUserId=userId;
+    document.body.dataset.sync='local';
+    renderSyncedGameState();
+    console.warn('Cloud load skipped',error);
+    return false;
+  }
 }
 async function remoteSocialAction(action,payload={}){
   const response=await fetch('/api/social',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,payload,snapshot:buildPlayerSnapshot()})});
@@ -74,7 +110,7 @@ async function syncSocialDashboard(){
   catch(error){socialState.mode='local';return false;}
 }
 async function initIdentityAndSocial(force=false){
-  if(identityLoading&&!force)return;identityLoading=true;
+  if(identityLoading)return;identityLoading=true;cloudSyncSuspended=true;cancelQueuedCloudSave();
   try{
     if(!socialState.playerId)await initLocalSocial();
     if(!isLocalStaticMode()){
@@ -82,8 +118,9 @@ async function initIdentityAndSocial(force=false){
       catch(error){identityUser=null;}
     }else identityUser=null;
     if(identityUser){await pullCloudSave();await syncSocialDashboard();}
+    else{activeSaveUserId=null;document.body.dataset.sync='local';}
     renderIdentity();renderSocial();scheduleGoogleButton();
-  }finally{identityLoading=false;}
+  }finally{cloudSyncSuspended=false;identityLoading=false;}
 }
 function scheduleGoogleButton(attempt=0){
   if(identityUser||googleRendered)return;
@@ -110,14 +147,22 @@ async function handleGoogleCredential(response){
   }catch(error){showToast(error.message||'Googleログインに失敗しました','warning');}
 }
 async function logoutGoogle(){
-  await fetch('/api/auth/logout',{method:'POST'}).catch(()=>{});identityUser=null;socialState.mode='local';googleRendered=false;
+  cloudSyncSuspended=true;cancelQueuedCloudSave();
+  if(identityUser&&activeSaveUserId){
+    await save();await pendingSave.catch(()=>{});
+    const accountRecord=await saveDbGet(accountSaveRecordKey(activeSaveUserId)).catch(()=>null);
+    if(accountRecord?.data)await putCloudSave(accountRecord).catch(()=>{});
+  }
+  await fetch('/api/auth/logout',{method:'POST'}).catch(()=>{});identityUser=null;activeSaveUserId=null;cloudSaveEnabled=null;socialState.mode='local';googleRendered=false;document.body.dataset.sync='local';
+  const guest=await saveDbGet(SAVE_RECORD).catch(()=>null);G=normalizeGameState(guest?.data||DEFAULT_GAME_STATE);renderSyncedGameState();
+  cloudSyncSuspended=false;
   try{google.accounts.id.disableAutoSelect();}catch(error){}
   renderIdentity();renderSocial();scheduleGoogleButton();showToast('ログアウトしました');
 }
 function renderIdentity(){
   const name=document.getElementById('identityName'),cloud=document.getElementById('cloudSaveState'),sync=document.getElementById('socialSyncState');
   if(name)name.textContent=identityUser?.name||'ゲスト';
-  if(cloud)cloud.textContent=identityUser?(document.body.dataset.sync==='cloud'?'クラウドと同期済み':'端末保存＋クラウド待機'):'この端末に保存中';
+  if(cloud)cloud.textContent=identityUser?(document.body.dataset.sync==='cloud'?'コイン・持ち物まで同期済み':'この端末のアカウント保存（クラウド未接続）'):'ゲストデータをこの端末に保存中';
   if(sync)sync.textContent=socialState.mode==='cloud'?'クラウド同期':'端末モード';
   const signIn=document.getElementById('googleSignInButton'),logout=document.getElementById('googleLogoutBtn');
   if(signIn)signIn.style.display=identityUser?'none':'block';if(logout)logout.style.display=identityUser?'inline-flex':'none';

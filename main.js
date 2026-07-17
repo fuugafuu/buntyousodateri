@@ -394,7 +394,10 @@ function delCookie(n){
 const SAVE_DB_NAME='mofumori-v4';
 const SAVE_STORE='state';
 const SAVE_RECORD='current';
-let saveDbPromise=null,pendingSave=Promise.resolve(),cloudSaveTimer=null,identityUser=null;
+const ACCOUNT_SAVE_PREFIX='account:';
+let saveDbPromise=null,pendingSave=Promise.resolve(),cloudSaveTimer=null,identityUser=null,activeSaveUserId=null,cloudSyncSuspended=false,cloudSaveEnabled=null;
+function accountSaveRecordKey(userId){return `${ACCOUNT_SAVE_PREFIX}${String(userId||'').slice(0,160)}`;}
+function activeSaveRecordKey(){return activeSaveUserId?accountSaveRecordKey(activeSaveUserId):SAVE_RECORD;}
 function openSaveDb(){
   if(saveDbPromise)return saveDbPromise;
   saveDbPromise=new Promise((resolve,reject)=>{
@@ -423,15 +426,30 @@ function stateForStorage(){
   delete data.chatApiKey;delete data.chatApiDraft;delete data.chatApiEnabled;
   return data;
 }
-function queueCloudSave(record){
-  if(!identityUser)return;
+function cancelQueuedCloudSave(){
   if(cloudSaveTimer)clearTimeout(cloudSaveTimer);
+  cloudSaveTimer=null;
+}
+async function putCloudSave(record){
+  const response=await fetch('/api/cloud-save',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(record)});
+  const payload=await response.json().catch(()=>({}));
+  if(!response.ok){if(payload.configured===false)cloudSaveEnabled=false;throw new Error(payload.message||`cloud_save_${response.status}`);}
+  cloudSaveEnabled=true;
+  document.body.dataset.sync='cloud';
+  renderIdentity();
+  return payload;
+}
+function queueCloudSave(record){
+  const userId=activeSaveUserId;
+  if(!identityUser||!userId||String(identityUser.id)!==userId||cloudSyncSuspended||cloudSaveEnabled===false)return;
+  cancelQueuedCloudSave();
   cloudSaveTimer=setTimeout(async()=>{
+    cloudSaveTimer=null;
+    if(cloudSyncSuspended||!identityUser||String(identityUser.id)!==userId)return;
     try{
-      const response=await fetch('/api/cloud-save',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(record)});
-      if(!response.ok)throw new Error(`cloud_save_${response.status}`);
-      document.body.dataset.sync='cloud';
-      renderIdentity();
+      const payload=await putCloudSave(record);
+      const key=accountSaveRecordKey(userId),latest=await saveDbGet(key).catch(()=>null);
+      if(payload.savedAt&&latest?.savedAt===record.savedAt)await saveDbSet(key,{...record,savedAt:payload.savedAt});
     }catch(error){document.body.dataset.sync='local';console.warn('Cloud save skipped',error);renderIdentity();}
   },1200);
 }
@@ -444,7 +462,8 @@ function clearLegacySave(){
 function save(){
   G.lastUpdate=Date.now();
   const record={version:'4.0.0',savedAt:new Date().toISOString(),data:stateForStorage()};
-  pendingSave=pendingSave.catch(()=>{}).then(()=>saveDbSet(SAVE_RECORD,record)).catch(error=>{if(!scanCache.idb){scanCache.idb=true;console.error('IndexedDB save failed',error);}});
+  const recordKey=activeSaveRecordKey();
+  pendingSave=pendingSave.catch(()=>{}).then(()=>saveDbSet(recordKey,record)).catch(error=>{if(!scanCache.idb){scanCache.idb=true;console.error('IndexedDB save failed',error);}});
   queueCloudSave(record);
   return pendingSave;
 }
