@@ -15,7 +15,7 @@ Original prompt: 日本語で作業してください。まず本気で全体の
 - [x] Google Identity Servicesログイン
 - [x] 絆ランク、フレンド、ランキング、仕送り
 - [x] 正しいMofumoriを実モデル・API・モバイルで再検証
-- [ ] 正しいブランチをGitHub/Vercelへ公開
+- [x] 正しいブランチをGitHub/Vercelへ公開
 
 ## 2026-07-17 追加実装メモ
 
@@ -38,6 +38,7 @@ Original prompt: 日本語で作業してください。まず本気で全体の
 - モバイル390×844でフレンド追加、相手のどうぶつ閲覧、シード仕送り、IndexedDB再読込、なかよし度増加、空腹時のAI要求→えさ実行を確認。
 - 14種類のミニゲームすべてで開始UI、稼働状態、終了処理を再検証。コンソールエラー0。
 - `npm test`、`npm run test:ui`、`npm audit --omit=dev`（脆弱性0件）成功。
+- PR #6を`main`へマージ。Vercel本番デプロイがREADYとなり、`buntyousodateri.vercel.app`へエイリアス接続された。
 
 ## TODO
 

@@ -16,6 +16,9 @@ function invoke(handler, { method = 'GET', headers = {}, body = undefined } = {}
 }
 
 (async () => {
+  const health = await invoke(require('../api/health.js'));
+  assert.equal(health.status, 200);
+  assert.equal(health.body.localModeAvailable, true);
   const me = await invoke(require('../api/auth/me.js'));
   assert.equal(me.status, 401);
   const cloud = await invoke(require('../api/cloud-save.js'));
