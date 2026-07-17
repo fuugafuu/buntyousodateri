@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "文鳥育成シュミレーター",
-  description: "文鳥を育てて小松菜高速食べバトルに挑むWebゲーム",
+  title: "文鳥育成シミュレーター",
+  description: "端末内AIと話しながら文鳥を育て、フレンドとつながるスマホWebゲーム",
 };
 
 export default function RootLayout({

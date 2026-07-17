@@ -1,8 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
+import { GoogleIdentityButton } from "@/components/auth/GoogleIdentityButton";
 
 const appleEnabled = process.env.NEXT_PUBLIC_ENABLE_APPLE === "true";
-const googleEnabled = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
 const lineEnabled = Boolean(process.env.AUTH_LINE_ID && process.env.AUTH_LINE_SECRET);
 
 export default function LoginPage() {
@@ -22,24 +22,12 @@ export default function LoginPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-[#17211c]/72 via-[#17211c]/22 to-transparent" />
           <div className="absolute bottom-6 left-6 right-6 text-white">
             <p className="text-sm font-semibold">小松菜高速食べバトル</p>
-            <h1 className="mt-1 text-4xl font-bold leading-tight">文鳥育成シュミレーター</h1>
+            <h1 className="mt-1 text-4xl font-bold leading-tight">文鳥育成シミュレーター</h1>
           </div>
         </div>
 
         <div className="flex flex-1 flex-col gap-4 p-6">
-          {googleEnabled ? (
-            <Link
-              href="/api/auth/signin/google"
-              className="flex h-12 items-center justify-center gap-3 border border-[#dadce0] bg-white px-4 text-sm font-semibold text-[#3c4043] transition hover:bg-[#f8fafd]"
-            >
-              <span className="grid h-5 w-5 place-items-center rounded-full border border-[#dadce0] text-xs font-bold">
-                G
-              </span>
-              Googleでログイン
-            </Link>
-          ) : (
-            <DisabledLoginButton label="Googleログイン未設定" mark="G" />
-          )}
+          <GoogleIdentityButton />
           {lineEnabled ? (
             <Link
               href="/api/auth/signin/line"
@@ -69,7 +57,7 @@ export default function LoginPage() {
             デモで始める
           </Link>
           <p className="text-sm leading-6 text-[var(--muted)]">
-            ローカルでは外部認証なしのデモで遊べます。本番ではAuth.jsのセッションを使ってAPI更新を保護します。
+            Googleログインは署名済みIDトークンをサーバーで検証します。ゲームデータや端末内AIの会話がGoogleへ送られることはありません。
           </p>
         </div>
       </section>

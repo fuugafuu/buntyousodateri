@@ -17,12 +17,15 @@ import {
   Swords,
   Volume2,
   Waves,
+  Users,
   Zap,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { LocalBirdAI, type AiEmotion } from "@/components/ai/LocalBirdAI";
+import { SocialHub } from "@/components/social/SocialHub";
 import type {
   BattleMode,
   BattleRoom,
@@ -33,7 +36,7 @@ import type {
   OwnedBird,
 } from "@/lib/game/types";
 
-type Screen = "home" | "encyclopedia" | "shop" | "battle";
+type Screen = "home" | "encyclopedia" | "shop" | "battle" | "social";
 
 type ApiResult<T> = { ok: true; data: T } | { ok: false; message: string };
 
@@ -42,6 +45,7 @@ const navItems: Array<{ href: string; screen: Screen; label: string; Icon: typeo
   { href: "/encyclopedia", screen: "encyclopedia", label: "図鑑", Icon: BookOpen },
   { href: "/shop", screen: "shop", label: "ショップ", Icon: ShoppingBag },
   { href: "/battle", screen: "battle", label: "バトル", Icon: Swords },
+  { href: "/social", screen: "social", label: "つながり", Icon: Users },
 ];
 
 const statLabels = {
@@ -60,6 +64,19 @@ const conditionLabels = {
   energy: "気力",
 };
 
+function emotionEmoji(emotion: AiEmotion) {
+  return {
+    calm: "●ᴗ●",
+    happy: "♥ᴗ♥",
+    excited: "★▽★",
+    hungry: "・△・",
+    thirsty: "・o・",
+    sleepy: "－_－",
+    lonely: "・︵・",
+    curious: "？ᴗ？",
+  }[emotion];
+}
+
 export function GameApp({ screen }: { screen: Screen }) {
   const [state, setState] = useState<GameState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,6 +86,7 @@ export function GameApp({ screen }: { screen: Screen }) {
   const [bgmOn, setBgmOn] = useState(true);
   const [noticeOn, setNoticeOn] = useState(false);
   const [gachaResultIds, setGachaResultIds] = useState<string[]>([]);
+  const [aiEmotion, setAiEmotion] = useState<AiEmotion>("calm");
 
   const load = useCallback(async () => {
     try {
@@ -105,6 +123,48 @@ export function GameApp({ screen }: { screen: Screen }) {
       setBusy(null);
     }
   }, []);
+
+  const fulfillAiRequest = useCallback(async (action: CareAction) => {
+    const next = await runMutation(`ai-care-${action}`, () =>
+      apiPost<GameState>("/api/game/care", { action }),
+    );
+    if (!next) {
+      return false;
+    }
+    setState(next);
+    return true;
+  }, [runMutation]);
+
+  useEffect(() => {
+    if (!state) {
+      return;
+    }
+    const debugWindow = window as typeof window & {
+      render_game_to_text?: () => string;
+      advanceTime?: (milliseconds: number) => void;
+    };
+    debugWindow.render_game_to_text = () => JSON.stringify({
+      screen,
+      player: state.profile.displayName,
+      bird: {
+        name: state.selectedBird.nickname,
+        speciesId: state.selectedBird.speciesId,
+        level: state.selectedBird.level,
+        condition: state.selectedBird.condition,
+        emotion: aiEmotion,
+      },
+      coins: state.profile.coins,
+      inventory: state.inventory.filter((entry) => entry.quantity > 0),
+      note: "DOM based mobile pet game; AI overlays and bottom navigation are interactive elements.",
+    });
+    debugWindow.advanceTime = (milliseconds) => {
+      window.dispatchEvent(new CustomEvent("mofumori:advance-time", { detail: { milliseconds } }));
+    };
+    return () => {
+      delete debugWindow.render_game_to_text;
+      delete debugWindow.advanceTime;
+    };
+  }, [aiEmotion, screen, state]);
 
   if (!state || !selectedSpecies) {
     return (
@@ -168,7 +228,14 @@ export function GameApp({ screen }: { screen: Screen }) {
         </div>
       ) : null}
       {screen === "home" ? (
-        <HomeScreen state={state} species={selectedSpecies} busy={busy} runMutation={runMutation} setState={setState} />
+        <HomeScreen
+          state={state}
+          species={selectedSpecies}
+          emotion={aiEmotion}
+          busy={busy}
+          runMutation={runMutation}
+          setState={setState}
+        />
       ) : null}
       {screen === "encyclopedia" ? (
         <EncyclopediaScreen state={state} busy={busy} runMutation={runMutation} setState={setState} />
@@ -186,6 +253,8 @@ export function GameApp({ screen }: { screen: Screen }) {
       {screen === "battle" ? (
         <BattleScreen state={state} busy={busy} runMutation={runMutation} setState={setState} />
       ) : null}
+      {screen === "social" ? <SocialHub onGameStateChanged={load} /> : null}
+      <LocalBirdAI state={state} onEmotion={setAiEmotion} onFulfill={fulfillAiRequest} />
     </AppChrome>
   );
 }
@@ -227,7 +296,7 @@ function AppChrome({
           <Settings className="h-5 w-5" />
         </button>
         <div className="game-scrollbar flex-1 overflow-y-auto pb-24">{children}</div>
-        <nav className="absolute bottom-0 left-0 right-0 z-30 grid h-20 grid-cols-4 border-t border-[var(--line)] bg-white/96 px-2 py-2 backdrop-blur">
+        <nav className="absolute bottom-0 left-0 right-0 z-30 grid h-20 grid-cols-5 border-t border-[var(--line)] bg-white/96 px-1 py-2 backdrop-blur">
           {navItems.map(({ href, screen, label, Icon }) => {
             const active = activeScreen === screen || pathname === href;
             return (
@@ -276,12 +345,12 @@ function AppChrome({
               <ToggleRow checked={noticeOn} icon={<ShieldCheck className="h-4 w-4" />} label="通知" setChecked={setNoticeOn} />
               <Link
                 className="mt-3 flex h-11 items-center justify-center gap-2 border border-[var(--line)] text-sm font-semibold text-[var(--muted)]"
-                href="/api/auth/signout"
+                href="/api/auth/google/signout"
               >
                 <LogOut className="h-4 w-4" />
                 ログアウト
               </Link>
-              <p className="mt-3 text-xs text-[var(--muted)]">version 0.1.0 / デモモード対応</p>
+              <p className="mt-3 text-xs text-[var(--muted)]">version 1.0.0 / 端末AI・クラウド同期対応</p>
             </aside>
           </div>
         ) : null}
@@ -320,12 +389,14 @@ function ToggleRow({
 function HomeScreen({
   state,
   species,
+  emotion,
   busy,
   runMutation,
   setState,
 }: {
   state: GameState;
   species: BirdSpecies;
+  emotion: AiEmotion;
   busy: string | null;
   runMutation: <T>(label: string, action: () => Promise<T>) => Promise<T | null>;
   setState: (state: GameState) => void;
@@ -379,8 +450,9 @@ function HomeScreen({
             {state.profile.coins}
           </div>
         </div>
-        <div className="absolute bottom-2 right-5 z-10 h-48 w-48">
+        <div className={clsx("bird-ai-avatar absolute bottom-2 right-5 z-10 h-48 w-48", `emotion-${emotion}`)} data-emotion={emotion}>
           <AssetImage alt={selected.nickname} className="object-contain drop-shadow-lg" fill priority src={species.asset} />
+          <span aria-hidden="true" className="bird-emotion-badge">{emotionEmoji(emotion)}</span>
         </div>
       </div>
 

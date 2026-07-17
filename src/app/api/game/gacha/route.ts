@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { fail, getRequestKey, ok, requireGameUserId } from "@/lib/api";
 import { performGacha } from "@/lib/game/store";
+import { persistGameState, prepareGameState } from "@/lib/game/persistence";
 import { enforceRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,10 @@ export async function POST(request: NextRequest) {
     const userId = await requireGameUserId();
     await enforceRateLimit("gacha", getRequestKey(request, userId));
     const body = gachaSchema.parse(await request.json());
-    return ok(performGacha(userId, body.pulls));
+    await prepareGameState(userId);
+    const result = performGacha(userId, body.pulls);
+    await persistGameState(userId, result.state);
+    return ok(result);
   } catch (error) {
     return fail(error);
   }

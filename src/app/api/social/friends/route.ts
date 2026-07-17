@@ -1,28 +1,21 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { fail, getRequestKey, ok, requireGameUserId } from "@/lib/api";
-import { purchaseItem } from "@/lib/game/store";
-import { persistGameState, prepareGameState } from "@/lib/game/persistence";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { addFriend } from "@/lib/social/store";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const purchaseSchema = z.object({
-  itemCode: z.string().min(1).max(64),
-});
+const schema = z.object({ playerId: z.string().min(6).max(24) });
 
 export async function POST(request: NextRequest) {
   try {
     const userId = await requireGameUserId();
     await enforceRateLimit("item", getRequestKey(request, userId));
-    const body = purchaseSchema.parse(await request.json());
-    await prepareGameState(userId);
-    const state = purchaseItem(userId, body.itemCode);
-    await persistGameState(userId, state);
-    return ok(state);
+    const body = schema.parse(await request.json());
+    return ok(await addFriend(userId, body.playerId));
   } catch (error) {
     return fail(error);
   }
 }
-

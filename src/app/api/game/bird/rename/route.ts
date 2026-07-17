@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { fail, getRequestKey, ok, requireGameUserId } from "@/lib/api";
 import { renameBird } from "@/lib/game/store";
+import { persistGameState, prepareGameState } from "@/lib/game/persistence";
 import { enforceRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +18,10 @@ export async function POST(request: NextRequest) {
     const userId = await requireGameUserId();
     await enforceRateLimit("care", getRequestKey(request, userId));
     const body = renameSchema.parse(await request.json());
-    return ok(renameBird(userId, body.birdId, body.nickname));
+    await prepareGameState(userId);
+    const state = renameBird(userId, body.birdId, body.nickname);
+    await persistGameState(userId, state);
+    return ok(state);
   } catch (error) {
     return fail(error);
   }

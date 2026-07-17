@@ -210,6 +210,51 @@ export function getGameState(userId: string): GameState {
   };
 }
 
+export function importGameState(userId: string, state: GameState) {
+  const ownedBirds = state.ownedBirds.map((bird) => ({ ...bird, userId }));
+  if (!ownedBirds.some((bird) => bird.selected) && ownedBirds[0]) {
+    ownedBirds[0].selected = true;
+  }
+  store.set(userId, {
+    profile: { ...state.profile, userId },
+    ownedBirds,
+    inventory: state.inventory.map((entry) => ({ ...entry })),
+    careLogs: state.careLogs.map((entry) => ({ ...entry })),
+    gachaLogs: state.gachaLogs.map((entry) => ({ ...entry, resultBirdIds: [...entry.resultBirdIds] })),
+    pendingConsumptions: state.pendingConsumptions.map((entry) => ({ ...entry })),
+    battleRooms: state.battleRooms.map((entry) => ({ ...entry, userId })),
+    battleLogs: state.battleLogs.map((entry) => ({ ...entry })),
+  });
+  return getGameState(userId);
+}
+
+export function takeInventoryItem(userId: string, itemCode: string, quantity: number) {
+  const record = getRecord(userId);
+  const entry = record.inventory.find((item) => item.itemCode === itemCode);
+  if (!items.some((item) => item.code === itemCode) || !entry || entry.quantity < quantity) {
+    throw new ApiError(400, "仕送りするアイテムが足りません。");
+  }
+  entry.quantity -= quantity;
+  record.profile.updatedAt = nowIso();
+  return getGameState(userId);
+}
+
+export function addInventoryItem(userId: string, itemCode: string, quantity: number) {
+  const record = getRecord(userId);
+  if (!items.some((item) => item.code === itemCode)) {
+    throw new ApiError(404, "アイテムが見つかりません。");
+  }
+  const entry = record.inventory.find((item) => item.itemCode === itemCode);
+  if (entry) entry.quantity += quantity;
+  else record.inventory.push({ itemCode, quantity });
+  record.profile.updatedAt = nowIso();
+  return getGameState(userId);
+}
+
+export function getMemoryGameStates() {
+  return [...store.keys()].map((userId) => getGameState(userId));
+}
+
 export function applyCare(userId: string, action: CareAction) {
   const record = getRecord(userId);
   const config = careEffects[action];
