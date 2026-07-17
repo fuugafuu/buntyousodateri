@@ -3,7 +3,7 @@
   "version": "4.0.0",
   "private": true,
   "scripts": {
-    "check": "node --check main.js && node --check social.js && node --check sw.js && node --check api/auth/google.js && node --check api/auth/me.js && node --check api/auth/logout.js && node --check api/cloud-save.js && node --check api/social.js && node --check server/auth.cjs && node --check server/supabase.cjs",
+    "check": "node --check main.js && node --check social.js && node --check sw.js && node --check api/auth/google.js && node --check api/auth/me.js && node --check api/auth/logout.js && node --check api/cloud-save.js && node --check api/social.js && node --check api/health.js && node --check server/auth.cjs && node --check server/supabase.cjs",
     "test": "npm run check && node tests/api-smoke.cjs",
     "test:ui": "node tests/ui-social-smoke.mjs && node tests/ui-minigames-smoke.mjs",
     "test:ai": "node tests/ui-ai-real.mjs"
