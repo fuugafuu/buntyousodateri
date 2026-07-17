@@ -20,7 +20,9 @@ function invoke(handler, { method = 'GET', headers = {}, body = undefined } = {}
   assert.equal(health.status, 200);
   assert.equal(health.body.localModeAvailable, true);
   const me = await invoke(require('../api/auth/me.js'));
-  assert.equal(me.status, 401);
+  assert.equal(me.status, 200);
+  assert.equal(me.body.authenticated, false);
+  assert.equal(me.body.data, null);
   const cloud = await invoke(require('../api/cloud-save.js'));
   assert.equal(cloud.status, 401);
   const social = await invoke(require('../api/social.js'), { method: 'POST', body: { action: 'dashboard' } });
@@ -32,5 +34,5 @@ function invoke(handler, { method = 'GET', headers = {}, body = undefined } = {}
   const logout = await invoke(require('../api/auth/logout.js'), { method: 'POST' });
   assert.equal(logout.status, 200);
   assert.match(String(logout.headers['set-cookie']), /Max-Age=0/);
-  console.log('API smoke: auth guards, invalid credential, logout cookie OK');
+  console.log('API smoke: guest identity, auth guards, invalid credential, logout cookie OK');
 })().catch(error => { console.error(error); process.exitCode = 1; });

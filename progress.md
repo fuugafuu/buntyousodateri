@@ -81,3 +81,4 @@ Original prompt: 日本語で作業してください。まず本気で全体の
 - `tests/ui-account-sync.mjs`で、リモートの9876コイン・42ダイヤ・シード77個の読込、ゲスト321コインの維持、アカウント側だけ12345コインへ更新されることを確認。
 - `npm test`、`npm run test:ui`、Webゲーム用Playwrightクライアントを完走。14ミニゲームとフレンド機能の回帰なし。
 - 公開API `/api/health` は現時点で `cloudConfigured:false`。Supabase環境変数が未登録のため、端末間クラウド同期にはVercel側の`SUPABASE_URL`と`SUPABASE_SERVICE_ROLE_KEY`登録が必要。
+- 未ログイン時の`/api/auth/me`を正常なゲスト応答へ変更し、公開版で不要な401コンソールエラーが出ないようにした。
