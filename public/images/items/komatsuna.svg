@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="temporary komatsuna icon">
-  <rect width="512" height="512" fill="#f8fbf6"/>
-  <path d="M254 392c-10-84 2-174 30-262" stroke="#4f8a55" stroke-width="28" stroke-linecap="round"/>
-  <ellipse cx="208" cy="178" rx="72" ry="118" fill="#4f9f59" transform="rotate(-28 208 178)"/>
-  <ellipse cx="328" cy="184" rx="74" ry="122" fill="#5eb967" transform="rotate(22 328 184)"/>
-  <ellipse cx="250" cy="250" rx="78" ry="120" fill="#68bd70"/>
-  <rect x="185" y="360" width="142" height="34" rx="17" fill="#b98a5d"/>
-</svg>

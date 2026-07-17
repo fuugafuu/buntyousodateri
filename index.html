@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mofumori">
+  <meta name="theme-color" content="#102d2a">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
+  <title>Mofumori - どうぶつ育成ゲーム</title>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="day">
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-card">
+      <div class="loading-icon" id="loadingIcon">🐦</div>
+      <div class="loading-text">読み込み中...</div>
+      <div class="loading-bar"><span></span></div>
+    </div>
+  </div>
+  <div class="stars" id="stars"></div>
+  <div class="toast" id="toast"></div>
+  <div class="install-banner" id="installBanner">
+    <h3>📱 ホーム画面に追加</h3>
+    <p>追加すると寝ている間も元気が回復！</p>
+    <button class="install-btn" onclick="showInstallGuide()">方法を見る</button>
+    <button class="close-btn" onclick="hideInstallBanner()">後で</button>
+  </div>
+  <header class="header">
+    <div class="header-content">
+      <div class="bird-info">
+        <span class="bird-icon" id="headerIcon">🐦</span>
+        <div>
+          <div class="brand-kicker">MOFUMORI DAYS</div>
+          <div class="bird-name"><span id="birdName">文鳥</span><button class="edit-btn" onclick="showModal('nameModal')">✏️</button></div>
+          <div class="bird-stats-mini">Lv.<span id="level">1</span> | <span id="age">0分</span> | <span id="mood">😊</span></div>
+        </div>
+      </div>
+      <div class="currency">
+        <div class="coins">💰 <span id="coins">100</span></div>
+        <div class="gems">💎 <span id="gems">5</span></div>
+        <div class="exp-bar"><div class="exp-fill" id="expBar"></div></div>
+      </div>
+    </div>
+  </header>
+  <div class="modal" id="nameModal">
+    <div class="modal-content">
+      <div class="modal-title">🐦 名前を変更</div>
+      <input type="text" id="nameInput" maxlength="12" placeholder="新しい名前">
+      <div class="name-suggestions" id="nameSuggestions"></div>
+      <div class="modal-buttons">
+        <button class="modal-btn secondary" onclick="hideModal('nameModal')">キャンセル</button>
+        <button class="modal-btn primary" onclick="saveName()">決定</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="birdModal">
+    <div class="modal-content">
+      <div class="modal-title">🐦 鳥を選ぶ</div>
+      <div class="bird-grid" id="birdGrid"></div>
+      <div class="modal-buttons">
+        <button class="modal-btn secondary" onclick="hideModal('birdModal')">閉じる</button>
+        <button class="modal-btn primary" id="buyBirdBtn" onclick="buyBird()">購入</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="installModal">
+    <div class="modal-content">
+      <div class="modal-title">📱 ホーム画面に追加</div>
+      <div style="text-align:left;font-size:0.8rem;line-height:1.5">
+        <p style="margin-bottom:10px"><b>iPhone/iPad:</b></p>
+        <ol style="margin-left:18px;margin-bottom:14px">
+          <li>共有ボタン（□↑）をタップ</li>
+          <li>「ホーム画面に追加」を選択</li>
+          <li>「追加」をタップ</li>
+        </ol>
+        <p style="margin-bottom:10px"><b>Android:</b></p>
+        <ol style="margin-left:18px">
+          <li>ブラウザのメニュー（⋮）を開く</li>
+          <li>「ホーム画面に追加」を選択</li>
+        </ol>
+        <p style="margin-top:14px;padding:8px;background:rgba(76,175,80,0.1);border-radius:6px">✨ <b>アプリを閉じても寝ている間は元気が回復</b>します！</p>
+      </div>
+      <div class="modal-buttons" style="margin-top:14px">
+        <button class="modal-btn primary" onclick="hideModal('installModal')">わかった</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="useItemModal">
+    <div class="modal-content">
+      <div class="modal-title" id="useItemTitle">アイテムを使う</div>
+      <p style="text-align:center;margin-bottom:14px" id="useItemDesc"></p>
+      <div class="modal-buttons">
+        <button class="modal-btn secondary" onclick="hideModal('useItemModal')">キャンセル</button>
+        <button class="modal-btn primary" onclick="confirmUseItem()">使う</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="changeNameModal">
+    <div class="modal-content">
+      <div class="modal-title" id="changeNameTitle">🐦 名前も変える？</div>
+      <p style="text-align:center;margin-bottom:14px" id="changeNameDesc">新しい鳥になりました！名前も変えますか？</p>
+      <div class="name-suggestions" id="newBirdNames"></div>
+      <input type="text" id="newNameInput" maxlength="12" placeholder="新しい名前">
+      <div class="modal-buttons">
+        <button class="modal-btn secondary" onclick="skipNameChange()">そのまま</button>
+        <button class="modal-btn primary" onclick="confirmNameChange()">変更</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="aiModelModal">
+    <div class="modal-content ai-model-modal">
+      <div class="ai-modal-head">
+        <div><small>ON-DEVICE AI</small><div class="modal-title">🧠 端末内モデルを読み込む</div></div>
+        <button class="ai-close" onclick="hideModal('aiModelModal')" aria-label="閉じる">×</button>
+      </div>
+      <div class="ai-privacy"><span>🔒</span><div><b>モデルも会話も端末の中だけ</b><p>GGUFはサーバーへ送信しません。初回だけスマホ内のファイルを選択します。</p></div></div>
+      <ol class="ai-steps">
+        <li><b>モデルをスマホへコピー</b><span>PCの E:\qwen2.5-1.5b-instruct-q4_k_m.gguf をスマホのファイルへ移します。</span></li>
+        <li><b>利用条件を確認</b><span>約1.04GBの保存容量、発熱、電池消費が発生します。</span></li>
+        <li><b>初回だけファイル選択</b><span>ブラウザの保護領域へ保存し、次回から再選択を省けます。</span></li>
+      </ol>
+      <label class="ai-terms"><input id="aiTerms" type="checkbox" onchange="setAiTerms(this.checked)"><span>端末内AIの利用条件と上記の注意事項に同意します</span></label>
+      <div class="ai-load-status"><div><i id="aiStatusDot"></i><b id="aiStatusText">端末内AIは未読み込みです</b></div><progress id="aiLoadProgress" max="100" value="0"></progress></div>
+      <input id="aiModelFile" type="file" accept=".gguf,application/octet-stream" hidden onchange="cacheAiModel(event)">
+      <div class="ai-modal-actions">
+        <button id="aiPrimaryBtn" class="modal-btn primary" onclick="selectOrLoadAiModel()">GGUFを選んで保存</button>
+        <button id="aiDeleteBtn" class="modal-btn secondary" onclick="deleteAiModel()" style="display:none">キャッシュ削除</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="friendPetModal">
+    <div class="modal-content friend-pet-modal">
+      <div class="friend-pet-head">
+        <div><small>FRIEND'S PET</small><div class="modal-title" id="friendPetName">ともだちのどうぶつ</div></div>
+        <button class="ai-close" onclick="hideModal('friendPetModal')" aria-label="閉じる">×</button>
+      </div>
+      <div class="friend-pet-stage" id="friendPetStage"></div>
+      <div class="friend-pet-stats" id="friendPetStats"></div>
+      <label class="gift-label" for="giftItemSelect">この子の飼い主へ仕送り</label>
+      <div class="gift-row">
+        <select id="giftItemSelect" class="gift-select"></select>
+        <button class="modal-btn primary" id="giftSendBtn" onclick="sendGiftToSelectedFriend()">🎁 送る</button>
+      </div>
+      <small class="social-hint">送ったアイテムは自分の持ち物から1個減ります。</small>
+    </div>
+  </div>
+  <main class="game-shell">
+    <section class="habitat-card">
+      <div class="habitat-toolbar">
+        <div><span class="live-dot"></span><span id="speciesLabel">桜文鳥</span>のお部屋</div>
+        <button class="fullscreen-btn" onclick="toggleFullscreen(event)" title="全画面表示 (F)">⛶ <span>全画面</span></button>
+      </div>
+      <div class="main-display" onclick="petBird()" aria-label="キャラクターをなでる">
+        <div class="room-scene" aria-hidden="true">
+          <div class="scene-window"><span class="scene-sun"></span><span class="scene-cloud cloud-one"></span><span class="scene-cloud cloud-two"></span></div>
+          <div class="scene-shelf"><i></i><i></i><i></i></div>
+          <div class="scene-plant"><span></span></div>
+          <div class="scene-rug"></div>
+        </div>
+        <div class="weather-effects" id="weatherEffects"></div>
+        <svg id="birdSvg" viewBox="0 0 200 220" width="260" height="286" role="img" aria-label="育成中のキャラクター"></svg>
+      </div>
+      <div class="recovery-banner" id="recoveryBanner"></div>
+      <div class="message-bubble" aria-live="polite">
+        <div class="message-avatar" id="messageAvatar">🐦</div>
+        <div class="message-copy"><small>いまの気持ち</small><div class="message-text"><span id="message">あなたを見ています...</span></div><button id="aiRequestBtn" class="ai-request-btn" style="display:none" onclick="fulfillAiRequest()"></button></div>
+      </div>
+    </section>
+    <aside class="care-card">
+      <div class="section-heading"><div><span>CARE STATUS</span><h2>今日のお世話</h2></div><div class="mood-orb" id="moodOrb">😊</div></div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="actions-grid">
+        <button data-care class="action-btn feed" onclick="feedBird()"><span>🍚</span>えさ</button>
+        <button data-care class="action-btn pet" onclick="petBird()"><span>✋</span>なでる</button>
+        <button data-care class="action-btn play" onclick="playBird()"><span>🎾</span>遊ぶ</button>
+        <button data-care class="action-btn bath" onclick="bathBird()"><span>🛁</span>水浴び</button>
+        <button data-care class="action-btn sleep" id="sleepBtn" onclick="toggleSleep()"><span>💤</span>寝かす</button>
+        <button data-care class="action-btn treat" onclick="giveTreat()"><span>🍬</span>おやつ</button>
+        <button data-care class="action-btn train" onclick="trainBird()"><span>📚</span>訓練</button>
+        <button data-care class="action-btn sing" onclick="singBird()"><span>🎵</span>歌う</button>
+      </div>
+      <div class="care-note"><span>TIP</span> 水浴びは清潔度を回復。シャンプーは持ち物から使うと全回復します。</div>
+    </aside>
+  </main>
+  <div class="quick-actions quick-dock">
+    <button class="quick-btn birds" onclick="showModal('birdModal')">🦊動物図鑑</button>
+    <button class="quick-btn shop" onclick="togglePanel('shop')">🛒ショップ</button>
+    <button class="quick-btn inventory" onclick="togglePanel('inventory')">🎒持ち物</button>
+    <button class="quick-btn minigame" onclick="togglePanel('minigame')">🎮ミニゲーム</button>
+    <button class="quick-btn chat" id="chatOpenBtn" onclick="togglePanel('chat')">🧠端末AI</button>
+    <button class="quick-btn social" id="socialOpenBtn" onclick="togglePanel('social')">🌐つながり</button>
+    <button class="quick-btn logs" onclick="togglePanel('logs')">🧰ログ</button>
+    <button class="quick-btn mission" onclick="togglePanel('missions')">✅ミニミッション</button>
+  </div>
+  <div class="panel" id="shopPanel">
+    <div class="panel-title">🛒 ショップ</div>
+    <div class="shop-tabs">
+      <button class="shop-tab active" onclick="setShopTab('food')">食べ物</button>
+      <button class="shop-tab" onclick="setShopTab('items')">アイテム</button>
+      <button class="shop-tab" onclick="setShopTab('premium')">プレミアム</button>
+    </div>
+    <div class="shop-grid" id="shopGrid"></div>
+  </div>
+  <div class="panel" id="inventoryPanel">
+    <div class="panel-title">🎒 持ち物</div>
+    <div class="inventory-grid" id="inventoryGrid"></div>
+  </div>
+  <div class="panel" id="minigamePanel">
+    <div class="panel-title">🎮 ミニゲーム</div>
+    <div class="minigame-select" id="minigameSelect">
+      <div class="minigame-filters" id="minigameFilters"></div>
+      <div class="minigame-grid" id="minigameGrid"></div>
+    </div>
+    <div class="minigame-play" id="minigamePlay" style="display:none">
+      <div class="minigame-header">
+        <span class="minigame-name" id="mgName">シードキャッチ</span>
+        <span class="minigame-best" id="mgBest">ベスト 0</span>
+        <button class="back-btn" onclick="backToMinigameList()">← 戻る</button>
+      </div>
+      <div class="minigame-area" id="minigameArea">
+        <div class="minigame-score">スコア: <span id="mgScore">0</span></div>
+        <div>制限時間: <span id="mgTime">15</span>秒</div>
+        <button class="action-btn play" onclick="startCurrentMinigame()" id="startMgBtn">開始(10💰)</button>
+        <div class="minigame-target" id="mgTarget" style="display:none" onclick="catchSeed()">🌾</div>
+        <div class="minigame-content" id="mgContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="chatPanel">
+    <div class="panel-title ai-chat-title"><span>💬 端末AIとおしゃべり</span><button onclick="showAiModelSettings()">モデル設定</button></div>
+    <div class="ai-chat-state" id="aiChatState"><span>簡易会話モード</span><button onclick="showAiModelSettings()">モデルを読み込む</button></div>
+    <div class="chat-wrap" id="chatWrap"></div>
+    <div class="thinking" id="chatThinking" style="display:none"><span></span><span></span><span></span> 考え中...</div>
+    <div class="chat-input-row">
+      <input id="chatInput" class="chat-input" maxlength="240" placeholder="やさしく話しかける… (最大240文字)">
+      <button class="chat-send" onclick="sendChatMessage()">送信</button>
+    </div>
+    <small class="api-hint">モデル読み込み後は完全に端末内で生成します。未読込時は簡易会話で応答します。</small>
+  </div>
+  <div class="panel" id="logsPanel">
+    <div class="panel-title">🧰 変更ログ / バグ報告 / エラーログ</div>
+    <div class="changelog" id="changeLogArea"></div>
+    <div class="customize-options">
+      <button class="customize-btn" onclick="exportSave()">💾 セーブを保存</button>
+      <button class="customize-btn" onclick="triggerImport()">📂 セーブを読み込み</button>
+      <input type="file" id="saveFileInput" accept="application/json" style="display:none" onchange="importSaveFile(event)">
+    </div>
+    <textarea id="bugInput" class="bug-input" maxlength="400" placeholder="不具合の内容を書いてください (最大400文字)"></textarea>
+    <div class="customize-options">
+      <button class="customize-btn active" onclick="submitBugReport()">🐞 報告を保存</button>
+      <button class="customize-btn" onclick="copyBugReport()">📋 最新報告をコピー</button>
+    </div>
+    <div class="error-log" id="errorLogArea"></div>
+  </div>
+
+
+
+  <div class="panel" id="missionsPanel">
+    <div class="panel-title">✅ ミニミッション</div>
+    <div class="mission-summary" id="missionSummary"></div>
+    <div class="mission-list" id="missionList"></div>
+  </div>
+
+  <div class="panel social-panel" id="socialPanel">
+    <div class="panel-title social-title"><span>🌐 みんなの森</span><span class="social-sync" id="socialSyncState">端末モード</span></div>
+    <section class="identity-card">
+      <div><small>PLAYER ACCOUNT</small><strong id="identityName">ゲスト</strong><span id="cloudSaveState">この端末に保存中</span></div>
+      <div id="googleSignInButton" class="google-signin"></div>
+      <button id="googleLogoutBtn" class="social-small-btn" onclick="logoutGoogle()" style="display:none">ログアウト</button>
+    </section>
+    <section class="player-id-card">
+      <div><small>あなたのプレイヤーID</small><strong id="playerIdText">読み込み中…</strong></div>
+      <button class="copy-id-btn" onclick="copyPlayerId()">📋 コピー</button>
+    </section>
+    <div class="social-tabs" role="tablist">
+      <button class="active" data-social-tab="grow" onclick="setSocialTab('grow')">🌱 育成</button>
+      <button data-social-tab="friends" onclick="setSocialTab('friends')">👥 フレンド</button>
+      <button data-social-tab="ranking" onclick="setSocialTab('ranking')">🏆 ランキング</button>
+      <button data-social-tab="gifts" onclick="setSocialTab('gifts')">🎁 受け取り</button>
+    </div>
+    <div class="social-tab-page active" id="socialGrowTab">
+      <div class="bond-card">
+        <div class="bond-orb">💚<strong id="bondLevel">1</strong></div>
+        <div><small>なかよし度</small><h3 id="bondTitle">はじめまして</h3><div class="bond-bar"><span id="bondBar"></span></div><p id="bondCopy"></p></div>
+      </div>
+      <div class="growth-missions" id="growthMissions"></div>
+    </div>
+    <div class="social-tab-page" id="socialFriendsTab">
+      <div class="friend-add-row"><input id="friendIdInput" maxlength="16" placeholder="MF-XXXXXXXX"><button onclick="addFriendById()">＋ 追加</button></div>
+      <small class="social-hint">ログインすると別の端末でもフレンドを共有できます。まずはお試しID「MF-MOCHI001」も使えます。</small>
+      <div class="friend-list" id="friendList"></div>
+    </div>
+    <div class="social-tab-page" id="socialRankingTab"><div class="ranking-list" id="rankingList"></div></div>
+    <div class="social-tab-page" id="socialGiftsTab"><div class="gift-inbox" id="giftInbox"></div></div>
+  </div>
+
+  <div class="panel" id="customizePanel">
+    <div class="customize-section">
+      <div class="customize-title">✨ アニメーション</div>
+      <div class="customize-options" id="animationOpts"></div>
+    </div>
+    <div class="customize-section">
+      <div class="customize-title">🖼️ キャラクターの描画品質</div>
+      <div class="customize-options" id="resolutionOpts"></div>
+    </div>
+    <div class="customize-section">
+      <div class="customize-title">🧪 立体表示</div>
+      <div class="customize-options" id="beta3dOpts"></div>
+    </div>
+    <div class="customize-section">
+      <div class="customize-title">🌤️ 背景</div>
+      <div class="customize-options" id="themeOpts"></div>
+      <div class="customize-options" id="themeAutoOpts"></div>
+    </div>
+    <div class="customize-section">
+      <div class="customize-title">🌦️ 天気</div>
+      <div class="customize-options" id="weatherOpts"></div>
+      <div class="customize-options" id="weatherAutoOpts"></div>
+      <small class="api-hint" id="weatherHint">位置情報を使って実際の天気に連動できます。</small>
+    </div>
+    <div class="customize-section">
+      <div class="customize-title">🔊 サウンド</div>
+      <div class="customize-options" id="soundOpts"></div>
+    </div>
+    <div class="customize-section">
+      <div class="customize-title">🧠 端末内AI</div>
+      <button class="api-save-btn" onclick="showAiModelSettings()">モデルとキャッシュを管理</button>
+      <small class="api-hint">APIキーは不要です。モデルと会話はスマホの外へ送信されません。</small>
+    </div>
+  </div>
+  <div class="quick-actions">
+    <button class="quick-btn shop" onclick="togglePanel('customize')">🎨カスタマイズ</button>
+    <button class="quick-btn share" onclick="shareGame()">📤共有</button>
+  </div>
+  <div class="footer-stats">
+    <div>🍚<span id="tFeeds">0</span> ✋<span id="tPets">0</span> 🎾<span id="tPlays">0</span> 💦<span id="tBaths">0</span></div>
+    <small>MOFUMORI v3.0</small>
+    <button class="reset-btn" onclick="resetGame()">🔄 リセット</button>
+  </div>
+
+  <script src="social.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

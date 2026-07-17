@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="temporary sakura java sparrow">
-  <ellipse cx="260" cy="302" rx="128" ry="142" fill="#b89472"/>
-  <ellipse cx="286" cy="318" rx="90" ry="112" fill="#fff7eb"/>
-  <circle cx="214" cy="190" r="92" fill="#62676a"/>
-  <ellipse cx="190" cy="206" rx="34" ry="42" fill="#ffffff"/>
-  <path d="M285 185l94 35-94 37z" fill="#e9a1a1"/>
-  <circle cx="237" cy="166" r="12" fill="#1b2223"/>
-  <path d="M210 432h96" stroke="#805f47" stroke-width="18" stroke-linecap="round"/>
-</svg>
