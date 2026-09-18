@@ -10,7 +10,7 @@ create table if not exists public.mofumori_pets (
   species text not null check (species in (
     'buncho_sakura','buncho_white','buncho_cinnamon','buncho_silver','canary',
     'inko_green','inko_blue','buncho_pied','buncho_black','finch_zebra',
-    'lovebird','cockatiel','owl','cat','fox','penguin'
+    'lovebird','cockatiel','owl','cat','fox','penguin','fuga','fuga'
   )),
   rarity text not null check (rarity in ('N','R','SR','SSR','UR')),
   rank smallint not null check (rank between 1 and 5),
@@ -20,6 +20,16 @@ create table if not exists public.mofumori_pets (
   obtained_at timestamptz not null default now(),
   unique(owner_key, migration_key)
 );
+
+do $ begin
+  if not exists (
+    select 1 from pg_constraint where conname='mofumori_profiles_active_pet_fk'
+  ) then
+    alter table public.mofumori_profiles
+      add constraint mofumori_profiles_active_pet_fk
+      foreign key (active_pet_id) references public.mofumori_pets(id) on delete set null;
+  end if;
+end $;
 
 create table if not exists public.mofumori_friend_requests (
   id uuid primary key default gen_random_uuid(),
