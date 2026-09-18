@@ -27,7 +27,7 @@ function invoke(handler, { method = 'GET', headers = {}, body = undefined } = {}
   assert.equal(cloud.status, 401);
   const social = await invoke(require('../api/social.js'), { method: 'POST', body: { action: 'dashboard' } });
   assert.equal(social.status, 401);
-  const badGoogle = await invoke(require('../api/auth/google.js'), { method: 'POST', body: { credential: 'bad' } });
+  const rankings = await invoke(require('../api/rankings.js'));\n  assert.equal(rankings.status, 401);\n  const badGoogle = await invoke(require('../api/auth/google.js'), { method: 'POST', body: { credential: 'bad' } });
   assert.equal(badGoogle.status, 400);
   const crossOrigin = await invoke(require('../api/auth/google.js'), { method: 'POST', headers: { origin: 'https://evil.example', host: 'buntyousodateri.vercel.app', 'x-forwarded-proto': 'https' }, body: { credential: 'bad' } });
   assert.equal(crossOrigin.status, 403);
