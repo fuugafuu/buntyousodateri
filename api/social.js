@@ -40,10 +40,24 @@ function giftToClient(row) {
   return { id: row.id, senderName: row.sender_name || 'フレンド', itemCode: row.item_code, quantity: Number(row.quantity || 1), claimedAt: row.claimed_at, createdAt: row.created_at };
 }
 async function syncProfile(supabase, user, snapshot) {
-  const { data: saveRow, error: saveError } = await supabase.from('mofumori_saves').select('state').eq('user_key', user.id).maybeSingle();
+  const [{ data: saveRow, error: saveError }, { data: existing, error: profileError }] = await Promise.all([
+    supabase.from('mofumori_saves').select('state').eq('user_key', user.id).maybeSingle(),
+    supabase.from('mofumori_profiles').select('active_pet_id').eq('user_key', user.id).maybeSingle()
+  ]);
   if (saveError) throw saveError;
+  if (profileError) throw profileError;
   const clean = cleanSnapshot(user, snapshot, saveRow?.state?.data);
-  const record = { user_key: user.id, player_id: playerIdFor(user.id), display_name: clean.displayName, score: clean.score, character: clean.character, updated_at: new Date().toISOString() };
+  let character = clean.character, activePetId = existing?.active_pet_id || null;
+  if (activePetId) {
+    const { data: pet, error: petError } = await supabase.from('mofumori_pets')
+      .select('species,rarity,rank,name').eq('id', activePetId).eq('owner_key', user.id).maybeSingle();
+    if (petError) throw petError;
+    if (pet) {
+      const meta = SPECIES_META[pet.species] || SPECIES_META.buncho_sakura;
+      character = { ...clean.character, name: text(pet.name, 12, meta[0]), species: pet.species, speciesName: meta[0], icon: meta[1], rarity: pet.rarity, rank: pet.rank };
+    } else activePetId = null;
+  }
+  const record = { user_key: user.id, player_id: playerIdFor(user.id), display_name: clean.displayName, score: clean.score, character, active_pet_id: activePetId, updated_at: new Date().toISOString() };
   const { error } = await supabase.from('mofumori_profiles').upsert(record, { onConflict: 'user_key' });
   if (error) throw error;
   return record;
@@ -112,7 +126,7 @@ module.exports = async function handler(req, res) {
     const action = text(body.action, 30, 'dashboard'), payload = body.payload && typeof body.payload === 'object' ? body.payload : {};
     const supabase = getSupabase(), ownProfile = await syncProfile(supabase, user, body.snapshot);
     let gameState = null;
-    if (action === 'addFriend') await addFriend(supabase, user, payload.playerId);
+    if (action === 'addFriend') throw Object.assign(new Error('フレンド追加は申請→承認方式に更新されました。'), { status: 409 });
     else if (action === 'sendGift') { const record = await sendGift(supabase, user, payload); gameState = record?.data || null; }
     else if (action === 'claimGift') { const record = await claimGift(supabase, user, payload.giftId); gameState = record?.data || null; }
     else if (action !== 'dashboard') throw Object.assign(new Error('未対応の操作です。'), { status: 400 });

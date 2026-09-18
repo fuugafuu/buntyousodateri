@@ -26,6 +26,8 @@ async function requireUser(req) {
 }
 
 function requireSameOrigin(req) {
+  const fetchSite = String(req.headers['sec-fetch-site'] || '').toLowerCase();
+  if (fetchSite === 'cross-site') throw Object.assign(new Error('この送信元からの操作は許可されていません。'), { status: 403 });
   const origin = String(req.headers.origin || '');
   if (!origin) return true;
   const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();

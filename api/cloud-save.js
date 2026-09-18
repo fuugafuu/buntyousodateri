@@ -9,7 +9,15 @@ function cleanRecord(input) {
   delete record.data.chatApiKey;
   delete record.data.chatApiDraft;
   delete record.data.chatApiEnabled;
-  record.version = '4.0.0';
+  // Privacy: exact location, conversations and local diagnostics never leave the device.
+  delete record.data.geo;
+  delete record.data.chatHistory;
+  delete record.data.bugReports;
+  delete record.data.errorLogs;
+  // Online pet ownership is authoritative in mofumori_pets, never in client save JSON.
+  delete record.data.petCollection;
+  delete record.data.activePetId;
+  record.version = '5.0.0';
   record.savedAt = new Date().toISOString();
   return record;
 }

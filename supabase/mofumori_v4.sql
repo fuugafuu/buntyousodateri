@@ -69,7 +69,10 @@ begin
   return current_state;
 end $$;
 
-revoke all on function public.mofumori_send_gift(text,text,text,integer) from public;
-revoke all on function public.mofumori_claim_gift(text,uuid) from public;
+revoke all on table public.mofumori_saves, public.mofumori_profiles, public.mofumori_friendships, public.mofumori_gifts from anon, authenticated;
+grant all on table public.mofumori_saves, public.mofumori_profiles, public.mofumori_friendships, public.mofumori_gifts to service_role;
+
+revoke all on function public.mofumori_send_gift(text,text,text,integer) from public, anon, authenticated;
+revoke all on function public.mofumori_claim_gift(text,uuid) from public, anon, authenticated;
 grant execute on function public.mofumori_send_gift(text,text,text,integer) to service_role;
 grant execute on function public.mofumori_claim_gift(text,uuid) to service_role;
