@@ -10,7 +10,7 @@ create table if not exists public.mofumori_pets (
   species text not null check (species in (
     'buncho_sakura','buncho_white','buncho_cinnamon','buncho_silver','canary',
     'inko_green','inko_blue','buncho_pied','buncho_black','finch_zebra',
-    'lovebird','cockatiel','owl','cat','fox','penguin','fuga','fuga'
+    'lovebird','cockatiel','owl','cat','fox','penguin','fuga'
   )),
   rarity text not null check (rarity in ('N','R','SR','SSR','UR')),
   rank smallint not null check (rank between 1 and 5),
@@ -269,13 +269,16 @@ begin
   return to_jsonb(visit_row);
 end $$;
 
-revoke all on function public.mofumori_take_rate_limit(text,text,integer,integer) from public;
-revoke all on function public.mofumori_award_gacha(text,integer,jsonb) from public;
-revoke all on function public.mofumori_respond_friend_request(text,uuid,boolean) from public;
-revoke all on function public.mofumori_remove_friend(text,text) from public;
-revoke all on function public.mofumori_start_visit(text,text,uuid) from public;
-revoke all on function public.mofumori_end_visit(text,uuid) from public;
-revoke all on function public.mofumori_visit_interaction(text,uuid,text) from public;
+revoke all on table public.mofumori_pets, public.mofumori_friend_requests, public.mofumori_visits, public.mofumori_visit_actions, public.mofumori_rate_limits from anon, authenticated;
+grant all on table public.mofumori_pets, public.mofumori_friend_requests, public.mofumori_visits, public.mofumori_visit_actions, public.mofumori_rate_limits to service_role;
+
+revoke all on function public.mofumori_take_rate_limit(text,text,integer,integer) from public, anon, authenticated;
+revoke all on function public.mofumori_award_gacha(text,integer,jsonb) from public, anon, authenticated;
+revoke all on function public.mofumori_respond_friend_request(text,uuid,boolean) from public, anon, authenticated;
+revoke all on function public.mofumori_remove_friend(text,text) from public, anon, authenticated;
+revoke all on function public.mofumori_start_visit(text,text,uuid) from public, anon, authenticated;
+revoke all on function public.mofumori_end_visit(text,uuid) from public, anon, authenticated;
+revoke all on function public.mofumori_visit_interaction(text,uuid,text) from public, anon, authenticated;
 
 grant execute on function public.mofumori_take_rate_limit(text,text,integer,integer) to service_role;
 grant execute on function public.mofumori_award_gacha(text,integer,jsonb) to service_role;
