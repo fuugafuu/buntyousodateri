@@ -112,7 +112,7 @@ module.exports = async function handler(req, res) {
     const action = text(body.action, 30, 'dashboard'), payload = body.payload && typeof body.payload === 'object' ? body.payload : {};
     const supabase = getSupabase(), ownProfile = await syncProfile(supabase, user, body.snapshot);
     let gameState = null;
-    if (action === 'addFriend') await addFriend(supabase, user, payload.playerId);
+    if (action === 'addFriend') throw Object.assign(new Error('フレンド追加は申請→承認方式に更新されました。'), { status: 409 });
     else if (action === 'sendGift') { const record = await sendGift(supabase, user, payload); gameState = record?.data || null; }
     else if (action === 'claimGift') { const record = await claimGift(supabase, user, payload.giftId); gameState = record?.data || null; }
     else if (action !== 'dashboard') throw Object.assign(new Error('未対応の操作です。'), { status: 400 });
