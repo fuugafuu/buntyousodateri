@@ -21,7 +21,7 @@ create table if not exists public.mofumori_pets (
   unique(owner_key, migration_key)
 );
 
-do $ begin
+do $$ begin
   if not exists (
     select 1 from pg_constraint where conname='mofumori_profiles_active_pet_fk'
   ) then
@@ -29,7 +29,7 @@ do $ begin
       add constraint mofumori_profiles_active_pet_fk
       foreign key (active_pet_id) references public.mofumori_pets(id) on delete set null;
   end if;
-end $;
+end $$;
 
 create table if not exists public.mofumori_friend_requests (
   id uuid primary key default gen_random_uuid(),
