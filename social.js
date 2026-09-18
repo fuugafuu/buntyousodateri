@@ -63,7 +63,13 @@ async function pullCloudSave(){
         await saveDbSet(accountKey,{...accountLocal,savedAt:saved.savedAt||accountLocal.savedAt,data:stateForStorage()});
         showToast('この端末に残っていたアカウントデータを同期しました','achievement');
       }else{
-        G=normalizeGameState(remote.data);
+        const localPrivate=accountLocal?.data||G;
+        G=normalizeGameState({...remote.data,
+          geo:localPrivate.geo??null,
+          chatHistory:Array.isArray(localPrivate.chatHistory)?localPrivate.chatHistory:[],
+          bugReports:Array.isArray(localPrivate.bugReports)?localPrivate.bugReports:[],
+          errorLogs:Array.isArray(localPrivate.errorLogs)?localPrivate.errorLogs:[]
+        });
         await saveDbSet(accountKey,{version:'4.0.0',savedAt:remote.savedAt,data:stateForStorage()});
         document.body.dataset.sync='cloud';
         showToast('Googleアカウントの続きから再開しました','achievement');
