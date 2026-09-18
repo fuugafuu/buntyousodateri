@@ -9,10 +9,10 @@
     "test:ai": "node tests/ui-ai-real.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.108.2",
-    "google-auth-library": "^10.3.0"
+    "@supabase/supabase-js": "2.108.2",
+    "google-auth-library": "10.3.0"
   },
   "engines": {
     "node": ">=20"
   }
-}\n
+}
