@@ -14,11 +14,12 @@ const SPECIES_WEIGHTS = {
   buncho_sakura:16,buncho_white:14,buncho_cinnamon:11,buncho_silver:9,canary:8,inko_green:7,inko_blue:7,
   buncho_pied:6,buncho_black:5,finch_zebra:5,lovebird:4,cockatiel:4,cat:4,penguin:4,fox:3,owl:2
 };
+const GACHA_SPECIES = new Set(Object.keys(SPECIES_WEIGHTS));
 const RARITY_META = { N:{rank:1}, R:{rank:2}, SR:{rank:3}, SSR:{rank:4}, UR:{rank:5} };
 const VISIT_ACTIONS = new Set(['greet','pet','play','share_seed']);
 
 function playerIdFor(userKey) {
-  return `MF-${crypto.createHash('sha256').update(String(userKey)).digest('hex').slice(0, 8).toUpperCase()}`;
+  return `MF-${crypto.createHash('sha256').update(String(userKey)).digest('hex').slice(0, 10).toUpperCase()}`;
 }
 function text(value, max, fallback = '') {
   const out = String(value || '').trim().slice(0, max);
@@ -90,9 +91,11 @@ async function ensureProfile(supabase, user) {
   return data;
 }
 async function ensureLegacyPets(supabase, user) {
-  const { data: existing, error: existingError } = await supabase.from('mofumori_pets').select('id').eq('owner_key', user.id).limit(1);
-  if (existingError) throw existingError;
-  if (existing?.length) return;
+  const { data: profile, error: profileError } = await supabase.from('mofumori_profiles')
+    .select('pets_migrated_at').eq('user_key', user.id).single();
+  if (profileError) throw profileError;
+  if (profile?.pets_migrated_at) return;
+
   const { data: saveRow, error: saveError } = await supabase.from('mofumori_saves').select('state').eq('user_key', user.id).maybeSingle();
   if (saveError) throw saveError;
   const game = saveRow?.state?.data || {};
@@ -105,11 +108,41 @@ async function ensureLegacyPets(supabase, user) {
       migration_key: `legacy:${species}`, name: text(game.birdNames?.[species], 12, meta[0])
     };
   });
-  const { error } = await supabase.from('mofumori_pets').upsert(rows, { onConflict: 'owner_key,migration_key', ignoreDuplicates: true });
+  if (rows.length) {
+    const { error } = await supabase.from('mofumori_pets').upsert(rows, { onConflict: 'owner_key,migration_key', ignoreDuplicates: true });
+    if (error) throw error;
+  }
+  const { error: migratedError } = await supabase.from('mofumori_profiles')
+    .update({ pets_migrated_at: new Date().toISOString() }).eq('user_key', user.id);
+  if (migratedError) throw migratedError;
+}
+async function ensureHiddenReward(supabase, user) {
+  const { data: existing, error: existingError } = await supabase.from('mofumori_pets')
+    .select('id').eq('owner_key', user.id).eq('species', 'fuga').limit(1);
+  if (existingError) throw existingError;
+  if (existing?.length) return false;
+
+  const { data: owned, error: ownedError } = await supabase.from('mofumori_pets')
+    .select('species').eq('owner_key', user.id);
+  if (ownedError) throw ownedError;
+  const ownedSpecies = new Set((owned || []).map(row => row.species));
+  if (![...GACHA_SPECIES].every(species => ownedSpecies.has(species))) return false;
+
+  const { error } = await supabase.from('mofumori_pets').upsert({
+    owner_key: user.id,
+    species: 'fuga',
+    rarity: 'UR',
+    rank: 5,
+    name: SPECIES_META.fuga[0],
+    source: 'reward',
+    migration_key: 'reward:fuga'
+  }, { onConflict: 'owner_key,migration_key', ignoreDuplicates: true });
   if (error) throw error;
+  return true;
 }
 async function loadDashboard(supabase, user) {
   await ensureLegacyPets(supabase, user);
+  const hiddenUnlocked = await ensureHiddenReward(supabase, user);
   const now = new Date().toISOString();
   const [{ data: pets, error: petError }, { data: links, error: linkError }, { data: requests, error: requestError }, { data: visits, error: visitError }] = await Promise.all([
     supabase.from('mofumori_pets').select('id,owner_key,species,rarity,rank,name,source,obtained_at').eq('owner_key', user.id).order('obtained_at', { ascending: true }).limit(250),
@@ -150,6 +183,7 @@ async function loadDashboard(supabase, user) {
 
   return {
     playerId: ownProfile.player_id,
+    newUnlocks: hiddenUnlocked ? ['fuga'] : [],
     pets: (pets || []).map(petToClient),
     friends: friendKeys.map(key => profileMap.get(key)).filter(Boolean).map(row => profileToClient(row, user.id)),
     requests: {
@@ -188,7 +222,7 @@ async function gacha(supabase, user, count) {
 async function sendFriendRequest(supabase, user, rawPlayerId) {
   await takeLimit(supabase, user.id, 'friend_request', 3600, 20);
   const playerId = text(rawPlayerId, 16).toUpperCase();
-  if (!/^MF-[A-Z0-9]{8}$/.test(playerId)) throw Object.assign(new Error('プレイヤーIDの形式が正しくありません。'), { status: 400 });
+  if (!/^MF-[A-Z0-9]{8,12}$/.test(playerId)) throw Object.assign(new Error('プレイヤーIDの形式が正しくありません。'), { status: 400 });
   const { data: target, error } = await supabase.from('mofumori_profiles').select('user_key,player_id').eq('player_id', playerId).maybeSingle();
   if (error) throw error;
   if (!target) throw Object.assign(new Error('そのプレイヤーは見つかりません。'), { status: 404 });
