@@ -34,5 +34,5 @@ function invoke(handler, { method = 'GET', headers = {}, body = undefined } = {}
   const logout = await invoke(require('../api/auth/logout.js'), { method: 'POST' });
   assert.equal(logout.status, 200);
   assert.match(String(logout.headers['set-cookie']), /Max-Age=0/);
-  console.log('API smoke: guest identity, auth guards, invalid credential, logout cookie OK');
+  console.log('API smoke: guest identity, auth guards, pets guard, invalid credential, logout cookie OK');
 })().catch(error => { console.error(error); process.exitCode = 1; });
