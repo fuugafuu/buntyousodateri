@@ -426,12 +426,24 @@ function stateForStorage(){
   delete data.chatApiKey;delete data.chatApiDraft;delete data.chatApiEnabled;
   return data;
 }
+function recordForCloudStorage(record){
+  const cloud=JSON.parse(JSON.stringify(record||{}));
+  if(!cloud.data||typeof cloud.data!=='object')return cloud;
+  // Privacy: these stay on this device. Online pet ownership lives in dedicated DB tables.
+  delete cloud.data.geo;
+  delete cloud.data.chatHistory;
+  delete cloud.data.bugReports;
+  delete cloud.data.errorLogs;
+  delete cloud.data.petCollection;
+  delete cloud.data.activePetId;
+  return cloud;
+}
 function cancelQueuedCloudSave(){
   if(cloudSaveTimer)clearTimeout(cloudSaveTimer);
   cloudSaveTimer=null;
 }
 async function putCloudSave(record){
-  const response=await fetch('/api/cloud-save',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(record)});
+  const response=await fetch('/api/cloud-save',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(recordForCloudStorage(record))});
   const payload=await response.json().catch(()=>({}));
   if(!response.ok){if(payload.configured===false)cloudSaveEnabled=false;throw new Error(payload.message||`cloud_save_${response.status}`);}
   cloudSaveEnabled=true;
