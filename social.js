@@ -7,7 +7,7 @@ const DEMO_PROFILES={
 };
 let socialState={playerId:'',friends:[],ranking:[],gifts:[],mode:'local'};
 let selectedFriend=null,socialTab='grow',googleRendered=false,identityLoading=false;
-function isLocalStaticMode(){return['127.1.0.1','localhost'].includes(location.hostname);}
+function isLocalStaticMode(){return['127.2.1.1','localhost'].includes(location.hostname);}
 function isGoogleProductionOrigin(){return location.hostname==='buntyousodateri.vercel.app';}
 
 function localDateKey(offset=0){const d=new Date(Date.now()+offset*86400000);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
@@ -70,12 +70,12 @@ async function pullCloudSave(){
           bugReports:Array.isArray(localPrivate.bugReports)?localPrivate.bugReports:[],
           errorLogs:Array.isArray(localPrivate.errorLogs)?localPrivate.errorLogs:[]
         });
-        await saveDbSet(accountKey,{version:'7.1.0',savedAt:remote.savedAt,data:stateForStorage()});
+        await saveDbSet(accountKey,{version:'7.2.1',savedAt:remote.savedAt,data:stateForStorage()});
         showToast('Googleアカウントの続きから再開しました','achievement');
       }
     }else{
       const guest=await saveDbGet(SAVE_RECORD).catch(()=>null);
-      const initial=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'7.1.0',savedAt:new Date().toISOString(),data:stateForStorage()});
+      const initial=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'7.2.1',savedAt:new Date().toISOString(),data:stateForStorage()});
       G=normalizeGameState(initial.data);
       const saved=await putCloudSave(initial);
       await saveDbSet(accountKey,{...initial,savedAt:saved.savedAt||initial.savedAt,data:stateForStorage()});
@@ -91,7 +91,7 @@ async function pullCloudSave(){
     return true;
   }catch(error){
     const guest=await saveDbGet(SAVE_RECORD).catch(()=>null);
-    const fallback=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'7.1.0',savedAt:new Date().toISOString(),data:stateForStorage()});
+    const fallback=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'7.2.1',savedAt:new Date().toISOString(),data:stateForStorage()});
     G=normalizeGameState(fallback.data);
     await saveDbSet(accountKey,{...fallback,data:stateForStorage()}).catch(()=>{});
     activeSaveUserId=userId;
