@@ -84,6 +84,50 @@ async function refreshProgress(force=false){
 }
 window.v7RefreshProgress=refreshProgress;
 
-function boot(){accountCard();renderAuth();progressShell();refreshProgress();setInterval(()=>refreshProgress(),10000)}
+function setCollectionTab(tab){
+  const modal=$('#birdModal');if(!modal)return;
+  modal.dataset.v7Tab=tab==='gacha'?'gacha':'pets';
+  $('[data-v7-collection-tab]',modal).forEach(b=>b.classList.toggle('active',b.dataset.v7CollectionTab===modal.dataset.v7Tab));
+}
+function renderCollectionSummary(){
+  const modal=$('#birdModal'),box=$('#v7CollectionSummary');if(!modal||!box)return;
+  const pets=Array.isArray(G?.petCollection)?G.petCollection:[];
+  const active=pets.find(p=>String(p.id)===String(G?.activePetId))||pets.find(p=>p.species===G?.species)||pets[0];
+  const b=active?(birds?.[active.species]||{}):{};
+  const rank=active?.rank||1,rarity=String(active?.rarity||'N');
+  const beavers=pets.filter(p=>p.species==='beaver').length;
+  box.innerHTML=active?`<div class="v7-current-pet"><span>${b.icon||'🐦'}</span><div><small>いま一緒</small><b>${escapeHtml?.(active.name||b.name||'なかま')||active.name||'なかま'}</b><em>${escapeHtml?.(b.name||active.species||'')||b.name||''} ・ ${rarity} ・ 個体ランク ${rank}</em></div></div><div class="v7-collection-count"><b>${pets.length}</b><small>仲間</small>${beavers?`<span>🦫 ${beavers}</span>`:''}</div>`:'<div class="v7-current-pet"><span>🐦</span><div><small>いま一緒</small><b>文鳥</b><em>仲間を集めよう</em></div></div>';
+}
+function enhanceCollection(){
+  const modal=$('#birdModal'),content=modal?.querySelector('.modal-content');if(!modal||!content)return;
+  content.classList.add('v7-collection-modal');
+  if(!$('#v7CollectionHead',modal)){
+    const oldTitle=content.querySelector('.modal-title');if(oldTitle)oldTitle.style.display='none';
+    const head=document.createElement('div');head.id='v7CollectionHead';head.className='v7-collection-head';
+    head.innerHTML='<div><small>MOFUMORI COMPANIONS</small><h2>仲間</h2></div><button type="button" data-v7-close aria-label="閉じる">×</button>';
+    content.insertBefore(head,content.firstChild);
+    head.querySelector('[data-v7-close]').onclick=()=>hideModal?.('birdModal');
+  }
+  if(!$('#v7CollectionSummary',modal)){
+    const summary=document.createElement('div');summary.id='v7CollectionSummary';summary.className='v7-collection-summary';
+    const before=$('#gachaHub',modal)||$('#birdGrid',modal);content.insertBefore(summary,before||content.firstChild?.nextSibling);
+  }
+  if(!$('#v7CollectionTabs',modal)){
+    const tabs=document.createElement('div');tabs.id='v7CollectionTabs';tabs.className='v7-collection-tabs';
+    tabs.innerHTML='<button type="button" class="active" data-v7-collection-tab="pets">🐦 仲間一覧</button><button type="button" data-v7-collection-tab="gacha">✨ ガチャ</button>';
+    const before=$('#gachaHub',modal)||$('#birdGrid',modal);content.insertBefore(tabs,before);
+    $('[data-v7-collection-tab]',tabs).forEach(b=>b.onclick=()=>setCollectionTab(b.dataset.v7CollectionTab));
+  }
+  if(!modal.dataset.v7Tab)modal.dataset.v7Tab='pets';
+  renderCollectionSummary();setCollectionTab(modal.dataset.v7Tab);
+  const grid=$('#birdGrid',modal);
+  if(grid&&!grid.dataset.v7Observed){
+    grid.dataset.v7Observed='1';
+    new MutationObserver(()=>renderCollectionSummary()).observe(grid,{childList:true,subtree:true});
+  }
+}
+window.v7EnhanceCollection=enhanceCollection;
+
+function boot(){accountCard();renderAuth();progressShell();enhanceCollection();refreshProgress();setInterval(()=>{refreshProgress();enhanceCollection();renderCollectionSummary()},10000)}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,120),{once:true}):setTimeout(boot,120);
 })();
