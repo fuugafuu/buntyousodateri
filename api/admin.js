@@ -33,6 +33,9 @@ function validateConfig(input){
   if(!ids.has(activeBanner)||!banners.find(b=>b.id===activeBanner)?.enabled)activeBanner=banners.find(b=>b.enabled)?.id||banners[0].id;
   return {activeBanner,banners};
 }
+async function audit(sb,user,action,target,detail={}){
+  try{await sb.from('mofumori_admin_audit').insert({admin_key:user.id,action,target:target||null,detail})}catch(e){console.warn('[admin-audit]',e?.message||e)}
+}
 async function loadConfig(sb){
   const {data,error}=await sb.from('mofumori_game_config').select('value,updated_at,updated_by').eq('key','gacha').maybeSingle();
   if(error)throw error;return data||null;
@@ -53,6 +56,7 @@ module.exports=async function handler(req,res){
       const value=validateConfig(body.config);
       const {error}=await sb.from('mofumori_game_config').upsert({key:'gacha',value,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:'key'});
       if(error)throw error;
+      await audit(sb,user,'set_gacha_config',value.activeBanner,{bannerCount:value.banners.length});
       return json(res,200,{ok:true,data:value});
     }
     if(action==='adjustCurrency'){
@@ -67,6 +71,7 @@ module.exports=async function handler(req,res){
         if(m.includes('save_missing'))throw Object.assign(new Error('対象プレイヤーのクラウドセーブがまだありません。'),{status:409});
         throw error;
       }
+      await audit(sb,user,'adjust_currency',playerId,{coinsDelta:coins,gemsDelta:gems});
       return json(res,200,{ok:true,data});
     }
     if(action==='diagnostics'){
@@ -81,6 +86,6 @@ module.exports=async function handler(req,res){
     }
     throw Object.assign(new Error('未対応の管理操作です。'),{status:400});
   }catch(error){
-    json(res,error.status||500,{ok:false,authorized:error.status!==403,message:error.message||'管理操作に失敗しました。'});
+    json(res,error.status||500,{ok:false,authorized:![401,403].includes(error.status),message:error.message||'管理操作に失敗しました。'});
   }
 };
