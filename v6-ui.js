@@ -69,10 +69,16 @@ function build(){
     s.innerHTML='<div class="v6-sheet-card arena-card"><header><div><small>ONLINE ARENA</small><h2>文鳥バトル</h2></div><button data-close>×</button></header><div id="v6ArenaBody"></div></div>';
     document.body.appendChild(s);s.querySelector('[data-close]').onclick=()=>closeSheet(s);
   }
+  if(!$('#v6More')){
+    const s=document.createElement('div');s.id='v6More';s.className='v6-sheet';
+    s.innerHTML='<div class="v6-sheet-card v6-more-card"><header><div><small>MORE</small><h2>その他</h2></div><button data-close>×</button></header><div class="v6-more-list"><button data-tool="shop"><span>🛒</span><div><b>ショップ</b><small>ごはん・アイテムを買う</small></div></button><button data-tool="inventory"><span>🎒</span><div><b>持ち物</b><small>持っている道具を使う</small></div></button><button data-tool="minigame"><span>🎮</span><div><b>ひとり遊び</b><small>オフラインのミニゲーム</small></div></button><button data-tool="missions"><span>✅</span><div><b>ミッション</b><small>今日の目標を見る</small></div></button><button data-tool="chat"><span>🧠</span><div><b>端末AI</b><small>文鳥とおしゃべり</small></div></button><button data-tool="customize"><span>⚙️</span><div><b>設定</b><small>天気・表示・サウンド</small></div></button><button data-tool="logs"><span>🧰</span><div><b>記録</b><small>セーブ・不具合情報</small></div></button></div></div>';
+    document.body.appendChild(s);s.querySelector('[data-close]').onclick=()=>closeSheet(s);
+    $('[data-tool]',s).forEach(b=>b.onclick=()=>openLegacyTool(b.dataset.tool));
+  }
   if(!$('#v6Battle')){
     const b=document.createElement('div');b.id='v6Battle';b.className='v6-battle';document.body.appendChild(b);
   }
-  renderOverview();renderPetSheet();patchCare();watchFriends();
+  organizeCareButtons();renderOverview();renderPetSheet();patchCare();watchFriends();
 }
 function navigate(k){
   $$('[data-v6]').forEach(b=>b.classList.toggle('active',b.dataset.v6===k));
@@ -80,7 +86,23 @@ function navigate(k){
   if(k==='bird')return openPet();
   if(k==='arena')return openArena();
   if(k==='friends'){openAccountHub?.();setTimeout(()=>{try{setSocialTab('friends')}catch(e){}$('#socialPanel')?.scrollIntoView({behavior:'smooth'})},40);return}
-  const p=$('#customizePanel')||$('#shopPanel');if(p){togglePanel?.('customize');p.scrollIntoView({behavior:'smooth'})}
+  if(k==='more')return openSheet($('#v6More'));
+}
+function openLegacyTool(name){
+  closeSheet($('#v6More'));
+  try{togglePanel?.(name)}catch(e){}
+  setTimeout(()=>document.getElementById(name+'Panel')?.scrollIntoView({behavior:'smooth',block:'start'}),50);
+}
+function organizeCareButtons(){
+  const grid=$('.care-card .actions-grid');if(!grid||grid.dataset.v6Organized)return;
+  grid.dataset.v6Organized='1';
+  const extra=[...grid.querySelectorAll('.bath,.treat,.train,.sing')];
+  if(!extra.length)return;
+  const details=document.createElement('details');details.className='v6-care-more';
+  const summary=document.createElement('summary');summary.textContent='＋ その他のお世話';
+  const wrap=document.createElement('div');wrap.className='v6-extra-care';
+  extra.forEach(btn=>wrap.appendChild(btn));details.append(summary,wrap);
+  grid.parentNode.insertBefore(details,grid.nextSibling);
 }
 function openSheet(s){s?.classList.add('show');document.body.classList.add('v6-sheet-open')}
 function closeSheet(s){s?.classList.remove('show');document.body.classList.remove('v6-sheet-open')}
