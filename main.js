@@ -1800,12 +1800,12 @@ function localChatReply(text){
   }
   if(/お腹|ごはん|食べ/.test(text))return G.hunger<45?'お腹がすいたよ。シードを少しもらえるとうれしいな。':'今はお腹いっぱい。ありがとう！';
   if(/好き|かわいい|大事/.test(text))return `${name}も、あなたと過ごす時間が大好き！`;
-  if(/遊|ゲーム/.test(text))return 'ミニゲームなら「ごはん仕分け」と「おうちへ帰ろう」が新しく増えたよ！';
+  if(/遊|ゲーム/.test(text))return 'ミニゲームは6種類に整理したよ。シードキャッチや森のフライトで遊ぼう！';
   return pickDialog('idle',[`${name}はうれしそうにうなずいた。`]);
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div><strong>v3.0 まるごとリニューアル</strong></div><ul><li>お部屋・UI・動物テクスチャを全面刷新</li><li>ミニゲームを14種類に整理し、新作2種類を追加</li><li>セーブ復旧、残留タイマー、睡眠入力、状態変化を安定化</li><li>ミッション5個ごとにダイヤ+2</li></ul>`;
+  el.innerHTML=`<div><strong>v7.1 安定化アップデート</strong></div><ul><li>夜テーマの配色と仲間画面を全面調整</li><li>ローカルゲームを遊びやすい6種類に厳選</li><li>オンライン対戦の不正値・早送り送信をサーバー側で検査</li><li>異常操作を含む自動バグ監査を追加</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
