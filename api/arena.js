@@ -7,7 +7,7 @@ const PET_SELECT = [
   'appetite','frame','metabolism','temperament','curiosity','sociability',
   'endurance','agility','flight_power','focus','beak_speed','balance',
   'weight_g','ideal_weight_g','body_length_cm','wing_span_cm','fitness',
-  'care_counters','arena_rating','arena_wins','arena_losses','arena_draws'
+  'care_counters','arena_rating','arena_wins','arena_losses','arena_draws','sex','sex_known','sex_determined_at'
 ].join(',');
 
 function text(v,max,fallback=''){const s=String(v??'').trim().slice(0,max);return s||fallback}
@@ -37,7 +37,7 @@ function stats(row){
 }
 function pet(row){return row?{
   id:row.id,species:row.species,name:row.name,rarity:row.rarity,rank:Number(row.rank||1),
-  source:row.source,obtainedAt:row.obtained_at,eligible:isBuncho(row.species),stats:stats(row)
+  source:row.source,obtainedAt:row.obtained_at,eligible:isBuncho(row.species),sexKnown:row.sex_known===true,sex:row.sex_known===true?row.sex:null,sexDeterminedAt:row.sex_determined_at||null,stats:stats(row)
 }:null}
 function profile(row){return row?{playerId:row.player_id,displayName:row.display_name,character:row.character||{}}:null}
 async function takeLimit(sb,userKey,action,windowSeconds,limit){
