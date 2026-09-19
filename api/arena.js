@@ -110,24 +110,42 @@ async function dashboard(sb,user){
 }
 function calculate(game,raw,s){
   if(game==='flight'){
-    const duration=num(raw?.durationMs,5000,36000,30000);
-    const maxHeight=duration*.72;
-    const height=num(raw?.height,0,maxHeight,0),collisions=Math.round(num(raw?.collisions,0,60,0));
+    const duration=30000,maxHeight=21600;
+    const height=num(raw?.height,0,maxHeight,0),collisions=Math.round(num(raw?.collisions,0,45,0));
     const weightFit=1-Math.min(Math.abs(s.weightG-s.idealWeightG)/Math.max(1,s.idealWeightG),.35);
     const modifier=.50+s.flightPower/260+s.endurance/360+s.agility/520+s.fitness/700+weightFit*.12;
-    return {score:Math.max(0,Math.round(Math.max(0,height-collisions*160)*modifier)),detail:{height:round(height,0),collisions,durationMs:Math.round(duration),modifier:round(modifier,3),weightFit:round(weightFit,3)}};
+    return {score:Math.max(0,Math.round(Math.max(0,height-collisions*160)*modifier)),detail:{height:round(height,0),collisions,durationMs:duration,modifier:round(modifier,3),weightFit:round(weightFit,3)}};
   }
   if(game==='kale'){
-    const duration=num(raw?.durationMs,8000,15000,10000),maxTaps=Math.floor(duration/55);
+    const duration=10000,maxTaps=181;
     const taps=Math.round(num(raw?.taps,0,maxTaps,0));
     const modifier=.50+s.appetite/220+s.beakSpeed/300+s.focus/500+s.fitness/850;
-    return {score:Math.max(0,Math.round(taps*100*modifier)),detail:{taps,durationMs:Math.round(duration),modifier:round(modifier,3),maxTaps}};
+    return {score:Math.max(0,Math.round(taps*100*modifier)),detail:{taps,durationMs:duration,modifier:round(modifier,3),maxTaps}};
   }
-  const hits=Math.round(num(raw?.hits,0,24,0)),misses=Math.round(num(raw?.misses,0,24,0));
-  const avgReaction=num(raw?.avgReactionMs,80,2000,1200);
+  const hits=Math.round(num(raw?.hits,0,12,0)),misses=Math.round(num(raw?.misses,0,12,0));
+  const avgReaction=num(raw?.avgReactionMs,100,2000,1200);
   const base=Math.max(0,hits*100-misses*30-avgReaction*.12);
   const modifier=.55+s.agility/300+s.balance/280+s.focus/450+s.temperament/900-Math.max(0,s.frame-70)/1200;
   return {score:Math.max(0,Math.round(base*modifier)),detail:{hits,misses,avgReactionMs:round(avgReaction,0),modifier:round(modifier,3)}};
+}
+function validateSubmission(m,raw){
+  const now=Date.now(),start=Date.parse(m.startsAt||0),expires=Date.parse(m.expiresAt||0);
+  if(!Number.isFinite(start)||start<=0)throw Object.assign(new Error('対戦開始時刻を確認できません。'),{status:409});
+  if(now<start)throw Object.assign(new Error('まだ対戦は始まっていません。'),{status:409});
+  if(Number.isFinite(expires)&&expires>0&&now>expires+5000)throw Object.assign(new Error('この対戦は終了しています。'),{status:410});
+  if(m.gameType==='flight'){
+    const duration=Number(raw?.durationMs);
+    if(!Number.isFinite(duration)||duration<28500||duration>31500||now-start<27000)throw Object.assign(new Error('飛行バトルのプレイ時間が不正です。'),{status:400});
+    if(Number(raw?.height)<0||Number(raw?.height)>21600||Number(raw?.collisions)<0||Number(raw?.collisions)>45)throw Object.assign(new Error('飛行バトルの結果が不正です。'),{status:400});
+  }else if(m.gameType==='kale'){
+    const duration=Number(raw?.durationMs),taps=Number(raw?.taps);
+    if(!Number.isFinite(duration)||duration<9000||duration>11000||now-start<8500)throw Object.assign(new Error('もぐもぐ対戦のプレイ時間が不正です。'),{status:400});
+    if(!Number.isFinite(taps)||taps<0||taps>181)throw Object.assign(new Error('タップ数が不正です。'),{status:400});
+  }else{
+    const hits=Number(raw?.hits),misses=Number(raw?.misses),reaction=Number(raw?.avgReactionMs);
+    if(!Number.isInteger(hits)||!Number.isInteger(misses)||hits<0||misses<0||hits+misses!==12)throw Object.assign(new Error('反射バトルのラウンド数が不正です。'),{status:400});
+    if(hits>0&&(!Number.isFinite(reaction)||reaction<100||reaction>2000))throw Object.assign(new Error('反応時間が不正です。'),{status:400});
+  }
 }
 async function queue(sb,user,payload){
   await takeLimit(sb,user.id,'arena_queue',60,30);
@@ -184,11 +202,13 @@ async function submit(sb,user,payload){
   await takeLimit(sb,user.id,'arena_submit',60,10);
   const m=await loadMatch(sb,user.id,payload.matchId);if(!m)throw Object.assign(new Error('対戦が見つかりません。'),{status:404});
   if(!['ready','running'].includes(m.status))return m;
-  const firstSubmit=m.me.score==null;
-  const result=calculate(m.gameType,payload.raw||{},m.me.pet.stats);
+  if(m.me.score!=null)return {result:null,match:m,stored:null,reused:true};
+  const raw=payload.raw&&typeof payload.raw==='object'?payload.raw:{};
+  validateSubmission(m,raw);
+  const result=calculate(m.gameType,raw,m.me.pet.stats);
   const {data,error}=await sb.rpc('mofumori_arena_submit',{p_user:user.id,p_match:m.id,p_score:result.score,p_detail:result.detail});
   if(error)throw error;
-  if(firstSubmit)await sb.rpc('mofumori_progress_event',{p_user:user.id,p_event:'battle'}).catch(()=>{});
+  await sb.rpc('mofumori_progress_event',{p_user:user.id,p_event:'battle'}).catch(()=>{});
   return {result,match:await loadMatch(sb,user.id,m.id),stored:data};
 }
 
