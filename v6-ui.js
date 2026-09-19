@@ -1,11 +1,13 @@
 (()=>{'use strict';
 
 const GAME={
-  flight:{icon:'🪽',name:'飛行バトル',desc:'左右に動いて障害物を避け、より高く登る',stat:'飛行力・体力・敏捷性・体重'},
-  kale:{icon:'🥬',name:'小松菜もぐもぐ',desc:'10秒間で小松菜をどれだけ食べられるか',stat:'食いしん坊度・くちばし速度・集中力'},
-  perch:{icon:'🪵',name:'とまり木反射',desc:'光ったとまり木へ素早く移動して連続成功を狙う',stat:'敏捷性・バランス・集中力・性格'}
+  flight:{icon:'🪽',name:'飛行バトル',desc:'同じ障害物コースを2羽で同時飛行',stat:'飛行力・体力・敏捷性・体重'},
+  kale:{icon:'🥬',name:'小松菜もぐもぐ',desc:'2羽を見ながら10秒の食べ比べ',stat:'食いしん坊度・くちばし速度・集中力'},
+  perch:{icon:'🪵',name:'とまり木反射',desc:'同じ合図に2羽が反応する反射勝負',stat:'敏捷性・バランス・集中力・性格'},
+  seedrace:{icon:'🌾',name:'シードダッシュ',desc:'シードを集めて2羽が並走するスプリント',stat:'敏捷性・集中力・くちばし速度'},
+  ring:{icon:'⭕',name:'リングラッシュ',desc:'同じリング列をくぐるタイミング勝負',stat:'飛行力・集中力・バランス'}
 };
-const A={dash:null,game:'flight',petId:null,target:null,match:null,refreshing:false,poll:null,matchPoll:null,playing:false,queueing:false,lastProgress:0,gameState:null};
+const A={dash:null,game:'flight',petId:null,target:null,match:null,refreshing:false,poll:null,matchPoll:null,playing:false,queueing:false,lastProgress:0,gameState:null,lastArenaInteraction:0,arenaScroll:{pets:0,games:0,body:0},preparing:false,ready:false,voiceAt:0};
 const $=(q,r=document)=>r.querySelector(q),$$=(q,r=document)=>[...r.querySelectorAll(q)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const logged=()=>typeof identityUser!=='undefined'&&!!identityUser;
@@ -77,6 +79,11 @@ function build(){
   }
   if(!$('#v6Battle')){
     const b=document.createElement('div');b.id='v6Battle';b.className='v6-battle';document.body.appendChild(b);
+  }
+  if(!$('#v72ArenaTutorial')){
+    const t=document.createElement('div');t.id='v72ArenaTutorial';t.className='modal';
+    t.innerHTML='<div class="modal-content v72-arena-tutorial"><div class="modal-title">⚔ はじめてのオンライン対戦</div><div class="v72-tutorial-steps"><article><span>1</span><div><b>文鳥と競技を選ぶ</b><small>いま一緒にいる文鳥が最初から選ばれます。</small></div></article><article><span>2</span><div><b>相手を探す</b><small>プレイヤー同士を最優先。10秒以上見つからない時だけCPUが参加します。</small></div></article><article><span>3</span><div><b>接続チェック</b><small>整合性・セキュリティ・通信安定性を確認してから同時スタート。</small></div></article><article><span>4</span><div><b>2羽を同時表示</b><small>相手の動きも見えます。鳥同士はぶつかりませんが、障害物には当たります。</small></div></article></div><div class="modal-buttons"><button class="modal-btn primary" id="v72TutorialStart">わかった、対戦する</button></div></div>';
+    document.body.appendChild(t);$('#v72TutorialStart',t).onclick=()=>{localStorage.setItem('mofumoriArenaTutorialV72','1');hideModal?.('v72ArenaTutorial')};
   }
   organizeCareButtons();renderOverview();renderPetSheet();patchCare();watchFriends();
 }
@@ -162,17 +169,24 @@ async function determineSex(){
 }
 
 async function refreshArena(force=false){
-  if(!logged()){A.dash=null;renderArena();return null}
+  if(!logged()){A.dash=null;if(force)renderArena(true);return null}
   if(A.refreshing)return A.dash;A.refreshing=true;
   try{
-    const r=await arena('dashboard');A.dash=r.data;mergePets(r.data?.pets);ensurePetSelection();renderArena();
-    if(r.data?.activeMatch&&!A.playing){A.match=r.data.activeMatch;openMatch(A.match)}
+    const root=$('#v6ArenaBody'),petList=$('.v6-pet-list'),gameList=$('.v6-game-list');
+    if(root){A.arenaScroll.body=root.scrollTop;A.arenaScroll.pets=petList?.scrollTop||0;A.arenaScroll.games=gameList?.scrollTop||0}
+    const r=await arena('dashboard');A.dash=r.data;mergePets(r.data?.pets);ensurePetSelection();
+    const arenaOpen=$('#v6Arena')?.classList.contains('show'),recent=Date.now()-A.lastArenaInteraction<1400;
+    if(force||!arenaOpen||!recent)renderArena(true);
+    if(r.data?.activeMatch&&!A.playing&&!A.preparing){A.match=r.data.activeMatch;openMatch(A.match)}
     return r.data;
   }catch(e){if(force)showToast?.(e.message,'warning');return null}finally{A.refreshing=false}
 }
 async function openArena(friendId=null){
-  if(friendId){A.target=(socialState?.friends||[]).find(f=>f.playerId===friendId)||null}
-  openSheet($('#v6Arena'));renderArena();
+  if(friendId)A.target=(socialState?.friends||[]).find(f=>f.playerId===friendId)||null;
+  const equipped=eligiblePets().find(p=>String(p.id)===String(G?.activePetId));
+  if(equipped)A.petId=equipped.id;
+  openSheet($('#v6Arena'));renderArena(false);
+  if(localStorage.getItem('mofumoriArenaTutorialV72')!=='1')setTimeout(()=>showModal?.('v72ArenaTutorial'),180);
   if(logged())await refreshArena(true);
 }
 function gameCards(){return Object.entries(GAME).map(([id,g])=>`<button class="v6-game-card ${A.game===id?'active':''}" data-game="${id}"><span>${g.icon}</span><div><b>${g.name}</b><small>${g.desc}</small><em>${g.stat}</em></div></button>`).join('')}
@@ -189,22 +203,26 @@ function friendRows(){
   if(A.target)return `<section class="v6-target"><small>CHALLENGE</small><b>${esc(A.target.displayName||A.target.playerId)} に挑戦</b><p>${GAME[A.game].name} / ${petName(activeArenaPet())}</p><button id="v6SendChallenge">対戦申請を送る</button><button class="subtle" id="v6ClearTarget">キャンセル</button></section>`;
   return `<section class="v6-friend-arena"><h3>フレンドと対戦</h3>${fs.length?fs.map(f=>`<button data-friend-battle="${f.playerId}"><span>${esc(f.character?.icon||'🐦')}</span><div><b>${esc(f.displayName||f.playerId)}</b><small>${esc(f.playerId)}</small></div><em>申請 →</em></button>`).join(''):'<p class="v6-empty">フレンドになると直接対戦を申請できます。</p>'}</section>`;
 }
-function renderArena(){
+function renderArena(preserve=false){
   const root=$('#v6ArenaBody');if(!root)return;
+  const saved=preserve?{body:A.arenaScroll.body,pets:A.arenaScroll.pets,games:A.arenaScroll.games}:{body:root.scrollTop,pets:$('.v6-pet-list')?.scrollTop||0,games:$('.v6-game-list')?.scrollTop||0};
   if(!logged()){root.innerHTML='<div class="v6-login-gate"><span>⚔</span><h3>オンライン対戦</h3><p>ログインするとランダムマッチとフレンド対戦が使えます。</p><button id="v6LoginArena">ログイン画面を開く</button></div>';$('#v6LoginArena')?.addEventListener('click',()=>{closeSheet($('#v6Arena'));openAccountHub?.()});return}
-  const q=A.dash?.queue;
-  root.innerHTML=`<section class="v6-arena-intro"><div><small>BUNCHO ARENA</small><h3>3つの競技で育てた個体を試す</h3></div><span>SERVER MATCH</span></section>
+  const q=A.dash?.queue,gameCount=Object.keys(GAME).length;
+  root.innerHTML=`<section class="v6-arena-intro"><div><small>BUNCHO ARENA v7.2</small><h3>${gameCount}つの競技を2羽同時表示で対戦</h3></div><span>SECURE MATCH</span></section>
     <section class="v6-mode"><h3>ゲームを選ぶ</h3><div class="v6-game-list">${gameCards()}</div></section>
     <section class="v6-mode"><h3>出場する文鳥</h3><div class="v6-pet-list">${petOptions()}</div></section>
-    <section class="v6-random"><div><small>RANDOM MATCH</small><b>オンラインランダムマッチ</b><p>同じゲームを待っているプレイヤーと自動で対戦。</p></div>${q?`<button id="v6CancelQueue" class="waiting"><i></i>待機中… 取消</button>`:A.queueing?'<button id="v6RandomMatch" disabled><i></i>接続中…</button>':'<button id="v6RandomMatch">相手を探す</button>'}</section>
+    <section class="v6-random"><div><small>RANDOM MATCH</small><b>オンラインランダムマッチ</b><p>プレイヤー同士を優先。10秒待って相手がいない場合はCPUが参加します。</p></div>${q?`<button id="v6CancelQueue" class="waiting"><i></i>待機中… 取消</button>`:A.queueing?'<button id="v6RandomMatch" disabled><i></i>接続中…</button>':'<button id="v6RandomMatch">相手を探す</button>'}</section>
     ${friendRows()}${challengeRows()}`;
-  $$('[data-game]',root).forEach(b=>b.onclick=()=>{A.game=b.dataset.game;renderArena()});
-  $$('[data-pet]',root).forEach(b=>b.onclick=()=>{A.petId=b.dataset.pet;renderArena()});
-  $('#v6RandomMatch')?.addEventListener('click',startRandom);
-  $('#v6CancelQueue')?.addEventListener('click',cancelQueue);
-  $('#v6SendChallenge')?.addEventListener('click',sendChallenge);
-  $('#v6ClearTarget')?.addEventListener('click',()=>{A.target=null;renderArena()});
-  $$('[data-friend-battle]',root).forEach(b=>b.onclick=()=>{A.target=(socialState?.friends||[]).find(f=>f.playerId===b.dataset.friendBattle)||null;renderArena()});
+  const petsEl=$('.v6-pet-list',root),gamesEl=$('.v6-game-list',root);
+  requestAnimationFrame(()=>{root.scrollTop=saved.body||0;if(petsEl)petsEl.scrollTop=saved.pets||0;if(gamesEl)gamesEl.scrollTop=saved.games||0});
+  const touch=()=>{A.lastArenaInteraction=Date.now();A.arenaScroll.body=root.scrollTop;A.arenaScroll.pets=petsEl?.scrollTop||0;A.arenaScroll.games=gamesEl?.scrollTop||0};
+  root.addEventListener('pointerdown',touch,{passive:true});root.addEventListener('scroll',touch,{passive:true});
+  petsEl?.addEventListener('scroll',touch,{passive:true});gamesEl?.addEventListener('scroll',touch,{passive:true});
+  $$('[data-game]',root).forEach(b=>b.onclick=()=>{touch();A.game=b.dataset.game;$$('[data-game]',root).forEach(x=>x.classList.toggle('active',x===b));const t=$('.v6-target p',root);if(t)t.textContent=`${GAME[A.game].name} / ${petName(activeArenaPet())}`});
+  $$('[data-pet]',root).forEach(b=>b.onclick=()=>{touch();A.petId=b.dataset.pet;$$('[data-pet]',root).forEach(x=>x.classList.toggle('active',x===b));const t=$('.v6-target p',root);if(t)t.textContent=`${GAME[A.game].name} / ${petName(activeArenaPet())}`});
+  $('#v6RandomMatch')?.addEventListener('click',startRandom);$('#v6CancelQueue')?.addEventListener('click',cancelQueue);
+  $('#v6SendChallenge')?.addEventListener('click',sendChallenge);$('#v6ClearTarget')?.addEventListener('click',()=>{A.target=null;renderArena(true)});
+  $$('[data-friend-battle]',root).forEach(b=>b.onclick=()=>{A.target=(socialState?.friends||[]).find(f=>f.playerId===b.dataset.friendBattle)||null;renderArena(true)});
   $$('[data-accept]',root).forEach(b=>b.onclick=()=>respondChallenge(b.dataset.accept,true,b.dataset.cgame));
   $$('[data-decline]',root).forEach(b=>b.onclick=()=>respondChallenge(b.dataset.decline,false));
 }
