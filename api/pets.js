@@ -52,10 +52,22 @@ function drawPet(minRarity = 'N') {
 }
 function petToClient(row) {
   const meta = SPECIES_META[row.species] || SPECIES_META.buncho_sakura;
+  const weight = Number(row.weight_g || 24.5), ideal = Number(row.ideal_weight_g || 24.5);
+  const stats = row.appetite == null ? null : {
+    appetite:Number(row.appetite||0), frame:Number(row.frame||0), metabolism:Number(row.metabolism||0),
+    temperament:Number(row.temperament||0), curiosity:Number(row.curiosity||0), sociability:Number(row.sociability||0),
+    endurance:Number(row.endurance||0), agility:Number(row.agility||0), flightPower:Number(row.flight_power||0),
+    focus:Number(row.focus||0), beakSpeed:Number(row.beak_speed||0), balance:Number(row.balance||0),
+    weightG:weight, idealWeightG:ideal, bodyLengthCm:Number(row.body_length_cm||0), wingSpanCm:Number(row.wing_span_cm||0),
+    fitness:Number(row.fitness||0), careCounters:row.care_counters||{},
+    rating:Number(row.arena_rating||1000), wins:Number(row.arena_wins||0), losses:Number(row.arena_losses||0), draws:Number(row.arena_draws||0)
+  };
   return {
     id: row.id, species: row.species, speciesName: meta[0], icon: meta[1],
     name: row.name || meta[0], rarity: row.rarity || 'N', rank: Number(row.rank || 1),
-    source: row.source || 'legacy', obtainedAt: row.obtained_at || null
+    source: row.source || 'legacy', obtainedAt: row.obtained_at || null,
+    sexKnown: row.sex_known === true, sex: row.sex_known === true ? row.sex : null,
+    sexDeterminedAt: row.sex_determined_at || null, stats
   };
 }
 function profileToClient(row, ownKey) {
@@ -145,7 +157,7 @@ async function loadDashboard(supabase, user) {
   const hiddenUnlocked = await ensureHiddenReward(supabase, user);
   const now = new Date().toISOString();
   const [{ data: pets, error: petError }, { data: links, error: linkError }, { data: requests, error: requestError }, { data: visits, error: visitError }] = await Promise.all([
-    supabase.from('mofumori_pets').select('id,owner_key,species,rarity,rank,name,source,obtained_at').eq('owner_key', user.id).order('obtained_at', { ascending: true }).limit(250),
+    supabase.from('mofumori_pets').select('id,owner_key,species,rarity,rank,name,source,obtained_at,sex,sex_known,sex_determined_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').eq('owner_key', user.id).order('obtained_at', { ascending: true }).limit(250),
     supabase.from('mofumori_friendships').select('friend_key').eq('owner_key', user.id).limit(200),
     supabase.from('mofumori_friend_requests').select('id,sender_key,recipient_key,status,created_at').eq('status', 'pending')
       .or(`sender_key.eq.${user.id},recipient_key.eq.${user.id}`).order('created_at', { ascending: false }).limit(100),
@@ -174,7 +186,7 @@ async function loadDashboard(supabase, user) {
   let visitPets = [];
   if (visitPetIds.length) {
     const { data, error } = await supabase.from('mofumori_pets')
-      .select('id,owner_key,species,rarity,rank,name,source,obtained_at').in('id', visitPetIds);
+      .select('id,owner_key,species,rarity,rank,name,source,obtained_at,sex,sex_known,sex_determined_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').in('id', visitPetIds);
     if (error) throw error;
     visitPets = data || [];
   }
@@ -283,10 +295,17 @@ async function renamePet(supabase, user, rawPetId, rawName) {
   const petId = uuid(rawPetId), name = text(rawName, 12);
   if (!petId || !name) throw Object.assign(new Error('名前が不正です。'), { status: 400 });
   const { data: pet, error } = await supabase.from('mofumori_pets').update({ name }).eq('id', petId).eq('owner_key', user.id)
-    .select('id,species,rarity,rank,name,source,obtained_at').maybeSingle();
+    .select('id,species,rarity,rank,name,source,obtained_at,sex,sex_known,sex_determined_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').maybeSingle();
   if (error) throw error;
   if (!pet) throw Object.assign(new Error('その子の名前は変更できません。'), { status: 403 });
   return petToClient(pet);
+}
+async function determinePetSex(supabase, user, rawPetId) {
+  const petId = uuid(rawPetId);
+  if (!petId) throw Object.assign(new Error('どうぶつIDが不正です。'), { status: 400 });
+  const { data, error } = await supabase.rpc('mofumori_determine_pet_sex', { p_owner: user.id, p_pet: petId });
+  if (error) throw error;
+  return data;
 }
 async function startVisit(supabase, user, rawPlayerId, rawPetId) {
   await takeLimit(supabase, user.id, 'start_visit', 3600, 30);
@@ -340,6 +359,7 @@ module.exports = async function handler(req, res) {
     else if (action === 'removeFriend') await removeFriend(supabase, user, payload.playerId);
     else if (action === 'selectPet') extra.selectedPet = await selectPet(supabase, user, payload.petId);
     else if (action === 'renamePet') extra.renamedPet = await renamePet(supabase, user, payload.petId, payload.name);
+    else if (action === 'determinePetSex') extra.sexResult = await determinePetSex(supabase, user, payload.petId);
     else if (action === 'startVisit') extra.visit = await startVisit(supabase, user, payload.playerId, payload.petId);
     else if (action === 'endVisit') await endVisit(supabase, user, payload.visitId);
     else if (action === 'interactVisit') extra.interaction = await interactVisit(supabase, user, payload.visitId, payload.interaction);
