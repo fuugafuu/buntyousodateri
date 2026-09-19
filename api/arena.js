@@ -1,4 +1,5 @@
 const { allowMethods, json, requireUser, requireSameOrigin } = require('../server/auth.cjs');
+async function bestEffortRpc(sb,name,args){try{const {error}=await sb.rpc(name,args);if(error)console.warn('[mofumori] best-effort RPC failed',name,error.message)}catch(error){console.warn('[mofumori] best-effort RPC exception',name,error?.message||error)}}
 const { configured, getSupabase } = require('../server/supabase.cjs');
 const { calculate, validateSubmission: validateArenaSubmission } = require('../server/arena-rules.cjs');
 
@@ -224,7 +225,7 @@ async function submit(sb,user,payload){
   const result=calculate(m.gameType,raw,m.me.pet.stats);
   const {data,error}=await sb.rpc('mofumori_arena_submit',{p_user:user.id,p_match:m.id,p_score:result.score,p_detail:result.detail});if(error)throw error;
   await finishBotIfNeeded(sb,user,m);
-  await sb.rpc('mofumori_progress_event',{p_user:user.id,p_event:'battle'}).catch(()=>{});
+  await bestEffortRpc(sb,'mofumori_progress_event',{p_user:user.id,p_event:'battle'});
   return {result,match:await loadMatch(sb,user.id,m.id),stored:data};
 }
 
@@ -245,8 +246,8 @@ module.exports=async function handler(req,res){
       const care=text(payload.care,16);
       const {data:d,error}=await sb.rpc('mofumori_record_pet_care',{p_owner:user.id,p_pet:p.id,p_action:care});
       if(error)throw error;data=d;
-      await sb.rpc('mofumori_progress_event',{p_user:user.id,p_event:'care'}).catch(()=>{});
-      if(care==='play'||care==='train')await sb.rpc('mofumori_progress_event',{p_user:user.id,p_event:care}).catch(()=>{});
+      await bestEffortRpc(sb,'mofumori_progress_event',{p_user:user.id,p_event:'care'});
+      if(care==='play'||care==='train')await bestEffortRpc(sb,'mofumori_progress_event',{p_user:user.id,p_event:care});
     }else if(action==='queue'){extra.matchmaking=await queue(sb,user,payload);data=await dashboard(sb,user)}
     else if(action==='cancelQueue'){await sb.from('mofumori_arena_queue').delete().eq('user_key',user.id);data=await dashboard(sb,user)}
     else if(action==='challenge'){extra.challenge=await challenge(sb,user,payload);data=await dashboard(sb,user)}
