@@ -197,3 +197,61 @@ body.night.mofumori-v6 .v71-result-actions button.subtle{background:#263730;colo
 body.night.mofumori-v6 .v71-live-duel>div{background:#1c2a25;border-color:#3a5048}
 body.night.mofumori-v6 .v71-live-duel small,body.night.mofumori-v6 .v71-live-duel b{color:#b5c5bf}
 body.night.mofumori-v6 .v71-live-duel i{background:#2c3d37}
+
+
+/* v7.2 companion / gacha split + motion system */
+.v72-companion-toolbar{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:0 0 10px}
+.v72-companion-toolbar label{display:grid;gap:4px;flex:1;font-size:.5rem;font-weight:900;letter-spacing:.08em;color:var(--muted)}
+.v72-companion-toolbar select{width:100%;border:1px solid var(--line);border-radius:11px;padding:9px 10px;background:var(--paper);color:var(--ink);font:inherit;font-size:.58rem}
+.v72-companion-toolbar .modal-btn{width:auto!important;min-width:112px;margin:0!important}
+.v72-gacha-modal{width:min(620px,calc(100vw - 20px))!important}
+.v72-gacha-screen .gacha-hub{margin:4px 0 0!important}
+#birdModal .pet-card{animation:v72PetIn .38s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(min(var(--pet-i,0),18)*24ms);transform-origin:50% 80%}
+#birdModal .pet-card:active{transform:scale(.975)}
+#birdModal .pet-card.selected:after{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;box-shadow:0 0 0 2px rgba(84,170,141,.16),0 0 24px rgba(84,170,141,.14);animation:v72SelectedPulse 1.9s ease-in-out infinite}
+#gachaModal.show .modal-content{animation:v72PanelUp .42s cubic-bezier(.18,.88,.28,1.08) both}
+#birdModal.show .modal-content{animation:v72PanelUp .38s cubic-bezier(.18,.88,.28,1.08) both}
+#gachaModal .gacha-actions button{position:relative;overflow:hidden;transition:transform .18s ease,box-shadow .18s ease}
+#gachaModal .gacha-actions button:before{content:"";position:absolute;top:-80%;left:-45%;width:34%;height:260%;transform:rotate(22deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);animation:v72Shine 3.2s ease-in-out infinite}
+#gachaModal .gacha-actions button:active{transform:scale(.97)}
+.quick-btn.gacha{background:linear-gradient(145deg,#7857d8,#a467df)!important;color:#fff!important}
+body.night.mofumori-v6 .v72-companion-toolbar select{background:#111b18!important;color:#edf5f2!important;border-color:#40564f!important}
+
+.modal.show{animation:v72Backdrop .24s ease both}
+.v6-sheet.show .v6-sheet-card{animation:v72SheetIn .34s cubic-bezier(.18,.88,.28,1.05) both}
+.v6-game-card,.v6-pet-choice,.v6-friend-arena>button,.v6-challenges article{transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease}
+.v6-game-card:active,.v6-pet-choice:active,.v6-friend-arena>button:active{transform:scale(.985)}
+.v6-game-card.active,.v6-pet-choice.active{animation:v72Pick .28s cubic-bezier(.2,.8,.2,1)}
+.v72-loading-ring{width:58px;height:58px;border:4px solid rgba(84,174,144,.15);border-top-color:#54ae90;border-radius:50%;animation:v72Spin .8s linear infinite}
+.v72-security-step{opacity:.45;transform:translateY(3px);transition:.25s ease}
+.v72-security-step.active{opacity:1;transform:none}
+.v72-security-step.ok{opacity:1;color:#278463}
+.v72-security-step.ok:before{content:"✓ ";font-weight:900}
+.v72-match-found{animation:v72MatchFound .6s cubic-bezier(.16,.9,.2,1.2) both}
+.v72-battle-flash{animation:v72BattleFlash .46s ease both}
+.v72-hit-shake{animation:v72Hit .28s ease}
+.v72-rival-bird{filter:saturate(.78) hue-rotate(18deg);opacity:.88}
+.v72-me-bird{filter:drop-shadow(0 5px 8px rgba(38,99,80,.22))}
+.v72-cpu-badge{display:inline-flex;padding:2px 6px;border-radius:999px;background:#edf2ef;color:#60726a;font-size:.42rem;font-weight:900;letter-spacing:.08em}
+body.night .v72-cpu-badge{background:#2b3b36;color:#b7c7c1}
+
+@keyframes v72PetIn{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes v72SelectedPulse{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes v72PanelUp{from{opacity:0;transform:translateY(24px) scale(.975)}to{opacity:1;transform:none}}
+@keyframes v72SheetIn{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes v72Backdrop{from{background:rgba(0,0,0,0)}to{background:rgba(0,0,0,.42)}}
+@keyframes v72Pick{0%{transform:scale(.98)}55%{transform:scale(1.018)}100%{transform:none}}
+@keyframes v72Spin{to{transform:rotate(360deg)}}
+@keyframes v72Shine{0%,62%{left:-45%;opacity:0}72%{opacity:1}90%,100%{left:120%;opacity:0}}
+@keyframes v72MatchFound{0%{opacity:0;transform:scale(.88)}70%{transform:scale(1.035)}100%{opacity:1;transform:none}}
+@keyframes v72BattleFlash{0%{box-shadow:inset 0 0 0 999px rgba(255,255,255,.7)}100%{box-shadow:inset 0 0 0 999px transparent}}
+@keyframes v72Hit{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}55%{transform:translateX(6px)}75%{transform:translateX(-3px)}}
+
+@media(prefers-reduced-motion:reduce){
+  #birdModal .pet-card,#gachaModal.show .modal-content,#birdModal.show .modal-content,.v6-sheet.show .v6-sheet-card,.v72-loading-ring,.v72-match-found,.v72-battle-flash,.v72-hit-shake{animation:none!important}
+  #gachaModal .gacha-actions button:before{display:none}
+}
+@media(max-width:520px){
+  .v72-companion-toolbar{align-items:stretch;flex-direction:column}
+  .v72-companion-toolbar .modal-btn{width:100%!important}
+}
