@@ -490,8 +490,14 @@ async function submitGame(raw){
   }catch(e){A.playing=false;$('#v6MatchStatus').textContent='送信エラー';showToast?.(e.message,'warning')}
 }
 function showResult(m){
-  A.playing=false;A.gameState?.stop?.();const me=m.me?.profile?.playerId,w=m.winnerPlayerId;const draw=!w,win=w===me;
-  const root=$('#v6Result');if(!root)return;$('#v6MatchStatus').textContent='FINISHED';$('#v6GameStage').innerHTML='';
+  A.playing=false;A.gameState?.stop?.();const root=$('#v6Result');if(!root)return;
+  if(m.status==='abandoned'){
+    $('#v6MatchStatus').textContent='CANCELLED';$('#v6GameStage').innerHTML='';
+    root.innerHTML='<div class="result-burst draw"><small>CANCELLED</small><h2>対戦を終了しました</h2><p>接続切れ、時間切れ、または両者未完了のため中止されました。</p><div class="v71-result-actions"><button id="v6ResultAgain">もう一戦</button><button id="v6ResultClose" class="subtle">閉じる</button></div></div>';
+    clearInterval(A.matchPoll);arenaVoice('対戦は中止されました。');$('#v6ResultAgain').onclick=()=>{closeBattle();openArena()};$('#v6ResultClose').onclick=()=>{closeBattle();refreshArena(true)};return;
+  }
+  const me=m.me?.profile?.playerId,w=m.winnerPlayerId,draw=!w,win=w===me;
+  $('#v6MatchStatus').textContent='FINISHED';$('#v6GameStage').innerHTML='';
   root.innerHTML=`<div class="result-burst ${draw?'draw':win?'win':'lose'}"><small>${draw?'DRAW':win?'WIN':'LOSE'}</small><h2>${draw?'引き分け':win?'勝利！':'惜敗'}</h2><div><span><b>${Number(m.me.score||0).toLocaleString()}</b><small>YOU</small></span><strong>:</strong><span><b>${Number(m.opponent.score||0).toLocaleString()}</b><small>RIVAL</small></span></div><p>RATING ${m.me.pet?.stats?.rating||1000}</p><div class="v71-result-actions"><button id="v6ResultAgain">もう一戦</button><button id="v6ResultClose" class="subtle">閉じる</button></div></div>`;
   clearInterval(A.matchPoll);arenaSfx(win?'go':draw?'match':'hit');arenaVoice(draw?'引き分けです。おつかれさまでした。':win?'勝利です！ おめでとうございます。':'対戦終了です。次は取り返しましょう。');window.v7RefreshProgress?.(true);
   $('#v6ResultAgain').onclick=()=>{closeBattle();openArena()};
