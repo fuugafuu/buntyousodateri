@@ -1885,6 +1885,8 @@ window.render_game_to_text=renderGameToText;
 let deterministicRemainder=0;
 window.advanceTime=(ms)=>{deterministicRemainder+=Math.max(0,Number(ms)||0);while(deterministicRemainder>=1000){deterministicRemainder-=1000;gameTick();}renderBird();};
 async function init(){
+  if(window.__mofumoriCacheResetPromise)await window.__mofumoriCacheResetPromise;
+  if(window.__mofumoriCacheResetting)return;
   await load();initMissions();renderStars();renderShop();renderInv();renderCustomize();renderMissions();updateUI();
   void initLocalAi();
   void initIdentityAndSocial();
