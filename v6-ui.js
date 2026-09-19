@@ -5,7 +5,7 @@ const GAME={
   kale:{icon:'🥬',name:'小松菜もぐもぐ',desc:'10秒間で小松菜をどれだけ食べられるか',stat:'食いしん坊度・くちばし速度・集中力'},
   perch:{icon:'🪵',name:'とまり木反射',desc:'光ったとまり木へ素早く移動して連続成功を狙う',stat:'敏捷性・バランス・集中力・性格'}
 };
-const A={dash:null,game:'flight',petId:null,target:null,match:null,refreshing:false,poll:null,matchPoll:null,playing:false,lastProgress:0,gameState:null};
+const A={dash:null,game:'flight',petId:null,target:null,match:null,refreshing:false,poll:null,matchPoll:null,playing:false,queueing:false,lastProgress:0,gameState:null};
 const $=(q,r=document)=>r.querySelector(q),$$=(q,r=document)=>[...r.querySelectorAll(q)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const logged=()=>typeof identityUser!=='undefined'&&!!identityUser;
@@ -185,7 +185,7 @@ function renderArena(){
   root.innerHTML=`<section class="v6-arena-intro"><div><small>BUNCHO ARENA</small><h3>3つの競技で育てた個体を試す</h3></div><span>SERVER MATCH</span></section>
     <section class="v6-mode"><h3>ゲームを選ぶ</h3><div class="v6-game-list">${gameCards()}</div></section>
     <section class="v6-mode"><h3>出場する文鳥</h3><div class="v6-pet-list">${petOptions()}</div></section>
-    <section class="v6-random"><div><small>RANDOM MATCH</small><b>オンラインランダムマッチ</b><p>同じゲームを待っているプレイヤーと自動で対戦。</p></div>${q?`<button id="v6CancelQueue" class="waiting"><i></i>待機中… 取消</button>`:'<button id="v6RandomMatch">相手を探す</button>'}</section>
+    <section class="v6-random"><div><small>RANDOM MATCH</small><b>オンラインランダムマッチ</b><p>同じゲームを待っているプレイヤーと自動で対戦。</p></div>${q?`<button id="v6CancelQueue" class="waiting"><i></i>待機中… 取消</button>`:A.queueing?'<button id="v6RandomMatch" disabled><i></i>接続中…</button>':'<button id="v6RandomMatch">相手を探す</button>'}</section>
     ${friendRows()}${challengeRows()}`;
   $$('[data-game]',root).forEach(b=>b.onclick=()=>{A.game=b.dataset.game;renderArena()});
   $$('[data-pet]',root).forEach(b=>b.onclick=()=>{A.petId=b.dataset.pet;renderArena()});
@@ -198,12 +198,23 @@ function renderArena(){
   $$('[data-decline]',root).forEach(b=>b.onclick=()=>respondChallenge(b.dataset.decline,false));
 }
 async function startRandom(){
+  if(A.queueing)return;
   const p=activeArenaPet();if(!p)return showToast?.('出場する文鳥を選んでください','warning');
+  A.queueing=true;renderArena();
   try{
-    const r=await arena('queue',{petId:p.id,gameType:A.game});A.dash=r.data;renderArena();
-    if(r.matchmaking?.status==='matched'){const m=await arena('match',{matchId:r.matchmaking.matchId});A.match=m.data;openMatch(A.match)}
-    else showToast?.('対戦相手を探しています…');
-  }catch(e){showToast?.(e.message,'warning')}
+    const r=await arena('queue',{petId:p.id,gameType:A.game});A.dash=r.data;
+    if(r.matchmaking?.status==='matched'){
+      const m=await arena('match',{matchId:r.matchmaking.matchId});
+      A.match=m.data;A.queueing=false;openMatch(A.match);
+    }else{
+      A.queueing=false;renderArena();showToast?.('対戦相手を探しています…');
+    }
+  }catch(e){
+    A.queueing=false;
+    const recovered=await refreshArena().catch(()=>null);
+    if(recovered?.activeMatch)return;
+    renderArena();showToast?.(e.message,'warning');
+  }
 }
 async function cancelQueue(){try{const r=await arena('cancelQueue');A.dash=r.data;renderArena()}catch(e){showToast?.(e.message,'warning')}}
 async function sendChallenge(){
