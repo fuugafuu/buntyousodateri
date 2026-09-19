@@ -9,7 +9,7 @@ page.on('pageerror', error => errors.push(error.message));
 await page.goto('http://127.0.0.1:3101', { waitUntil: 'networkidle' });
 await page.waitForSelector('#loadingOverlay.hide', { timeout: 10_000 });
 const ids = await page.evaluate(() => minigames.map(game => game.id));
-assert.equal(ids.length, 14);
+assert.deepEqual(ids, ['catch','timing','memory','rhythm','fly','maze']);
 const results = [];
 for (const id of ids) {
   const state = await page.evaluate(async gameId => {
