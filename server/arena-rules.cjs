@@ -45,6 +45,7 @@ function validateSubmission(game,raw,{elapsedMs=0,expired=false}={}){
   }
   if(game==='perch'){
     const hits=Number(raw?.hits),misses=Number(raw?.misses),reaction=Number(raw?.avgReactionMs);
+    if(elapsedMs<1200)throw invalid('反射バトルのプレイ時間が不正です。');
     if(!Number.isInteger(hits)||!Number.isInteger(misses)||hits<0||misses<0||hits+misses!==12)throw invalid('反射バトルのラウンド数が不正です。');
     if(hits>0&&(!Number.isFinite(reaction)||reaction<100||reaction>2000))throw invalid('反応時間が不正です。');
     return true;
