@@ -83,7 +83,7 @@ function build(){
 function navigate(k){
   $$('[data-v6]').forEach(b=>b.classList.toggle('active',b.dataset.v6===k));
   if(k==='home')return $('.game-shell')?.scrollIntoView({behavior:'smooth',block:'start'});
-  if(k==='bird')return openPet();
+  if(k==='bird')return openBirdCollection();
   if(k==='arena')return openArena();
   if(k==='friends'){openAccountHub?.();setTimeout(()=>{try{setSocialTab('friends')}catch(e){}$('#socialPanel')?.scrollIntoView({behavior:'smooth'})},40);return}
   if(k==='more')return openSheet($('#v6More'));
@@ -111,6 +111,17 @@ function organizeCareButtons(){
 }
 function openSheet(s){s?.classList.add('show');document.body.classList.add('v6-sheet-open')}
 function closeSheet(s){s?.classList.remove('show');document.body.classList.remove('v6-sheet-open')}
+function openBirdCollection(){
+  closeSheet($('#v6PetSheet'));closeSheet($('#v6More'));
+  const modal=$('#birdModal');
+  if(!modal){showToast?.('文鳥一覧を開けませんでした','warning');return;}
+  if(typeof window.showModal==='function')window.showModal('birdModal');
+  else modal.classList.add('show');
+  requestAnimationFrame(()=>{
+    $('#gachaHub')?.scrollIntoView({block:'start'});
+    $('#birdGrid')?.scrollIntoView({block:'nearest'});
+  });
+}
 function openPet(){renderPetSheet();openSheet($('#v6PetSheet'));refreshArena(true).catch(()=>{})}
 
 function metric(label,val,suffix=''){return `<div class="v6-metric"><span>${esc(label)}</span><b>${Number(val||0).toFixed(suffix==='g'||suffix==='cm'?1:0)}${suffix}</b><i><em style="width:${clamp(val,0,100)}%"></em></i></div>`}
