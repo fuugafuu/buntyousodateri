@@ -297,8 +297,8 @@ function renderMatchLobby(m){
   <div class="v6-versus v72-match-found"><article><span>${petIcon(m.me.pet)}</span><b>${esc(m.me.pet?.name)}</b><small>YOU / ${m.me.pet?.stats?.rating||1000}</small></article><strong>VS</strong><article><span>${petIcon(m.opponent.pet)}</span><b>${esc(m.opponent.pet?.name)}</b><small>${esc(m.opponent.profile?.displayName||'RIVAL')} / ${m.opponent.pet?.stats?.rating||1000} ${isBot?'<i class="v72-cpu-badge">CPU</i>':''}</small></article></div>
   <div class="v72-connection-check" id="v72ConnectionCheck"><div class="v72-loading-ring"></div><div><b>対戦環境を確認しています</b><small class="v72-security-step active" data-check="auth">参加権限と対戦IDを検証</small><small class="v72-security-step" data-check="sync">時刻・seed・ゲーム整合性を確認</small><small class="v72-security-step" data-check="network">通信安定性を測定</small><small class="v72-security-step" data-check="rival">相手のREADYを待機</small></div></div>
   <div class="v71-live-duel"><div><small>YOU</small><i><em id="v71MeLive"></em></i><b id="v71MeLiveText">0%</b></div><div><small>RIVAL</small><i><em id="v71RivalLive"></em></i><b id="v71RivalLiveText">0%</b></div></div>
-  <div id="v6Countdown" class="v6-countdown"></div><div id="v6GameStage" class="v6-game-stage"></div><div id="v6Result" class="v6-result"></div>`;
-  $('#v6LeaveBattle').onclick=leaveBattle;
+  <div id="v6Countdown" class="v6-countdown"></div><div id="v6GameStage" class="v6-game-stage"></div><div id="v6Result" class="v6-result"></div><button id="v721ExitBattle" class="v721-exit-battle">対戦から出る</button>`;
+  $('#v6LeaveBattle').onclick=leaveBattle;$('#v721ExitBattle').onclick=leaveBattle;
 }
 function setCheck(name,state='ok'){
   const el=$(`[data-check="${name}"]`);if(!el)return;el.classList.add(state);if(state==='active')el.classList.add('active');
@@ -328,30 +328,38 @@ async function prepareMatch(){
   }
 }
 async function waitForBothReady(){
-  const deadline=Date.now()+18000;
+  const deadline=Date.now()+22000;
   while(A.match&&Date.now()<deadline){
-    const r=await arena('match',{matchId:A.match.id});if(r.data)A.match=r.data;updateOpponent(A.match);
-    if(A.match?.connection?.meReady&&A.match?.connection?.opponentReady&&A.match?.connection?.startLocked){
+    const r=await arena('heartbeat',{matchId:A.match.id});if(r.data)A.match=r.data;updateOpponent(A.match);
+    const conn=A.match?.connection||{};
+    if(conn.meReady&&conn.opponentReady&&conn.opponentFresh&&conn.startLocked){
       setCheck('rival');const box=$('#v72ConnectionCheck');if(box){box.classList.add('complete');setTimeout(()=>box.remove(),420)}
       A.preparing=false;arenaVoice('接続は安定しています。対戦を開始します。');countdownToStart();return;
     }
+    const status=$('#v6MatchStatus');if(status&&!conn.opponentFresh)status.textContent='相手の接続を待っています…';
     await sleep(400);
   }
-  throw new Error('相手との接続確認がタイムアウトしました');
+  throw new Error('相手の接続を確認できませんでした');
 }
-function countdownToStart(){
+async function countdownToStart(){
   if(A.counting)return;A.counting=true;
-  const tick=()=>{if(!A.match||A.playing)return;const left=Date.parse(A.match.startsAt)-Date.now(),el=$('#v6Countdown');
-    if(left>0){const n=Math.max(1,Math.ceil(left/1000));if(el)el.innerHTML=`<b>${n}</b><small>SYNC READY</small>`;if(n<=3)arenaSfx('tick');setTimeout(tick,120)}
-    else{if(el)el.innerHTML='<b>GO!</b>';arenaSfx('go');arenaVoice('スタート');$('#v6Battle')?.classList.add('v72-battle-flash');setTimeout(()=>$('#v6Battle')?.classList.remove('v72-battle-flash'),480);setTimeout(()=>el?.classList.add('gone'),350);startGame(A.match.gameType)}
-  };tick();
+  try{
+    while(A.match&&!A.playing){
+      const r=await arena('heartbeat',{matchId:A.match.id});if(r.data)A.match=r.data;
+      const conn=A.match?.connection||{};
+      if(!conn.startLocked||!conn.opponentFresh){A.counting=false;const el=$('#v6Countdown');if(el)el.innerHTML='<small>相手の再接続を待っています…</small>';await waitForBothReady();return}
+      const left=Date.parse(A.match.startsAt)-Date.now(),el=$('#v6Countdown');
+      if(left<=0){if(el)el.innerHTML='<b>GO!</b>';arenaSfx('go');arenaVoice('スタート');$('#v6Battle')?.classList.add('v72-battle-flash');setTimeout(()=>$('#v6Battle')?.classList.remove('v72-battle-flash'),480);setTimeout(()=>el?.classList.add('gone'),350);startGame(A.match.gameType);return}
+      const n=Math.max(1,Math.ceil(left/1000));if(el)el.innerHTML=`<b>${n}</b><small>SYNC READY</small>`;if(n<=3)arenaSfx('tick');await sleep(320);
+    }
+  }catch(e){A.counting=false;const status=$('#v6MatchStatus');if(status)status.textContent='再接続中…'}
 }
 async function pollMatch(){
   if(!A.match)return;
   try{
-    const r=await arena('match',{matchId:A.match.id});if(!r.data)return;A.match=r.data;updateOpponent(r.data);
+    const r=await arena('heartbeat',{matchId:A.match.id});if(!r.data)return;A.match=r.data;updateOpponent(r.data);
     const status=$('#v6MatchStatus');if(status&&A.playing&&status.textContent==='再接続中…')status.textContent='対戦中';
-    if(r.data.status==='finished')showResult(r.data);
+    if(r.data.status==='finished'||r.data.status==='abandoned')showResult(r.data);
   }catch(e){const status=$('#v6MatchStatus');if(status&&A.playing)status.textContent='再接続中…'}
 }
 function livePercent(game,p){
@@ -367,7 +375,7 @@ function updateLiveMeter(side,p){
 }
 function updateOpponent(m){
   const el=$('#v6OpponentLive');if(!el)return;const p=m.opponent?.progress||{};updateLiveMeter('rival',p);
-  const rival=$('#flightRivalBird');if(rival){rival.style.left=`${clamp((Number(p.x||0)+1)/2*100,6,94)}%`;rival.style.opacity=p.ready===false?'.35':'.86'}
+  const rival=$('#flightRivalBird');if(rival){rival.style.left=`${clamp((Number(p.x||0)+1)/2*100,6,94)}%`;rival.style.top=`${clamp((Number(p.y||0)+1)/2*72+10,10,82)}%`;rival.style.opacity=p.ready===false?'.35':'.86'}
   const perch=$('#perchRivalBird');if(perch)perch.style.left=`${[17,50,83][clamp(Math.round((Number(p.x||0)+1)),0,2)]}%`;
   const seed=$('#seedRivalBird');if(seed)seed.style.left=`${clamp(Number(p.count||0)/120*88+5,5,93)}%`;
   const ring=$('#ringRivalBird');if(ring)ring.style.left=`${clamp(Number(p.hits||0)/16*88+5,5,93)}%`;
@@ -393,25 +401,34 @@ function startGame(type){
 }
 function flightGame(){
   const stage=$('#v6GameStage'),p=A.match.me.pet,rnd=seeded(A.match.seed),duration=30000;
-  stage.innerHTML='<div class="flight-hud"><span>HEIGHT <b id="fHeight">0</b>m</span><span>HP <b id="fHp">100</b></span><span>体力 <b id="fStamina">100</b>%</span></div><div class="flight-field v72-dual-field" id="flightField"><div class="flight-clouds"></div><div class="flight-bird v72-me-bird" id="flightBird">🐦<small>YOU</small></div><div class="flight-bird v72-rival-bird" id="flightRivalBird">🐦<small>RIVAL</small></div><div class="flight-obstacles" id="flightObs"></div></div><div class="flight-controls"><button id="fLeft">←</button><small>同じ障害物を2羽で飛行 / 鳥同士は接触なし</small><button id="fRight">→</button></div>';
+  stage.innerHTML='<div class="flight-hud"><span>DIST <b id="fHeight">0</b>m</span><span>HP <b id="fHp">100</b></span><span>体力 <b id="fStamina">100</b>%</span></div><div class="flight-field v72-dual-field v721-flight-2d" id="flightField"><div class="flight-clouds"></div><div class="flight-bird v72-me-bird" id="flightBird">🐦<small>YOU</small></div><div class="flight-bird v72-rival-bird" id="flightRivalBird">🐦<small>RIVAL</small></div><div class="flight-obstacles" id="flightObs"></div></div><div class="v721-flight-pad"><button id="fUp">↑</button><div><button id="fLeft">←</button><button id="fDown">↓</button><button id="fRight">→</button></div><small>画面をドラッグして上下左右にも移動できます</small></div>';
   const field=$('#flightField'),bird=$('#flightBird'),obsRoot=$('#flightObs');
-  let x=.5,height=0,collisions=0,stamina=100,hp=100,last=performance.now(),t0=last,spawn=0,raf=0,done=false,obs=[];
+  let x=.24,y=.5,distance=0,collisions=0,stamina=100,hp=100,last=performance.now(),t0=last,nextSpawn=650,raf=0,done=false,obs=[];
   const weightFit=1-Math.min(Math.abs(stat(p,'weightG',24.5)-stat(p,'idealWeightG',24.5))/Math.max(1,stat(p,'idealWeightG',24.5)),.35);
-  const climb=.31+stat(p,'flightPower')*.0017+stat(p,'endurance')*.0009+weightFit*.06,handling=.08+stat(p,'agility')*.0012+Math.max(0,30-stat(p,'weightG',24.5))*.001;
-  function setX(v){x=clamp(v,.08,.92);bird.style.left=`${x*100}%`}
-  function pointer(e){const r=field.getBoundingClientRect();setX((e.clientX-r.left)/r.width)}
-  field.addEventListener('pointerdown',e=>{field.setPointerCapture?.(e.pointerId);pointer(e)});field.addEventListener('pointermove',e=>{if(e.buttons)pointer(e)});
-  $('#fLeft').onpointerdown=()=>setX(x-handling);$('#fRight').onpointerdown=()=>setX(x+handling);
-  function addObs(){const gap=.23+rnd()*.42,w=.28+clamp(stat(p,'agility'),0,100)/900,el=document.createElement('div');el.className='flight-gate';el.innerHTML='<i></i><i></i>';obsRoot.appendChild(el);obs.push({gap,w,y:-12,hit:false,el})}
-  function hit(){collisions++;height=Math.max(0,height-190);stamina=Math.max(0,stamina-12);hp=Math.max(0,hp-14);field.classList.add('hit','v72-hit-shake');arenaSfx('hit');setTimeout(()=>field.classList.remove('hit','v72-hit-shake'),290)}
+  const speed=.29+stat(p,'flightPower')*.0018+stat(p,'endurance')*.0008+weightFit*.05,handling=.055+stat(p,'agility')*.0009;
+  function setPos(nx,ny){x=clamp(nx,.07,.93);y=clamp(ny,.10,.86);bird.style.left=`${x*100}%`;bird.style.top=`${y*100}%`}
+  function pointer(e){const r=field.getBoundingClientRect();setPos((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height)}
+  field.addEventListener('pointerdown',e=>{field.setPointerCapture?.(e.pointerId);pointer(e)});field.addEventListener('pointermove',e=>{if(e.buttons||e.pointerType==='touch')pointer(e)});
+  $('#fLeft').onpointerdown=()=>setPos(x-handling,y);$('#fRight').onpointerdown=()=>setPos(x+handling,y);$('#fUp').onpointerdown=()=>setPos(x,y-handling);$('#fDown').onpointerdown=()=>setPos(x,y+handling);
+  function addObs(spawnAt){
+    const oy=.12+rnd()*.68,ow=.075+rnd()*.075,oh=.12+rnd()*.18,el=document.createElement('div');
+    el.className='v721-flight-block';obsRoot.appendChild(el);obs.push({spawnAt,x:1.08,y:oy,w:ow,h:oh,hit:false,el});
+  }
+  function hit(){collisions++;distance=Math.max(0,distance-170);stamina=Math.max(0,stamina-10);hp=Math.max(0,hp-16);field.classList.add('hit','v72-hit-shake');arenaSfx('hit');setTimeout(()=>field.classList.remove('hit','v72-hit-shake'),290)}
   function frame(now){
-    const dt=Math.min(34,now-last);last=now;const t=now-t0;if(done)return;stamina=Math.max(0,100-t/1000*(1.45-stat(p,'endurance')*.006));height+=dt*climb*(.72+stamina/360)*(hp<=0?.72:1);
-    spawn+=dt;if(spawn>850){spawn-=850;addObs()}const H=field.clientHeight,birdY=H-86;
-    for(const o of obs){o.y+=dt*(.19+height/160000);o.el.style.transform=`translateY(${o.y}px)`;const left=(o.gap-o.w/2)*100,right=(o.gap+o.w/2)*100;o.el.children[0].style.width=`${Math.max(0,left)}%`;o.el.children[1].style.left=`${Math.min(100,right)}%`;o.el.children[1].style.width=`${Math.max(0,100-right)}%`;if(!o.hit&&o.y>birdY-20&&o.y<birdY+22&&(x<o.gap-o.w/2||x>o.gap+o.w/2)){o.hit=true;hit()}}
-    obs=obs.filter(o=>{if(o.y>H+30){o.el.remove();return false}return true});$('#fHeight').textContent=Math.round(height/10);$('#fStamina').textContent=Math.round(stamina);$('#fHp').textContent=Math.round(hp);
-    progress({t:Math.round(t),x:x*2-1,height:Math.round(height),hp});
-    if(t>=duration){done=true;cancelAnimationFrame(raf);submitGame({durationMs:duration,height,collisions});return}raf=requestAnimationFrame(frame)
-  }setX(x);raf=requestAnimationFrame(frame);A.gameState={stop:()=>{done=true;cancelAnimationFrame(raf)}}
+    const dt=Math.min(34,now-last);last=now;const t=now-t0;if(done)return;
+    stamina=Math.max(0,100-t/1000*(1.35-stat(p,'endurance')*.0055));distance+=dt*speed*(.72+stamina/360)*(hp<=0?.68:1);
+    while(t>=nextSpawn){addObs(nextSpawn);nextSpawn+=760}
+    for(const o of obs){
+      o.x=1.08-Math.max(0,t-o.spawnAt)*.00048;o.el.style.left=`${o.x*100}%`;o.el.style.top=`${o.y*100}%`;o.el.style.width=`${o.w*100}%`;o.el.style.height=`${o.h*100}%`;
+      const bx=x,by=y,bw=.055,bh=.075;if(!o.hit&&Math.abs(bx-o.x)<(bw+o.w)/2&&Math.abs(by-o.y)<(bh+o.h)/2){o.hit=true;hit()}
+    }
+    obs=obs.filter(o=>{if(o.x<-.15){o.el.remove();return false}return true});
+    $('#fHeight').textContent=Math.round(distance/10);$('#fStamina').textContent=Math.round(stamina);$('#fHp').textContent=Math.round(hp);
+    progress({t:Math.round(t),x:x*2-1,y:y*2-1,height:Math.round(distance),hp});
+    if(t>=duration){done=true;cancelAnimationFrame(raf);submitGame({durationMs:duration,height:distance,collisions});return}raf=requestAnimationFrame(frame)
+  }
+  setPos(x,y);raf=requestAnimationFrame(frame);A.gameState={stop:()=>{done=true;cancelAnimationFrame(raf)}}
 }
 function kaleGame(){
   const stage=$('#v6GameStage'),p=A.match.me.pet,duration=10000;let taps=0,done=false,t0=Date.now(),timer;
@@ -473,8 +490,14 @@ async function submitGame(raw){
   }catch(e){A.playing=false;$('#v6MatchStatus').textContent='送信エラー';showToast?.(e.message,'warning')}
 }
 function showResult(m){
-  A.playing=false;A.gameState?.stop?.();const me=m.me?.profile?.playerId,w=m.winnerPlayerId;const draw=!w,win=w===me;
-  const root=$('#v6Result');if(!root)return;$('#v6MatchStatus').textContent='FINISHED';$('#v6GameStage').innerHTML='';
+  A.playing=false;A.gameState?.stop?.();const root=$('#v6Result');if(!root)return;
+  if(m.status==='abandoned'){
+    $('#v6MatchStatus').textContent='CANCELLED';$('#v6GameStage').innerHTML='';
+    root.innerHTML='<div class="result-burst draw"><small>CANCELLED</small><h2>対戦を終了しました</h2><p>接続切れ、時間切れ、または両者未完了のため中止されました。</p><div class="v71-result-actions"><button id="v6ResultAgain">もう一戦</button><button id="v6ResultClose" class="subtle">閉じる</button></div></div>';
+    clearInterval(A.matchPoll);arenaVoice('対戦は中止されました。');$('#v6ResultAgain').onclick=()=>{closeBattle();openArena()};$('#v6ResultClose').onclick=()=>{closeBattle();refreshArena(true)};return;
+  }
+  const me=m.me?.profile?.playerId,w=m.winnerPlayerId,draw=!w,win=w===me;
+  $('#v6MatchStatus').textContent='FINISHED';$('#v6GameStage').innerHTML='';
   root.innerHTML=`<div class="result-burst ${draw?'draw':win?'win':'lose'}"><small>${draw?'DRAW':win?'WIN':'LOSE'}</small><h2>${draw?'引き分け':win?'勝利！':'惜敗'}</h2><div><span><b>${Number(m.me.score||0).toLocaleString()}</b><small>YOU</small></span><strong>:</strong><span><b>${Number(m.opponent.score||0).toLocaleString()}</b><small>RIVAL</small></span></div><p>RATING ${m.me.pet?.stats?.rating||1000}</p><div class="v71-result-actions"><button id="v6ResultAgain">もう一戦</button><button id="v6ResultClose" class="subtle">閉じる</button></div></div>`;
   clearInterval(A.matchPoll);arenaSfx(win?'go':draw?'match':'hit');arenaVoice(draw?'引き分けです。おつかれさまでした。':win?'勝利です！ おめでとうございます。':'対戦終了です。次は取り返しましょう。');window.v7RefreshProgress?.(true);
   $('#v6ResultAgain').onclick=()=>{closeBattle();openArena()};

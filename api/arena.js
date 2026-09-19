@@ -1,4 +1,5 @@
 const { allowMethods, json, requireUser, requireSameOrigin } = require('../server/auth.cjs');
+async function bestEffortRpc(sb,name,args){try{const {error}=await sb.rpc(name,args);if(error)console.warn('[mofumori] best-effort RPC failed',name,error.message)}catch(error){console.warn('[mofumori] best-effort RPC exception',name,error?.message||error)}}
 const { configured, getSupabase } = require('../server/supabase.cjs');
 const { calculate, validateSubmission: validateArenaSubmission } = require('../server/arena-rules.cjs');
 
@@ -63,7 +64,7 @@ function syntheticBotProgress(game,seed,startsAt,status){
   const r=rand((Number(seed)||1)^0x72b07),skill=.56+r()*.34,ratio=dur?elapsed/dur:0,x=Math.sin(elapsed/620+(seed%17))*.72;
   const moveRand=rand(((Number(seed)||1)^0x431d^Math.floor(elapsed/720))>>>0);
   if(status==='finished')return {};
-  if(game==='flight')return {ready:true,bot:true,t:elapsed,x:round(x,3),height:Math.round(ratio*(10500+skill*8500)),hp:Math.max(18,Math.round(100-ratio*(1-skill)*62)),count:0,hits:0};
+  if(game==='flight')return {ready:true,bot:true,t:elapsed,x:round(x,3),y:round(Math.sin(elapsed/830+(seed%11))*.62,3),height:Math.round(ratio*(10500+skill*8500)),hp:Math.max(18,Math.round(100-ratio*(1-skill)*62)),count:0,hits:0};
   if(game==='kale')return {ready:true,bot:true,t:elapsed,x:0,count:Math.floor(ratio*(65+skill*104)),height:0,hits:0,hp:100};
   if(game==='seedrace')return {ready:true,bot:true,t:elapsed,x:round(x,3),count:Math.floor(ratio*(62+skill*82)),height:0,hits:0,hp:100};
   if(game==='ring')return {ready:true,bot:true,t:elapsed,x:round(x,3),hits:Math.min(16,Math.floor(ratio*(9+skill*7))),count:0,height:0,hp:100};
@@ -92,6 +93,8 @@ async function loadMatch(sb,userKey,matchId){
   const meProgress=side===1?(m.p1_progress||{}):(m.p2_progress||{});
   let oppProgress=side===1?(m.p2_progress||{}):(m.p1_progress||{});
   if(oppProfile?.isBot&&!((side===1?m.p2_score:m.p1_score)!=null))oppProgress={...oppProgress,...syntheticBotProgress(m.game_type,m.seed,m.starts_at,m.status)};
+  const meSeen=side===1?m.p1_last_seen_at:m.p2_last_seen_at,oppSeen=side===1?m.p2_last_seen_at:m.p1_last_seen_at;
+  const opponentFresh=oppProfile?.isBot===true||(oppSeen&&Date.now()-Date.parse(oppSeen)<3500);
   return {
     id:m.id,gameType:m.game_type,status:m.status,seed:Number(m.seed||0),side,
     startsAt:m.starts_at,expiresAt:m.expires_at,finishedAt:m.finished_at||null,
@@ -100,6 +103,9 @@ async function loadMatch(sb,userKey,matchId){
       meReady:side===1?!!m.p1_ready_at:!!m.p2_ready_at,
       opponentReady:side===1?!!m.p2_ready_at:!!m.p1_ready_at,
       startLocked:m.handshake_locked===true,
+      opponentFresh,
+      meLastSeenAt:meSeen||null,
+      opponentLastSeenAt:oppSeen||null,
       secure:true
     },
     me:{profile:meProfile,pet:pet(bm.get(side===1?m.pet1_id:m.pet2_id)),score:side===1?m.p1_score:m.p2_score,detail:side===1?m.p1_detail:m.p2_detail,progress:meProgress},
@@ -181,16 +187,17 @@ async function handshake(sb,user,payload){
   const version=text(payload.clientVersion,16),rtt=Math.round(num(payload.rttMs,0,10000,9999));
   if(!/^7\.2(?:\.|$)/.test(version))throw Object.assign(new Error('対戦クライアントを更新してください。'),{status:409});
   if(rtt>2800)throw Object.assign(new Error('通信が不安定です。'),{status:409});
-  const side=m.side,readyCol=side===1?'p1_ready_at':'p2_ready_at',progressCol=side===1?'p1_progress':'p2_progress',now=new Date().toISOString();
-  const readyProgress={...(m.me.progress||{}),ready:true,rttMs:rtt,clientVersion:version,t:0,x:0,hp:100};
-  const {error}=await sb.from('mofumori_arena_matches').update({[readyCol]:now,[progressCol]:readyProgress}).eq('id',m.id);if(error)throw error;
-  const {data:row,error:rowError}=await sb.from('mofumori_arena_matches').select('p1_ready_at,p2_ready_at,handshake_locked').eq('id',m.id).single();if(rowError)throw rowError;
-  if(row.p1_ready_at&&row.p2_ready_at&&!row.handshake_locked){
-    const start=new Date(Date.now()+3200).toISOString();
-    const {error:lockError}=await sb.from('mofumori_arena_matches').update({handshake_locked:true,starts_at:start,expires_at:new Date(Date.now()+3*60*1000).toISOString()}).eq('id',m.id).eq('handshake_locked',false);
-    if(lockError)throw lockError;
-  }
+  const side=m.side,readyCol=side===1?'p1_ready_at':'p2_ready_at',seenCol=side===1?'p1_last_seen_at':'p2_last_seen_at',progressCol=side===1?'p1_progress':'p2_progress',now=new Date().toISOString();
+  const readyProgress={...(m.me.progress||{}),ready:true,rttMs:rtt,clientVersion:version,t:0,x:0,y:0,hp:100};
+  const {error}=await sb.from('mofumori_arena_matches').update({[readyCol]:now,[seenCol]:now,[progressCol]:readyProgress}).eq('id',m.id);if(error)throw error;
+  const {error:touchError}=await sb.rpc('mofumori_arena_touch',{p_user:user.id,p_match:m.id});if(touchError)throw touchError;
   return loadMatch(sb,user.id,m.id);
+}
+async function heartbeat(sb,user,payload){
+  await takeLimit(sb,user.id,'arena_heartbeat',60,180);
+  const mid=uuid(payload.matchId);if(!mid)throw Object.assign(new Error('対戦が不正です。'),{status:400});
+  const {error}=await sb.rpc('mofumori_arena_touch',{p_user:user.id,p_match:mid});if(error)throw error;
+  return loadMatch(sb,user.id,mid);
 }
 async function updateProgress(sb,user,payload){
   await takeLimit(sb,user.id,'arena_progress',60,150);
@@ -198,8 +205,8 @@ async function updateProgress(sb,user,payload){
   if(!['ready','running'].includes(m.status))return m;
   if(!m.connection?.startLocked)throw Object.assign(new Error('接続確認が完了していません。'),{status:409});
   const p=payload.progress&&typeof payload.progress==='object'?payload.progress:{};
-  const safe={t:Math.round(num(p.t,0,120000,0)),x:round(num(p.x,-1,1,0),3),height:round(num(p.height,0,30000,0),0),count:Math.round(num(p.count,0,500,0)),hits:Math.round(num(p.hits,0,50,0)),hp:Math.round(num(p.hp,0,100,100))};
-  const col=m.side===1?'p1_progress':'p2_progress',patch={[col]:safe};
+  const safe={t:Math.round(num(p.t,0,120000,0)),x:round(num(p.x,-1,1,0),3),y:round(num(p.y,-1,1,0),3),height:round(num(p.height,0,30000,0),0),count:Math.round(num(p.count,0,500,0)),hits:Math.round(num(p.hits,0,50,0)),hp:Math.round(num(p.hp,0,100,100))};
+  const col=m.side===1?'p1_progress':'p2_progress',seenCol=m.side===1?'p1_last_seen_at':'p2_last_seen_at',patch={[col]:safe,[seenCol]:new Date().toISOString()};
   if(Date.now()>=Date.parse(m.startsAt))patch.status='running';
   const {error}=await sb.from('mofumori_arena_matches').update(patch).eq('id',m.id);if(error)throw error;return safe;
 }
@@ -224,7 +231,7 @@ async function submit(sb,user,payload){
   const result=calculate(m.gameType,raw,m.me.pet.stats);
   const {data,error}=await sb.rpc('mofumori_arena_submit',{p_user:user.id,p_match:m.id,p_score:result.score,p_detail:result.detail});if(error)throw error;
   await finishBotIfNeeded(sb,user,m);
-  await sb.rpc('mofumori_progress_event',{p_user:user.id,p_event:'battle'}).catch(()=>{});
+  await bestEffortRpc(sb,'mofumori_progress_event',{p_user:user.id,p_event:'battle'});
   return {result,match:await loadMatch(sb,user.id,m.id),stored:data};
 }
 
@@ -245,8 +252,8 @@ module.exports=async function handler(req,res){
       const care=text(payload.care,16);
       const {data:d,error}=await sb.rpc('mofumori_record_pet_care',{p_owner:user.id,p_pet:p.id,p_action:care});
       if(error)throw error;data=d;
-      await sb.rpc('mofumori_progress_event',{p_user:user.id,p_event:'care'}).catch(()=>{});
-      if(care==='play'||care==='train')await sb.rpc('mofumori_progress_event',{p_user:user.id,p_event:care}).catch(()=>{});
+      await bestEffortRpc(sb,'mofumori_progress_event',{p_user:user.id,p_event:'care'});
+      if(care==='play'||care==='train')await bestEffortRpc(sb,'mofumori_progress_event',{p_user:user.id,p_event:care});
     }else if(action==='queue'){extra.matchmaking=await queue(sb,user,payload);data=await dashboard(sb,user)}
     else if(action==='cancelQueue'){await sb.from('mofumori_arena_queue').delete().eq('user_key',user.id);data=await dashboard(sb,user)}
     else if(action==='challenge'){extra.challenge=await challenge(sb,user,payload);data=await dashboard(sb,user)}
@@ -256,6 +263,7 @@ module.exports=async function handler(req,res){
       const {error}=await sb.from('mofumori_arena_challenges').update({status:'cancelled',updated_at:new Date().toISOString()}).eq('id',cid).eq('sender_key',user.id).eq('status','pending');if(error)throw error;data=await dashboard(sb,user);
     }else if(action==='match'){data=await loadMatch(sb,user.id,payload.matchId)}
     else if(action==='handshake'){data=await handshake(sb,user,payload)}
+    else if(action==='heartbeat'){data=await heartbeat(sb,user,payload)}
     else if(action==='progress'){data=await updateProgress(sb,user,payload)}
     else if(action==='submit'){extra.submission=await submit(sb,user,payload);data=extra.submission.match}
     else if(action==='abandon'){

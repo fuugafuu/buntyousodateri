@@ -11,5 +11,5 @@ module.exports = async function handler(req, res) {
       schemaReady = !error;
     } catch (error) { schemaReady = false; }
   }
-  json(res, 200, { ok: true, version: '7.2.0', cloudConfigured, schemaReady, localModeAvailable: true });
+  json(res, 200, { ok: true, version: '7.2.1', cloudConfigured, schemaReady, localModeAvailable: true });
 };

@@ -466,14 +466,14 @@ function clearLegacySave(){
 }
 function save(){
   G.lastUpdate=Date.now();
-  const record={version:'7.1.0',savedAt:new Date().toISOString(),data:stateForStorage()};
+  const record={version:'7.2.1',savedAt:new Date().toISOString(),data:stateForStorage()};
   const recordKey=activeSaveRecordKey();
   pendingSave=pendingSave.catch(()=>{}).then(()=>saveDbSet(recordKey,record)).catch(error=>{if(!scanCache.idb){scanCache.idb=true;console.error('IndexedDB save failed',error);}});
   queueCloudSave(record);
   return pendingSave;
 }
 function exportSave(){
-  const payload={version:'7.1.0',savedAt:new Date().toISOString(),data:stateForStorage()};
+  const payload={version:'7.2.1',savedAt:new Date().toISOString(),data:stateForStorage()};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
@@ -1932,7 +1932,7 @@ async function init(){
   });
   const overlay=document.getElementById('loadingOverlay');
   if(overlay){setTimeout(()=>overlay.classList.add('hide'),950);}
-  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js?v=7.1.0',{updateViaCache:'none'}).catch(error=>console.warn('Offline cache registration skipped',error));
+  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js?v=7.2.1',{updateViaCache:'none'}).catch(error=>console.warn('Offline cache registration skipped',error));
 }
 function saveName(){const n=document.getElementById('nameInput').value.trim();if(n){setCurrentBirdName(n);playBirdSound('feed');setMsg(`名前が「${n}」になった！`);save();updateUI()}hideModal('nameModal')}
 init();

@@ -21,7 +21,7 @@ has('api/auth/local.js',"action==='register'",'Local account registration must e
 has('api/auth/local.js',"await scrypt(pass,salt,32",'Local passwords must use scrypt');
 has('api/progression.js',"3回お世話する",'Daily progression goals must exist');
 has('api/pets.js',"beaver:['ビーバー','🦫']", 'Beaver must exist in server species metadata');
-has('api/pets.js',"forestLevel >= 3",'Beaver gacha must be level-gated');
+assert.match(fs.readFileSync('api/pets.js','utf8'),/forestLevel\s*>=\s*3/,'Beaver gacha must be level-gated');
 has('main.js',"beaver:{name:'ビーバー'",'Beaver must exist in client species data');
 has('main.js','if(isBeaver){','Beaver must have dedicated renderer');
 has('v7-ui.js','Mofumoriログイン','Local account UI must be present');
