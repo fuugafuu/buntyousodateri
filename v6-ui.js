@@ -317,7 +317,7 @@ async function prepareMatch(){
     setCheck('sync');setCheck('network','active');
     const sorted=samples.slice().sort((a,b)=>a-b),rtt=Math.round(sorted[Math.floor(sorted.length/2)]||0);
     if(rtt>2800)throw new Error('通信が不安定です。再接続してください');
-    const h=await arena('handshake',{matchId:A.match.id,rttMs:rtt,clientVersion:'7.2.0'});
+    const h=await arena('handshake',{matchId:A.match.id,rttMs:rtt,clientVersion:'7.2.1'});
     A.match=h.data||A.match;A.ready=true;setCheck('network');setCheck('rival','active');
     if(status)status.textContent=`READY / ${rtt}ms`;
     await waitForBothReady();
