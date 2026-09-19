@@ -15,6 +15,7 @@ const birds={
   cat:{name:'ねこ',icon:'🐱',price:720,curr:'coins',colors:{head:'#e0c39a',cheek:'#f5e2c6',body:'#cfa67a',belly:'#f2dec8',wing:'#b78961',tail:'#b07b51',beak:'#d07a4a',eyeRing:'#ffd39d',feet:'#c98d6c'},hasCheek:false,isCat:true,defaultNames:['みけ','こむぎ','そら','もか','こはく','あんず','まる']},
   fox:{name:'きつね',icon:'🦊',price:4,curr:'gems',colors:{head:'#e07a3f',cheek:'#ffe0c4',body:'#d2652f',belly:'#ffe8d6',wing:'#c35628',tail:'#b24b1f',beak:'#d26839',eyeRing:'#ffd6b8',feet:'#b35b32'},hasCheek:false,isFox:true,defaultNames:['こん','おこん','あさひ','ひばり','こはる','ほたる','しの']},
   penguin:{name:'ペンギン',icon:'🐧',price:880,curr:'coins',colors:{head:'#1f2b3a',cheek:'#dfe9f2',body:'#1b2633',belly:'#f4f7fb',wing:'#101820',tail:'#1f2b3a',beak:'#f3c05a',eyeRing:'#d5dee8',feet:'#f0c872'},hasCheek:false,isPenguin:true,defaultNames:['ペン','ゆきまる','こおり','ましろ','しらたま','あお','ちる']},
+  beaver:{name:'ビーバー',icon:'🦫',price:5,curr:'gems',colors:{head:'#8a5d3b',cheek:'#c89568',body:'#7b4f32',belly:'#cda77f',wing:'#6a432b',tail:'#4b3327',beak:'#f2e8d5',eyeRing:'#2f211a',feet:'#5a3d2d'},hasCheek:false,isBeaver:true,defaultNames:['ビーバー','ダム','ウッド','もく','こげちゃ','リバー','カリカリ']},
   fuga:{name:'ふうが',icon:'🧑‍🎤',price:0,curr:'coins',colors:{head:'#f1d6c8',cheek:'#f6c2c2',body:'#1d2026',belly:'#3b3f48',wing:'#2b3038',tail:'#16181d',beak:'#c08778',eyeRing:'#6c7a89',feet:'#3b3b3b'},hasCheek:false,isHuman:true,hidden:true,defaultNames:['ふうが','風牙','ユウ','ソラ','レン']}
 };
 const minigameCategories={all:'すべて',quick:'サクッと',brain:'ひらめき',action:'アクション'};
@@ -473,14 +474,14 @@ function clearLegacySave(){
 }
 function save(){
   G.lastUpdate=Date.now();
-  const record={version:'6.1.4',savedAt:new Date().toISOString(),data:stateForStorage()};
+  const record={version:'7.0.0',savedAt:new Date().toISOString(),data:stateForStorage()};
   const recordKey=activeSaveRecordKey();
   pendingSave=pendingSave.catch(()=>{}).then(()=>saveDbSet(recordKey,record)).catch(error=>{if(!scanCache.idb){scanCache.idb=true;console.error('IndexedDB save failed',error);}});
   queueCloudSave(record);
   return pendingSave;
 }
 function exportSave(){
-  const payload={version:'6.1.4',savedAt:new Date().toISOString(),data:stateForStorage()};
+  const payload={version:'7.0.0',savedAt:new Date().toISOString(),data:stateForStorage()};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
@@ -865,6 +866,7 @@ function renderBird(){
   const isCat=b.isCat===true;
   const isFox=b.isFox===true;
   const isPenguin=b.isPenguin===true;
+  const isBeaver=b.isBeaver===true;
   const isHuman=b.isHuman===true;
   const bodyCenterY=isPenguin?140:(isCat||isFox?134:132);
   const bodyRx=isPenguin?46:(isCat||isFox?52:48);
@@ -916,6 +918,29 @@ function renderBird(){
       </g>
       ${action==='sing'?`<text x="151" y="62" font-size="22" fill="#7b61ff">♪</text><text x="166" y="43" font-size="15" fill="#ff6b9d">♫</text>`:''}
       ${G.isSleeping?`<text x="148" y="48" font-size="24" fill="#756cf2">Z</text><text x="169" y="29" font-size="16" fill="#756cf2">z</text>`:''}`;
+    return;
+  }
+  if(isBeaver){
+    const tailSwing=Math.sin(animF*.13*speed)*8*amp;
+    const chew=action==='feed'||action==='treat'?Math.abs(Math.sin(animF*.42*speed))*4:0;
+    svg.innerHTML=`<defs><linearGradient id="beaverFur" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a9774e"/><stop offset="1" stop-color="${c.body}"/></linearGradient><filter id="beaverSh"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-opacity=".2"/></filter></defs>
+      <ellipse cx="101" cy="200" rx="70" ry="12" fill="rgba(66,43,29,.16)"/>
+      <g transform="translate(0,${-bounce-jumpY*.55})" filter="url(#beaverSh)">
+        <g transform="rotate(${tailSwing},151,163)"><ellipse cx="155" cy="166" rx="20" ry="42" fill="${c.tail}" transform="rotate(22 155 166)"/><path d="M142 143l27 43M137 153l28 42M149 136l24 39" stroke="#745340" stroke-width="2" opacity=".6"/></g>
+        <ellipse cx="101" cy="149" rx="49" ry="47" fill="url(#beaverFur)"/>
+        <ellipse cx="101" cy="158" rx="28" ry="30" fill="${c.belly}"/>
+        <ellipse cx="72" cy="176" rx="22" ry="15" fill="${c.body}"/><ellipse cx="130" cy="176" rx="22" ry="15" fill="${c.body}"/>
+        <g transform="rotate(${headTilt},101,83)">
+          <circle cx="73" cy="61" r="14" fill="${c.head}"/><circle cx="129" cy="61" r="14" fill="${c.head}"/>
+          <circle cx="101" cy="86" r="42" fill="url(#beaverFur)"/>
+          ${eyesClosed?`<path d="M73 81q10 8 20 0M109 81q10 8 20 0" stroke="#2f211a" stroke-width="4" fill="none" stroke-linecap="round"/>`:`<circle cx="83" cy="81" r="7" fill="#221712"/><circle cx="119" cy="81" r="7" fill="#221712"/><circle cx="85" cy="79" r="2" fill="#fff"/><circle cx="121" cy="79" r="2" fill="#fff"/>`}
+          <ellipse cx="101" cy="103" rx="25" ry="18" fill="${c.cheek}"/>
+          <ellipse cx="101" cy="96" rx="8" ry="6" fill="#322019"/>
+          <rect x="92" y="${105+chew}" width="8" height="15" rx="2" fill="#fff5de"/><rect x="102" y="${105+chew}" width="8" height="15" rx="2" fill="#fff5de"/>
+          <path d="M101 103q-12 ${9+mouthOpen} -21 2M101 103q12 ${9+mouthOpen} 21 2" stroke="#573729" stroke-width="2" fill="none"/>
+        </g>
+        ${action==='play'?'<text x="34" y="49" font-size="18">🪵</text>':''}
+      </g>${G.isSleeping?'<text x="151" y="52" font-size="25" fill="#6c63d9">Z</text>':''}`;
     return;
   }
   if(isCat){
@@ -1919,7 +1944,7 @@ async function init(){
   });
   const overlay=document.getElementById('loadingOverlay');
   if(overlay){setTimeout(()=>overlay.classList.add('hide'),950);}
-  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js?v=6.1.4',{updateViaCache:'none'}).catch(error=>console.warn('Offline cache registration skipped',error));
+  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js?v=7.0.0',{updateViaCache:'none'}).catch(error=>console.warn('Offline cache registration skipped',error));
 }
 function saveName(){const n=document.getElementById('nameInput').value.trim();if(n){setCurrentBirdName(n);playBirdSound('feed');setMsg(`名前が「${n}」になった！`);save();updateUI()}hideModal('nameModal')}
 init();

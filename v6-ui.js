@@ -331,7 +331,7 @@ function showResult(m){
   A.playing=false;A.gameState?.stop?.();const me=m.me?.profile?.playerId,w=m.winnerPlayerId;const draw=!w,win=w===me;
   const root=$('#v6Result');if(!root)return;$('#v6MatchStatus').textContent='FINISHED';$('#v6GameStage').innerHTML='';
   root.innerHTML=`<div class="result-burst ${draw?'draw':win?'win':'lose'}"><small>${draw?'DRAW':win?'WIN':'LOSE'}</small><h2>${draw?'引き分け':win?'勝利！':'惜敗'}</h2><div><span><b>${Number(m.me.score||0).toLocaleString()}</b><small>YOU</small></span><strong>:</strong><span><b>${Number(m.opponent.score||0).toLocaleString()}</b><small>RIVAL</small></span></div><p>RATING ${m.me.pet?.stats?.rating||1000}</p><button id="v6ResultClose">ホームへ戻る</button></div>`;
-  clearInterval(A.matchPoll);$('#v6ResultClose').onclick=()=>{closeBattle();refreshArena(true)}
+  clearInterval(A.matchPoll);window.v7RefreshProgress?.(true);$('#v6ResultClose').onclick=()=>{closeBattle();refreshArena(true)}
 }
 async function leaveBattle(){
   if(A.playing&&!confirm('対戦を途中で終了しますか？'))return;
@@ -352,7 +352,7 @@ function patchCare(){
 }
 async function recordCare(action){
   const p=activePet();if(!logged()||!uuid(p?.id))return;
-  try{const r=await arena('care',{petId:p.id,care:action});if(r.data){p.stats={...(p.stats||{}),...r.data};renderOverview();renderPetSheet()}}catch(e){}
+  try{const r=await arena('care',{petId:p.id,care:action});if(r.data){p.stats={...(p.stats||{}),...r.data};renderOverview();renderPetSheet();window.v7RefreshProgress?.()}}catch(e){}
 }
 function startPolling(){clearInterval(A.poll);A.poll=setInterval(()=>{if(logged()&&(!document.hidden||$('#v6Arena')?.classList.contains('show')))refreshArena()},2200)}
 function boot(){build();startPolling();if(logged())setTimeout(()=>refreshArena(),600)}
