@@ -10,7 +10,6 @@ function mustNot(file,needle,message){
 }
 
 must('v6-ui.js',"$$('[data-tool]',s).forEach",'More menu must bind every button');
-mustNot('v6-ui.js',"$('[data-tool]',s).forEach",'Do not call forEach on querySelector result');
 must('social.js',"document.body.dataset.sync='cloud';\n    renderSyncedGameState();",'Successful cloud pull must mark UI connected');
 must('v52-ui.js',"if(document.body.classList.contains('mofumori-v6'))return",'Legacy tap animation must be disabled in v6');
 must('index.html',"window.MOFUMORI_BUILD='6.1.1'",'Build cache guard must be present');
