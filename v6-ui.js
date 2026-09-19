@@ -415,15 +415,35 @@ function seedRaceGame(){
   timer=setInterval(()=>{const left=Math.max(0,duration-(Date.now()-t0));$('#srTime').textContent=(left/1000).toFixed(1);if(left<=0){clearInterval(timer);done=true;btn.disabled=true;submitGame({durationMs:duration,count})}},50);A.gameState={stop:()=>{done=true;clearInterval(timer)}}
 }
 function ringGame(){
-  const stage=$('#v6GameStage'),rnd=seeded(A.match.seed^0x77331),rounds=16,duration=20000;let round=0,hits=0,misses=0,errors=[],roundStart=0,raf=0,done=false,t0=performance.now(),locked=false;
-  stage.innerHTML=`<div class="perch-hud"><span>RING <b id="rgRound">1/${rounds}</b></span><span>YOU <b id="rgHits">0</b></span><span>RIVAL <b id="v72RivalCount">0</b></span></div><div class="v72-ring-track"><div class="v72-race-bird v72-me-bird" id="ringMeBird">${petIcon(A.match.me.pet)}</div><div class="v72-race-bird v72-rival-bird" id="ringRivalBird">${petIcon(A.match.opponent.pet)}</div><div class="v72-ring">⭕</div></div><div class="v72-timing-track"><i></i><em id="ringCursor"></em></div><button id="ringTap" class="v72-race-tap">今！</button>`;
+  const stage=$('#v6GameStage'),rnd=seeded(A.match.seed^0x77331),rounds=16,duration=20000;
+  let round=0,hits=0,misses=0,errors=[],roundStart=0,raf=0,done=false,t0=performance.now(),locked=true,unlockTimer=null,missTimer=null;
+  stage.innerHTML=`<div class="perch-hud"><span>RING <b id="rgRound">1/${rounds}</b></span><span>YOU <b id="rgHits">0</b></span><span>RIVAL <b id="v72RivalCount">0</b></span></div><div class="v72-ring-track"><div class="v72-race-bird v72-me-bird" id="ringMeBird">${petIcon(A.match.me.pet)}</div><div class="v72-race-bird v72-rival-bird" id="ringRivalBird">${petIcon(A.match.opponent.pet)}</div><div class="v72-ring">⭕</div></div><div class="v72-timing-track"><i></i><em id="ringCursor"></em></div><button id="ringTap" class="v72-race-tap" disabled>待って…</button>`;
   const cur=$('#ringCursor'),btn=$('#ringTap'),me=$('#ringMeBird');
-  function begin(){if(done)return;if(round>=rounds)return finish();locked=false;roundStart=performance.now()-(rnd()*.18)*800;$('#rgRound').textContent=`${round+1}/${rounds}`}
-  function frame(now){if(done)return;const phase=((now-roundStart)%900)/900,pos=Math.abs(phase*2-1);cur.style.left=`${phase*100}%`;if(now-t0>=duration&&round>=rounds)return finish();raf=requestAnimationFrame(frame)}
-  btn.onclick=()=>{if(done||locked)return;locked=true;const phase=((performance.now()-roundStart)%900)/900,error=Math.abs(phase-.5)*1800;errors.push(error);if(error<=190){hits++;arenaSfx('tick')}else{misses++;arenaSfx('hit')}round++;$('#rgHits').textContent=hits;me.style.left=`${clamp(hits/rounds*88+5,5,93)}%`;progress({t:Math.round(performance.now()-t0),hits,x:(phase-.5)*2});setTimeout(begin,180)};
+  function clearRoundTimers(){clearTimeout(unlockTimer);clearTimeout(missTimer)}
+  function begin(){
+    if(done)return;if(round>=rounds)return finish();clearRoundTimers();locked=true;btn.disabled=true;btn.textContent='タイミングを見て…';
+    roundStart=performance.now()-(rnd()*.06)*900;$('#rgRound').textContent=`${round+1}/${rounds}`;
+    const thisRound=round;
+    unlockTimer=setTimeout(()=>{if(done||round!==thisRound)return;locked=false;btn.disabled=false;btn.textContent='今！'},450);
+    missTimer=setTimeout(()=>{if(done||round!==thisRound)return;locked=true;btn.disabled=true;misses++;errors.push(900);round++;arenaSfx('hit');progress({t:Math.round(performance.now()-t0),hits,x:0});setTimeout(begin,90)},1100);
+  }
+  function frame(now){if(done)return;const phase=((now-roundStart)%900)/900;cur.style.left=`${phase*100}%`;raf=requestAnimationFrame(frame)}
+  btn.onclick=()=>{
+    if(done||locked)return;locked=true;btn.disabled=true;clearRoundTimers();
+    const phase=((performance.now()-roundStart)%900)/900,error=Math.abs(phase-.5)*1800;errors.push(error);
+    if(error<=190){hits++;arenaSfx('tick')}else{misses++;arenaSfx('hit')}
+    round++;$('#rgHits').textContent=hits;me.style.left=`${clamp(hits/rounds*88+5,5,93)}%`;
+    progress({t:Math.round(performance.now()-t0),hits,x:(phase-.5)*2});
+    setTimeout(begin,650);
+  };
   begin();raf=requestAnimationFrame(frame);
-  function finish(){if(done)return;done=true;cancelAnimationFrame(raf);btn.disabled=true;misses=Math.max(misses,rounds-hits);const avg=errors.length?errors.reduce((a,b)=>a+b,0)/errors.length:900;submitGame({durationMs:duration,hits,misses,avgReactionMs:avg})}
-  A.gameState={stop:()=>{done=true;cancelAnimationFrame(raf)}}
+  function finish(){
+    if(done)return;done=true;clearRoundTimers();cancelAnimationFrame(raf);btn.disabled=true;btn.textContent='FINISH';
+    misses=Math.max(misses,rounds-hits);const avg=errors.length?errors.reduce((a,b)=>a+b,0)/errors.length:900;
+    const elapsed=performance.now()-t0,wait=Math.max(0,15500-elapsed);
+    setTimeout(()=>submitGame({durationMs:duration,hits,misses,avgReactionMs:avg}),wait);
+  }
+  A.gameState={stop:()=>{done=true;clearRoundTimers();cancelAnimationFrame(raf)}}
 }
 async function submitGame(raw){
   $('#v6MatchStatus').textContent='結果を送信中…';
@@ -445,7 +465,7 @@ async function leaveBattle(){
   try{if(A.match&&['ready','running'].includes(A.match.status))await arena('abandon',{matchId:A.match.id})}catch(e){}
   closeBattle();
 }
-function closeBattle(){A.gameState?.stop?.();clearInterval(A.matchPoll);A.matchPoll=null;A.playing=false;A.match=null;A.gameState=null;$('#v6Battle')?.classList.remove('show');$('#v6Battle').innerHTML=''}
+function closeBattle(){A.gameState?.stop?.();clearInterval(A.matchPoll);A.matchPoll=null;A.playing=false;A.preparing=false;A.ready=false;A.counting=false;A.match=null;A.gameState=null;try{speechSynthesis?.cancel?.()}catch(e){}$('#v6Battle')?.classList.remove('show');$('#v6Battle').innerHTML=''}
 function watchFriends(){
   const root=$('#friendList');if(!root)return;
   const inject=()=>{$$('.friend-card-v5',root).forEach(card=>{if(card.querySelector('[data-v6-challenge]'))return;const pid=card.querySelector('[data-view]')?.dataset.view;if(!pid)return;const actions=card.querySelector('.friend-actions');if(!actions)return;const b=document.createElement('button');b.dataset.v6Challenge=pid;b.textContent='⚔️ 対戦';b.onclick=()=>openArena(pid);actions.appendChild(b)})};
