@@ -34,7 +34,7 @@ function validateConfig(input){
   return {activeBanner,banners};
 }
 async function audit(sb,user,action,target,detail={}){
-  try{await sb.from('mofumori_admin_audit').insert({admin_key:user.id,action,target:target||null,detail})}catch(e){console.warn('[admin-audit]',e?.message||e)}
+  try{const {error}=await sb.from('mofumori_admin_audit').insert({admin_key:user.id,action,target:target||null,detail});if(error)console.warn('[admin-audit]',error.message)}catch(e){console.warn('[admin-audit]',e?.message||e)}
 }
 async function loadConfig(sb){
   const {data,error}=await sb.from('mofumori_game_config').select('value,updated_at,updated_by').eq('key','gacha').maybeSingle();
