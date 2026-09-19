@@ -249,6 +249,7 @@ function renderMatchLobby(m){
   const b=$('#v6Battle'),g=GAME[m.gameType]||GAME.flight;
   b.innerHTML=`<div class="v6-match-top"><button id="v6LeaveBattle">×</button><div><small>${g.icon} ${g.name}</small><b id="v6MatchStatus">対戦準備中</b></div><span id="v6OpponentLive">相手接続中</span></div>
   <div class="v6-versus"><article><span>${petIcon(m.me.pet)}</span><b>${esc(m.me.pet?.name)}</b><small>YOU / ${m.me.pet?.stats?.rating||1000}</small></article><strong>VS</strong><article><span>${petIcon(m.opponent.pet)}</span><b>${esc(m.opponent.pet?.name)}</b><small>${esc(m.opponent.profile?.displayName||'RIVAL')} / ${m.opponent.pet?.stats?.rating||1000}</small></article></div>
+  <div class="v71-live-duel"><div><small>YOU</small><i><em id="v71MeLive"></em></i><b id="v71MeLiveText">0%</b></div><div><small>RIVAL</small><i><em id="v71RivalLive"></em></i><b id="v71RivalLiveText">0%</b></div></div>
   <div id="v6Countdown" class="v6-countdown"></div><div id="v6GameStage" class="v6-game-stage"></div><div id="v6Result" class="v6-result"></div>`;
   $('#v6LeaveBattle').onclick=leaveBattle;
 }
@@ -266,14 +267,24 @@ async function pollMatch(){
     const status=$('#v6MatchStatus');if(status&&A.playing)status.textContent='再接続中…';
   }
 }
+function livePercent(game,p){
+  if(game==='flight')return clamp(Number(p?.height||0)/21600*100,0,100);
+  if(game==='kale')return clamp(Number(p?.count||0)/181*100,0,100);
+  return clamp(Number(p?.hits||0)/12*100,0,100);
+}
+function updateLiveMeter(side,p){
+  const pct=livePercent(A.match?.gameType,p),bar=$(side==='me'?'#v71MeLive':'#v71RivalLive'),label=$(side==='me'?'#v71MeLiveText':'#v71RivalLiveText');
+  if(bar)bar.style.width=pct.toFixed(1)+'%';if(label)label.textContent=Math.round(pct)+'%';
+}
 function updateOpponent(m){
   const el=$('#v6OpponentLive');if(!el)return;
-  const p=m.opponent?.progress||{};
+  const p=m.opponent?.progress||{};updateLiveMeter('rival',p);
   if(m.gameType==='flight')el.textContent=`RIVAL ${Math.round(p.height||0)}m`;
   else if(m.gameType==='kale')el.textContent=`RIVAL ${p.count||0} bite`;
   else el.textContent=`RIVAL ${p.hits||0} hit`;
 }
 async function progress(obj){
+  updateLiveMeter('me',obj);
   if(!A.match||Date.now()-A.lastProgress<650)return;A.lastProgress=Date.now();
   try{await arena('progress',{matchId:A.match.id,progress:obj})}catch(e){}
 }
