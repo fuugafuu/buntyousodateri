@@ -18,10 +18,16 @@
   <link rel="stylesheet" href="v6-ui.css">
 </head>
 <body class="day">
-  <div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-overlay v6-loading" id="loadingOverlay">
     <div class="loading-card">
-      <div class="loading-icon" id="loadingIcon">🐦</div>
-      <div class="loading-text">読み込み中...</div>
+      <div class="v6-loading-brand">MOFUMORI</div>
+      <div class="v6-loading-title">小さな森を準備中</div>
+      <div class="v6-loading-stage" aria-hidden="true">
+        <div class="v6-loader-perch"></div>
+        <div class="v6-loader-bird"><span class="loading-icon" id="loadingIcon">🐦</span><i></i></div>
+        <div class="v6-loader-seeds">•••</div>
+      </div>
+      <div class="v6-loader-copy"><b>文鳥がお部屋を見回っています</b><small>育成データとオンライン機能を読み込み中</small></div>
       <div class="loading-bar"><span></span></div>
     </div>
   </div>

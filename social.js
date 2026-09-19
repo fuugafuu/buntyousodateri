@@ -120,7 +120,7 @@ async function initIdentityAndSocial(force=false){
   try{
     if(!socialState.playerId)await initLocalSocial();
     if(!isLocalStaticMode()){
-      try{const response=await fetch('/api/auth/me',{headers:{Accept:'application/json'}});if(response.ok){const payload=await response.json();identityUser=payload.data||null;}else identityUser=null;}
+      try{const response=await fetch('/api/auth/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});if(response.ok){const payload=await response.json();identityUser=payload.data||null;}else identityUser=null;}
       catch(error){identityUser=null;}
     }else identityUser=null;
     if(identityUser){await pullCloudSave();await syncSocialDashboard();}
@@ -145,12 +145,29 @@ function scheduleGoogleButton(attempt=0){
   }catch(error){host.textContent='本番URLでGoogleログインできます';}
 }
 async function handleGoogleCredential(response){
-  if(!response?.credential)return;
+  if(!response?.credential){showToast('Googleからログイン情報を受け取れませんでした','warning');return;}
+  let payload=null;
   try{
-    const result=await fetch('/api/auth/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:response.credential})});
-    const payload=await result.json().catch(()=>({}));if(!result.ok)throw new Error(payload.message||'ログインに失敗しました');
-    identityUser=payload.data;googleRendered=false;showToast('Googleログインしました','achievement');await initIdentityAndSocial(true);
-  }catch(error){showToast(error.message||'Googleログインに失敗しました','warning');}
+    const result=await fetch('/api/auth/google',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({credential:response.credential})});
+    payload=await result.json().catch(()=>({}));
+    if(!result.ok)throw new Error(payload.message||'Google認証を確認できませんでした');
+    const verify=await fetch('/api/auth/me',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+    const session=await verify.json().catch(()=>({}));
+    if(!verify.ok||!session.data)throw new Error('ログイン状態を保存できませんでした。もう一度お試しください');
+    identityUser=session.data;googleRendered=false;renderIdentity();showToast('Googleログインしました','achievement');
+  }catch(error){
+    console.warn('Google authentication failed',error);
+    identityUser=null;googleRendered=false;renderIdentity();scheduleGoogleButton();
+    showToast(error.message||'Googleログインに失敗しました','warning');return;
+  }
+  try{
+    await initIdentityAndSocial(true);
+  }catch(error){
+    console.warn('Post-login sync skipped',error);
+    identityUser=payload?.data||identityUser;
+    renderIdentity();renderSocial();
+    showToast('ログイン済みです。データ同期はあとで再試行します','warning');
+  }
 }
 async function logoutGoogle(){
   cloudSyncSuspended=true;cancelQueuedCloudSave();
@@ -159,7 +176,7 @@ async function logoutGoogle(){
     const accountRecord=await saveDbGet(accountSaveRecordKey(activeSaveUserId)).catch(()=>null);
     if(accountRecord?.data)await putCloudSave(accountRecord).catch(()=>{});
   }
-  await fetch('/api/auth/logout',{method:'POST'}).catch(()=>{});identityUser=null;activeSaveUserId=null;cloudSaveEnabled=null;socialState.mode='local';googleRendered=false;document.body.dataset.sync='local';
+  await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'}).catch(()=>{});identityUser=null;activeSaveUserId=null;cloudSaveEnabled=null;socialState.mode='local';googleRendered=false;document.body.dataset.sync='local';
   const guest=await saveDbGet(SAVE_RECORD).catch(()=>null);G=normalizeGameState(guest?.data||DEFAULT_GAME_STATE);renderSyncedGameState();
   cloudSyncSuspended=false;
   try{google.accounts.id.disableAutoSelect();}catch(error){}
