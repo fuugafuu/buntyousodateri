@@ -7,7 +7,7 @@ const GAME={
   seedrace:{icon:'🌾',name:'シードダッシュ',desc:'シードを集めて2羽が並走するスプリント',stat:'敏捷性・集中力・くちばし速度'},
   ring:{icon:'⭕',name:'リングラッシュ',desc:'同じリング列をくぐるタイミング勝負',stat:'飛行力・集中力・バランス'}
 };
-const A={dash:null,game:'flight',petId:null,target:null,match:null,refreshing:false,poll:null,matchPoll:null,playing:false,queueing:false,lastProgress:0,gameState:null,lastArenaInteraction:0,arenaScroll:{pets:0,games:0,body:0},preparing:false,ready:false,voiceAt:0};
+const A={dash:null,game:'flight',petId:null,target:null,match:null,refreshing:false,poll:null,matchPoll:null,playing:false,queueing:false,lastProgress:0,gameState:null,lastArenaInteraction:0,arenaScroll:{pets:0,games:0,body:0},preparing:false,ready:false,voiceAt:0,audio:null};
 const $=(q,r=document)=>r.querySelector(q),$$=(q,r=document)=>[...r.querySelectorAll(q)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const logged=()=>typeof identityUser!=='undefined'&&!!identityUser;
@@ -260,19 +260,34 @@ async function respondChallenge(id,accept,game){
 
 function arenaVoice(text){
   if(G?.soundMode==='off'||!('speechSynthesis'in window))return;
-  const now=Date.now();if(now-A.voiceAt<450)return;A.voiceAt=now;
-  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ja-JP';u.rate=1.06;u.pitch=1.04;u.volume=.78;const v=speechSynthesis.getVoices().find(x=>/^ja/i.test(x.lang));if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}
+  const now=Date.now();if(now-A.voiceAt<420)return;A.voiceAt=now;
+  try{
+    const synth=window.speechSynthesis,voices=synth.getVoices?.()||[];
+    const ja=voices.filter(v=>String(v.lang||'').toLowerCase().startsWith('ja'));
+    const preferred=ja.find(v=>/kyoko|oto ya|otoya|haruka|nanami|japanese/i.test(v.name||''))||ja[0]||voices[0];
+    synth.cancel();
+    const u=new SpeechSynthesisUtterance(String(text||'').slice(0,80));
+    u.lang='ja-JP';u.rate=.98;u.pitch=1.02;u.volume=.92;if(preferred)u.voice=preferred;
+    synth.speak(u);
+  }catch(e){}
 }
 function arenaSfx(kind='tick'){
+  if(G?.soundMode==='off')return;
   try{
-    if(G?.soundMode==='off')return;
-    if(typeof playBirdSound==='function')playBirdSound(kind==='hit'?'battle':kind==='go'?'sing':'action');
-    if(navigator.vibrate&&kind==='hit')navigator.vibrate(35);
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    A.audio=A.audio||new AC();if(A.audio.state==='suspended')A.audio.resume?.();
+    const ctx=A.audio,t=ctx.currentTime,g=ctx.createGain(),o1=ctx.createOscillator(),o2=ctx.createOscillator();
+    const cfg=kind==='go'?{a:660,b:990,d:.22,v:.11,type:'triangle'}:kind==='hit'?{a:150,b:92,d:.18,v:.13,type:'sawtooth'}:kind==='match'?{a:440,b:740,d:.28,v:.10,type:'sine'}:{a:520,b:640,d:.09,v:.075,type:'sine'};
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(cfg.v,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+cfg.d);
+    o1.type=cfg.type;o2.type=kind==='hit'?'square':'sine';o1.frequency.setValueAtTime(cfg.a,t);o2.frequency.setValueAtTime(cfg.b,t);
+    if(kind==='go'){o1.frequency.exponentialRampToValueAtTime(820,t+cfg.d);o2.frequency.exponentialRampToValueAtTime(1180,t+cfg.d)}
+    o1.connect(g);o2.connect(g);g.connect(ctx.destination);o1.start(t);o2.start(t+.018);o1.stop(t+cfg.d+.03);o2.stop(t+cfg.d+.03);
+    if(navigator.vibrate){if(kind==='hit')navigator.vibrate([35,25,35]);else if(kind==='go')navigator.vibrate(24)}
   }catch(e){}
 }
 function openMatch(m){
   if(!m||A.playing||A.preparing)return;
-  A.match=m;A.preparing=true;A.ready=false;A.counting=false;closeSheet($('#v6Arena'));
+  A.match=m;A.preparing=true;A.ready=false;A.counting=false;closeSheet($('#v6Arena'));arenaSfx('match');
   const b=$('#v6Battle');b.classList.add('show');renderMatchLobby(m);clearInterval(A.matchPoll);
   A.matchPoll=setInterval(pollMatch,700);arenaVoice('対戦相手が見つかりました。接続を確認します。');prepareMatch();
 }
@@ -456,7 +471,7 @@ function showResult(m){
   A.playing=false;A.gameState?.stop?.();const me=m.me?.profile?.playerId,w=m.winnerPlayerId;const draw=!w,win=w===me;
   const root=$('#v6Result');if(!root)return;$('#v6MatchStatus').textContent='FINISHED';$('#v6GameStage').innerHTML='';
   root.innerHTML=`<div class="result-burst ${draw?'draw':win?'win':'lose'}"><small>${draw?'DRAW':win?'WIN':'LOSE'}</small><h2>${draw?'引き分け':win?'勝利！':'惜敗'}</h2><div><span><b>${Number(m.me.score||0).toLocaleString()}</b><small>YOU</small></span><strong>:</strong><span><b>${Number(m.opponent.score||0).toLocaleString()}</b><small>RIVAL</small></span></div><p>RATING ${m.me.pet?.stats?.rating||1000}</p><div class="v71-result-actions"><button id="v6ResultAgain">もう一戦</button><button id="v6ResultClose" class="subtle">閉じる</button></div></div>`;
-  clearInterval(A.matchPoll);window.v7RefreshProgress?.(true);
+  clearInterval(A.matchPoll);arenaSfx(win?'go':draw?'match':'hit');arenaVoice(draw?'引き分けです。おつかれさまでした。':win?'勝利です！ おめでとうございます。':'対戦終了です。次は取り返しましょう。');window.v7RefreshProgress?.(true);
   $('#v6ResultAgain').onclick=()=>{closeBattle();openArena()};
   $('#v6ResultClose').onclick=()=>{closeBattle();refreshArena(true)}
 }
