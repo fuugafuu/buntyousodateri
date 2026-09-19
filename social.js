@@ -206,10 +206,11 @@ function renderIdentity(){
   const signIn=document.getElementById('googleSignInButton'),logout=document.getElementById('googleLogoutBtn');
   if(signIn)signIn.style.display=identityUser?'none':'block';if(logout)logout.style.display=identityUser?'inline-flex':'none';
   const shortcut=document.getElementById('accountShortcutBtn'),label=document.getElementById('accountShortcutLabel'),state=document.getElementById('accountShortcutState'),dock=document.getElementById('socialOpenBtn');
-  if(shortcut){shortcut.classList.toggle('signed-in',Boolean(identityUser));shortcut.setAttribute('aria-label',identityUser?'アカウントと同期状態を開く':'Googleログインとデータ同期を開く');}
+  if(shortcut){shortcut.classList.toggle('signed-in',Boolean(identityUser));shortcut.setAttribute('aria-label',identityUser?'アカウントと同期状態を開く':'ログインとデータ同期を開く');}
   if(label)label.textContent=identityUser?'アカウント':'ログイン';
   if(state)state.textContent=identityUser?(document.body.dataset.sync==='cloud'?'同期済み':cloudSaveEnabled===false?'要再接続':'確認中'):'データ同期';
   if(dock){const dockLabel=dock.querySelector('b'),dockIcon=dock.querySelector('.quick-nav-icon');if(dockLabel)dockLabel.textContent=identityUser?'アカウント':'ログイン';if(dockIcon)dockIcon.textContent=identityUser?'🌐':'👤';}
+  if(window.renderV7Auth)window.renderV7Auth();
 }
 function recordBondAction(actionName){
   if(!G.social)G.social={bond:0,streakDays:0,lastCareDate:'',todayCare:0,todayDate:''};
