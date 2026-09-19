@@ -403,24 +403,24 @@ function flightGame(){
   const stage=$('#v6GameStage'),p=A.match.me.pet,rnd=seeded(A.match.seed),duration=30000;
   stage.innerHTML='<div class="flight-hud"><span>DIST <b id="fHeight">0</b>m</span><span>HP <b id="fHp">100</b></span><span>体力 <b id="fStamina">100</b>%</span></div><div class="flight-field v72-dual-field v721-flight-2d" id="flightField"><div class="flight-clouds"></div><div class="flight-bird v72-me-bird" id="flightBird">🐦<small>YOU</small></div><div class="flight-bird v72-rival-bird" id="flightRivalBird">🐦<small>RIVAL</small></div><div class="flight-obstacles" id="flightObs"></div></div><div class="v721-flight-pad"><button id="fUp">↑</button><div><button id="fLeft">←</button><button id="fDown">↓</button><button id="fRight">→</button></div><small>画面をドラッグして上下左右にも移動できます</small></div>';
   const field=$('#flightField'),bird=$('#flightBird'),obsRoot=$('#flightObs');
-  let x=.24,y=.5,distance=0,collisions=0,stamina=100,hp=100,last=performance.now(),t0=last,spawn=0,raf=0,done=false,obs=[];
+  let x=.24,y=.5,distance=0,collisions=0,stamina=100,hp=100,last=performance.now(),t0=last,nextSpawn=650,raf=0,done=false,obs=[];
   const weightFit=1-Math.min(Math.abs(stat(p,'weightG',24.5)-stat(p,'idealWeightG',24.5))/Math.max(1,stat(p,'idealWeightG',24.5)),.35);
   const speed=.29+stat(p,'flightPower')*.0018+stat(p,'endurance')*.0008+weightFit*.05,handling=.055+stat(p,'agility')*.0009;
   function setPos(nx,ny){x=clamp(nx,.07,.93);y=clamp(ny,.10,.86);bird.style.left=`${x*100}%`;bird.style.top=`${y*100}%`}
   function pointer(e){const r=field.getBoundingClientRect();setPos((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height)}
   field.addEventListener('pointerdown',e=>{field.setPointerCapture?.(e.pointerId);pointer(e)});field.addEventListener('pointermove',e=>{if(e.buttons||e.pointerType==='touch')pointer(e)});
   $('#fLeft').onpointerdown=()=>setPos(x-handling,y);$('#fRight').onpointerdown=()=>setPos(x+handling,y);$('#fUp').onpointerdown=()=>setPos(x,y-handling);$('#fDown').onpointerdown=()=>setPos(x,y+handling);
-  function addObs(){
+  function addObs(spawnAt){
     const oy=.12+rnd()*.68,ow=.075+rnd()*.075,oh=.12+rnd()*.18,el=document.createElement('div');
-    el.className='v721-flight-block';obsRoot.appendChild(el);obs.push({x:1.08,y:oy,w:ow,h:oh,hit:false,el});
+    el.className='v721-flight-block';obsRoot.appendChild(el);obs.push({spawnAt,x:1.08,y:oy,w:ow,h:oh,hit:false,el});
   }
   function hit(){collisions++;distance=Math.max(0,distance-170);stamina=Math.max(0,stamina-10);hp=Math.max(0,hp-16);field.classList.add('hit','v72-hit-shake');arenaSfx('hit');setTimeout(()=>field.classList.remove('hit','v72-hit-shake'),290)}
   function frame(now){
     const dt=Math.min(34,now-last);last=now;const t=now-t0;if(done)return;
     stamina=Math.max(0,100-t/1000*(1.35-stat(p,'endurance')*.0055));distance+=dt*speed*(.72+stamina/360)*(hp<=0?.68:1);
-    spawn+=dt;if(spawn>760){spawn-=760;addObs()}
+    while(t>=nextSpawn){addObs(nextSpawn);nextSpawn+=760}
     for(const o of obs){
-      o.x-=dt*(.00038+distance/90000000);o.el.style.left=`${o.x*100}%`;o.el.style.top=`${o.y*100}%`;o.el.style.width=`${o.w*100}%`;o.el.style.height=`${o.h*100}%`;
+      o.x=1.08-Math.max(0,t-o.spawnAt)*.00048;o.el.style.left=`${o.x*100}%`;o.el.style.top=`${o.y*100}%`;o.el.style.width=`${o.w*100}%`;o.el.style.height=`${o.h*100}%`;
       const bx=x,by=y,bw=.055,bh=.075;if(!o.hit&&Math.abs(bx-o.x)<(bw+o.w)/2&&Math.abs(by-o.y)<(bh+o.h)/2){o.hit=true;hit()}
     }
     obs=obs.filter(o=>{if(o.x<-.15){o.el.remove();return false}return true});
