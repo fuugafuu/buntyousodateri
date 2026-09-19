@@ -135,7 +135,19 @@ async function queue(sb,user,payload){
   if(!isBuncho(p.species))throw Object.assign(new Error('オンライン対戦は文鳥で参加してください。'),{status:400});
   const game=GAMES.has(payload.gameType)?payload.gameType:null;if(!game)throw Object.assign(new Error('ゲームを選んでください。'),{status:400});
   const {data,error}=await sb.rpc('mofumori_arena_enqueue',{p_user:user.id,p_pet:p.id,p_game:game});
-  if(error){const m=String(error.message);if(m.includes('already_in_match'))throw Object.assign(new Error('すでに対戦中です。'),{status:409});throw error}
+  if(error){
+    const message=String(error.message||'');
+    if(message.includes('already_in_match')){
+      const now=new Date().toISOString();
+      const {data:existing,error:existingError}=await sb.from('mofumori_arena_matches')
+        .select('id,starts_at').or(`player1_key.eq.${user.id},player2_key.eq.${user.id}`)
+        .in('status',['ready','running']).gt('expires_at',now).order('created_at',{ascending:false}).limit(1).maybeSingle();
+      if(existingError)throw existingError;
+      if(existing?.id)return{status:'matched',matchId:existing.id,startsAt:existing.starts_at,reused:true};
+      throw Object.assign(new Error('対戦状態を再確認してください。'),{status:409});
+    }
+    throw error;
+  }
   return data;
 }
 async function challenge(sb,user,payload){
