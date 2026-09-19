@@ -1,11 +1,13 @@
 (()=>{'use strict';
 
 const GAME={
-  flight:{icon:'🪽',name:'飛行バトル',desc:'左右に動いて障害物を避け、より高く登る',stat:'飛行力・体力・敏捷性・体重'},
-  kale:{icon:'🥬',name:'小松菜もぐもぐ',desc:'10秒間で小松菜をどれだけ食べられるか',stat:'食いしん坊度・くちばし速度・集中力'},
-  perch:{icon:'🪵',name:'とまり木反射',desc:'光ったとまり木へ素早く移動して連続成功を狙う',stat:'敏捷性・バランス・集中力・性格'}
+  flight:{icon:'🪽',name:'飛行バトル',desc:'同じ障害物コースを2羽で同時飛行',stat:'飛行力・体力・敏捷性・体重'},
+  kale:{icon:'🥬',name:'小松菜もぐもぐ',desc:'2羽を見ながら10秒の食べ比べ',stat:'食いしん坊度・くちばし速度・集中力'},
+  perch:{icon:'🪵',name:'とまり木反射',desc:'同じ合図に2羽が反応する反射勝負',stat:'敏捷性・バランス・集中力・性格'},
+  seedrace:{icon:'🌾',name:'シードダッシュ',desc:'シードを集めて2羽が並走するスプリント',stat:'敏捷性・集中力・くちばし速度'},
+  ring:{icon:'⭕',name:'リングラッシュ',desc:'同じリング列をくぐるタイミング勝負',stat:'飛行力・集中力・バランス'}
 };
-const A={dash:null,game:'flight',petId:null,target:null,match:null,refreshing:false,poll:null,matchPoll:null,playing:false,queueing:false,lastProgress:0,gameState:null};
+const A={dash:null,game:'flight',petId:null,target:null,match:null,refreshing:false,poll:null,matchPoll:null,playing:false,queueing:false,lastProgress:0,gameState:null,lastArenaInteraction:0,arenaScroll:{pets:0,games:0,body:0},preparing:false,ready:false,voiceAt:0,audio:null};
 const $=(q,r=document)=>r.querySelector(q),$$=(q,r=document)=>[...r.querySelectorAll(q)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const logged=()=>typeof identityUser!=='undefined'&&!!identityUser;
@@ -77,6 +79,11 @@ function build(){
   }
   if(!$('#v6Battle')){
     const b=document.createElement('div');b.id='v6Battle';b.className='v6-battle';document.body.appendChild(b);
+  }
+  if(!$('#v72ArenaTutorial')){
+    const t=document.createElement('div');t.id='v72ArenaTutorial';t.className='modal';
+    t.innerHTML='<div class="modal-content v72-arena-tutorial"><div class="modal-title">⚔ はじめてのオンライン対戦</div><div class="v72-tutorial-steps"><article><span>1</span><div><b>文鳥と競技を選ぶ</b><small>いま一緒にいる文鳥が最初から選ばれます。</small></div></article><article><span>2</span><div><b>相手を探す</b><small>プレイヤー同士を最優先。10秒以上見つからない時だけCPUが参加します。</small></div></article><article><span>3</span><div><b>接続チェック</b><small>整合性・セキュリティ・通信安定性を確認してから同時スタート。</small></div></article><article><span>4</span><div><b>2羽を同時表示</b><small>相手の動きも見えます。鳥同士はぶつかりませんが、障害物には当たります。</small></div></article></div><div class="modal-buttons"><button class="modal-btn primary" id="v72TutorialStart">わかった、対戦する</button></div></div>';
+    document.body.appendChild(t);$('#v72TutorialStart',t).onclick=()=>{localStorage.setItem('mofumoriArenaTutorialV72','1');hideModal?.('v72ArenaTutorial')};
   }
   organizeCareButtons();renderOverview();renderPetSheet();patchCare();watchFriends();
 }
@@ -162,17 +169,24 @@ async function determineSex(){
 }
 
 async function refreshArena(force=false){
-  if(!logged()){A.dash=null;renderArena();return null}
+  if(!logged()){A.dash=null;if(force)renderArena(true);return null}
   if(A.refreshing)return A.dash;A.refreshing=true;
   try{
-    const r=await arena('dashboard');A.dash=r.data;mergePets(r.data?.pets);ensurePetSelection();renderArena();
-    if(r.data?.activeMatch&&!A.playing){A.match=r.data.activeMatch;openMatch(A.match)}
+    const root=$('#v6ArenaBody'),petList=$('.v6-pet-list'),gameList=$('.v6-game-list');
+    if(root){A.arenaScroll.body=root.scrollTop;A.arenaScroll.pets=petList?.scrollTop||0;A.arenaScroll.games=gameList?.scrollTop||0}
+    const r=await arena('dashboard');A.dash=r.data;mergePets(r.data?.pets);ensurePetSelection();
+    const arenaOpen=$('#v6Arena')?.classList.contains('show'),recent=Date.now()-A.lastArenaInteraction<1400;
+    if(force||!arenaOpen||!recent)renderArena(true);
+    if(r.data?.activeMatch&&!A.playing&&!A.preparing){A.match=r.data.activeMatch;openMatch(A.match)}
     return r.data;
   }catch(e){if(force)showToast?.(e.message,'warning');return null}finally{A.refreshing=false}
 }
 async function openArena(friendId=null){
-  if(friendId){A.target=(socialState?.friends||[]).find(f=>f.playerId===friendId)||null}
-  openSheet($('#v6Arena'));renderArena();
+  if(friendId)A.target=(socialState?.friends||[]).find(f=>f.playerId===friendId)||null;
+  const equipped=eligiblePets().find(p=>String(p.id)===String(G?.activePetId));
+  if(equipped)A.petId=equipped.id;
+  openSheet($('#v6Arena'));renderArena(false);
+  if(localStorage.getItem('mofumoriArenaTutorialV72')!=='1')setTimeout(()=>showModal?.('v72ArenaTutorial'),180);
   if(logged())await refreshArena(true);
 }
 function gameCards(){return Object.entries(GAME).map(([id,g])=>`<button class="v6-game-card ${A.game===id?'active':''}" data-game="${id}"><span>${g.icon}</span><div><b>${g.name}</b><small>${g.desc}</small><em>${g.stat}</em></div></button>`).join('')}
@@ -189,22 +203,26 @@ function friendRows(){
   if(A.target)return `<section class="v6-target"><small>CHALLENGE</small><b>${esc(A.target.displayName||A.target.playerId)} に挑戦</b><p>${GAME[A.game].name} / ${petName(activeArenaPet())}</p><button id="v6SendChallenge">対戦申請を送る</button><button class="subtle" id="v6ClearTarget">キャンセル</button></section>`;
   return `<section class="v6-friend-arena"><h3>フレンドと対戦</h3>${fs.length?fs.map(f=>`<button data-friend-battle="${f.playerId}"><span>${esc(f.character?.icon||'🐦')}</span><div><b>${esc(f.displayName||f.playerId)}</b><small>${esc(f.playerId)}</small></div><em>申請 →</em></button>`).join(''):'<p class="v6-empty">フレンドになると直接対戦を申請できます。</p>'}</section>`;
 }
-function renderArena(){
+function renderArena(preserve=false){
   const root=$('#v6ArenaBody');if(!root)return;
+  const saved=preserve?{body:A.arenaScroll.body,pets:A.arenaScroll.pets,games:A.arenaScroll.games}:{body:root.scrollTop,pets:$('.v6-pet-list')?.scrollTop||0,games:$('.v6-game-list')?.scrollTop||0};
   if(!logged()){root.innerHTML='<div class="v6-login-gate"><span>⚔</span><h3>オンライン対戦</h3><p>ログインするとランダムマッチとフレンド対戦が使えます。</p><button id="v6LoginArena">ログイン画面を開く</button></div>';$('#v6LoginArena')?.addEventListener('click',()=>{closeSheet($('#v6Arena'));openAccountHub?.()});return}
-  const q=A.dash?.queue;
-  root.innerHTML=`<section class="v6-arena-intro"><div><small>BUNCHO ARENA</small><h3>3つの競技で育てた個体を試す</h3></div><span>SERVER MATCH</span></section>
+  const q=A.dash?.queue,gameCount=Object.keys(GAME).length;
+  root.innerHTML=`<section class="v6-arena-intro"><div><small>BUNCHO ARENA v7.2</small><h3>${gameCount}つの競技を2羽同時表示で対戦</h3></div><span>SECURE MATCH</span></section>
     <section class="v6-mode"><h3>ゲームを選ぶ</h3><div class="v6-game-list">${gameCards()}</div></section>
     <section class="v6-mode"><h3>出場する文鳥</h3><div class="v6-pet-list">${petOptions()}</div></section>
-    <section class="v6-random"><div><small>RANDOM MATCH</small><b>オンラインランダムマッチ</b><p>同じゲームを待っているプレイヤーと自動で対戦。</p></div>${q?`<button id="v6CancelQueue" class="waiting"><i></i>待機中… 取消</button>`:A.queueing?'<button id="v6RandomMatch" disabled><i></i>接続中…</button>':'<button id="v6RandomMatch">相手を探す</button>'}</section>
+    <section class="v6-random"><div><small>RANDOM MATCH</small><b>オンラインランダムマッチ</b><p>プレイヤー同士を優先。10秒待って相手がいない場合はCPUが参加します。</p></div>${q?`<button id="v6CancelQueue" class="waiting"><i></i>待機中… 取消</button>`:A.queueing?'<button id="v6RandomMatch" disabled><i></i>接続中…</button>':'<button id="v6RandomMatch">相手を探す</button>'}</section>
     ${friendRows()}${challengeRows()}`;
-  $$('[data-game]',root).forEach(b=>b.onclick=()=>{A.game=b.dataset.game;renderArena()});
-  $$('[data-pet]',root).forEach(b=>b.onclick=()=>{A.petId=b.dataset.pet;renderArena()});
-  $('#v6RandomMatch')?.addEventListener('click',startRandom);
-  $('#v6CancelQueue')?.addEventListener('click',cancelQueue);
-  $('#v6SendChallenge')?.addEventListener('click',sendChallenge);
-  $('#v6ClearTarget')?.addEventListener('click',()=>{A.target=null;renderArena()});
-  $$('[data-friend-battle]',root).forEach(b=>b.onclick=()=>{A.target=(socialState?.friends||[]).find(f=>f.playerId===b.dataset.friendBattle)||null;renderArena()});
+  const petsEl=$('.v6-pet-list',root),gamesEl=$('.v6-game-list',root);
+  requestAnimationFrame(()=>{root.scrollTop=saved.body||0;if(petsEl)petsEl.scrollTop=saved.pets||0;if(gamesEl)gamesEl.scrollTop=saved.games||0});
+  const touch=()=>{A.lastArenaInteraction=Date.now();A.arenaScroll.body=root.scrollTop;A.arenaScroll.pets=petsEl?.scrollTop||0;A.arenaScroll.games=gamesEl?.scrollTop||0};
+  root.addEventListener('pointerdown',touch,{passive:true});root.addEventListener('scroll',touch,{passive:true});
+  petsEl?.addEventListener('scroll',touch,{passive:true});gamesEl?.addEventListener('scroll',touch,{passive:true});
+  $$('[data-game]',root).forEach(b=>b.onclick=()=>{touch();A.game=b.dataset.game;$$('[data-game]',root).forEach(x=>x.classList.toggle('active',x===b));const t=$('.v6-target p',root);if(t)t.textContent=`${GAME[A.game].name} / ${petName(activeArenaPet())}`});
+  $$('[data-pet]',root).forEach(b=>b.onclick=()=>{touch();A.petId=b.dataset.pet;$$('[data-pet]',root).forEach(x=>x.classList.toggle('active',x===b));const t=$('.v6-target p',root);if(t)t.textContent=`${GAME[A.game].name} / ${petName(activeArenaPet())}`});
+  $('#v6RandomMatch')?.addEventListener('click',startRandom);$('#v6CancelQueue')?.addEventListener('click',cancelQueue);
+  $('#v6SendChallenge')?.addEventListener('click',sendChallenge);$('#v6ClearTarget')?.addEventListener('click',()=>{A.target=null;renderArena(true)});
+  $$('[data-friend-battle]',root).forEach(b=>b.onclick=()=>{A.target=(socialState?.friends||[]).find(f=>f.playerId===b.dataset.friendBattle)||null;renderArena(true)});
   $$('[data-accept]',root).forEach(b=>b.onclick=()=>respondChallenge(b.dataset.accept,true,b.dataset.cgame));
   $$('[data-decline]',root).forEach(b=>b.onclick=()=>respondChallenge(b.dataset.decline,false));
 }
@@ -240,22 +258,93 @@ async function respondChallenge(id,accept,game){
   }catch(e){showToast?.(e.message,'warning')}
 }
 
+function arenaVoice(text){
+  if(G?.soundMode==='off'||!('speechSynthesis'in window))return;
+  const now=Date.now();if(now-A.voiceAt<420)return;A.voiceAt=now;
+  try{
+    const synth=window.speechSynthesis,voices=synth.getVoices?.()||[];
+    const ja=voices.filter(v=>String(v.lang||'').toLowerCase().startsWith('ja'));
+    const preferred=ja.find(v=>/kyoko|oto ya|otoya|haruka|nanami|japanese/i.test(v.name||''))||ja[0]||voices[0];
+    synth.cancel();
+    const u=new SpeechSynthesisUtterance(String(text||'').slice(0,80));
+    u.lang='ja-JP';u.rate=.98;u.pitch=1.02;u.volume=.92;if(preferred)u.voice=preferred;
+    synth.speak(u);
+  }catch(e){}
+}
+function arenaSfx(kind='tick'){
+  if(G?.soundMode==='off')return;
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    A.audio=A.audio||new AC();if(A.audio.state==='suspended')A.audio.resume?.();
+    const ctx=A.audio,t=ctx.currentTime,g=ctx.createGain(),o1=ctx.createOscillator(),o2=ctx.createOscillator();
+    const cfg=kind==='go'?{a:660,b:990,d:.22,v:.11,type:'triangle'}:kind==='hit'?{a:150,b:92,d:.18,v:.13,type:'sawtooth'}:kind==='match'?{a:440,b:740,d:.28,v:.10,type:'sine'}:{a:520,b:640,d:.09,v:.075,type:'sine'};
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(cfg.v,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+cfg.d);
+    o1.type=cfg.type;o2.type=kind==='hit'?'square':'sine';o1.frequency.setValueAtTime(cfg.a,t);o2.frequency.setValueAtTime(cfg.b,t);
+    if(kind==='go'){o1.frequency.exponentialRampToValueAtTime(820,t+cfg.d);o2.frequency.exponentialRampToValueAtTime(1180,t+cfg.d)}
+    o1.connect(g);o2.connect(g);g.connect(ctx.destination);o1.start(t);o2.start(t+.018);o1.stop(t+cfg.d+.03);o2.stop(t+cfg.d+.03);
+    if(navigator.vibrate){if(kind==='hit')navigator.vibrate([35,25,35]);else if(kind==='go')navigator.vibrate(24)}
+  }catch(e){}
+}
 function openMatch(m){
-  if(!m||A.playing)return;A.match=m;closeSheet($('#v6Arena'));const b=$('#v6Battle');b.classList.add('show');
-  renderMatchLobby(m);clearInterval(A.matchPoll);
-  A.matchPoll=setInterval(pollMatch,850);countdownToStart();
+  if(!m||A.playing||A.preparing)return;
+  A.match=m;A.preparing=true;A.ready=false;A.counting=false;closeSheet($('#v6Arena'));arenaSfx('match');
+  const b=$('#v6Battle');b.classList.add('show');renderMatchLobby(m);clearInterval(A.matchPoll);
+  A.matchPoll=setInterval(pollMatch,700);arenaVoice('対戦相手が見つかりました。接続を確認します。');prepareMatch();
 }
 function renderMatchLobby(m){
-  const b=$('#v6Battle'),g=GAME[m.gameType]||GAME.flight;
-  b.innerHTML=`<div class="v6-match-top"><button id="v6LeaveBattle">×</button><div><small>${g.icon} ${g.name}</small><b id="v6MatchStatus">対戦準備中</b></div><span id="v6OpponentLive">相手接続中</span></div>
-  <div class="v6-versus"><article><span>${petIcon(m.me.pet)}</span><b>${esc(m.me.pet?.name)}</b><small>YOU / ${m.me.pet?.stats?.rating||1000}</small></article><strong>VS</strong><article><span>${petIcon(m.opponent.pet)}</span><b>${esc(m.opponent.pet?.name)}</b><small>${esc(m.opponent.profile?.displayName||'RIVAL')} / ${m.opponent.pet?.stats?.rating||1000}</small></article></div>
+  const b=$('#v6Battle'),g=GAME[m.gameType]||GAME.flight,isBot=!!m.opponent?.profile?.isBot;
+  b.innerHTML=`<div class="v6-match-top"><button id="v6LeaveBattle">×</button><div><small>${g.icon} ${g.name}</small><b id="v6MatchStatus">接続チェック中</b></div><span id="v6OpponentLive">${isBot?'CPU READY':'相手を確認中'}</span></div>
+  <div class="v6-versus v72-match-found"><article><span>${petIcon(m.me.pet)}</span><b>${esc(m.me.pet?.name)}</b><small>YOU / ${m.me.pet?.stats?.rating||1000}</small></article><strong>VS</strong><article><span>${petIcon(m.opponent.pet)}</span><b>${esc(m.opponent.pet?.name)}</b><small>${esc(m.opponent.profile?.displayName||'RIVAL')} / ${m.opponent.pet?.stats?.rating||1000} ${isBot?'<i class="v72-cpu-badge">CPU</i>':''}</small></article></div>
+  <div class="v72-connection-check" id="v72ConnectionCheck"><div class="v72-loading-ring"></div><div><b>対戦環境を確認しています</b><small class="v72-security-step active" data-check="auth">参加権限と対戦IDを検証</small><small class="v72-security-step" data-check="sync">時刻・seed・ゲーム整合性を確認</small><small class="v72-security-step" data-check="network">通信安定性を測定</small><small class="v72-security-step" data-check="rival">相手のREADYを待機</small></div></div>
   <div class="v71-live-duel"><div><small>YOU</small><i><em id="v71MeLive"></em></i><b id="v71MeLiveText">0%</b></div><div><small>RIVAL</small><i><em id="v71RivalLive"></em></i><b id="v71RivalLiveText">0%</b></div></div>
   <div id="v6Countdown" class="v6-countdown"></div><div id="v6GameStage" class="v6-game-stage"></div><div id="v6Result" class="v6-result"></div>`;
   $('#v6LeaveBattle').onclick=leaveBattle;
 }
+function setCheck(name,state='ok'){
+  const el=$(`[data-check="${name}"]`);if(!el)return;el.classList.add(state);if(state==='active')el.classList.add('active');
+}
+async function prepareMatch(){
+  if(!A.match)return;const status=$('#v6MatchStatus');let samples=[];
+  try{
+    setCheck('auth','active');
+    for(let i=0;i<3;i++){
+      const t=performance.now(),r=await arena('match',{matchId:A.match.id});samples.push(performance.now()-t);
+      if(!r.data)throw new Error('対戦情報を確認できません');A.match=r.data;if(i===0)setCheck('auth');
+      await sleep(90);
+    }
+    setCheck('sync','active');
+    if(!GAME[A.match.gameType]||!Number.isFinite(Number(A.match.seed)))throw new Error('対戦データの整合性を確認できません');
+    setCheck('sync');setCheck('network','active');
+    const sorted=samples.slice().sort((a,b)=>a-b),rtt=Math.round(sorted[Math.floor(sorted.length/2)]||0);
+    if(rtt>2800)throw new Error('通信が不安定です。再接続してください');
+    const h=await arena('handshake',{matchId:A.match.id,rttMs:rtt,clientVersion:'7.2.0'});
+    A.match=h.data||A.match;A.ready=true;setCheck('network');setCheck('rival','active');
+    if(status)status.textContent=`READY / ${rtt}ms`;
+    await waitForBothReady();
+  }catch(e){
+    A.preparing=false;if(status)status.textContent='接続チェック失敗';
+    const box=$('#v72ConnectionCheck');if(box)box.innerHTML=`<div><b>接続を開始できませんでした</b><small>${esc(e.message||'通信を確認してください')}</small><button id="v72RetryConnect">再チェック</button></div>`;
+    $('#v72RetryConnect')?.addEventListener('click',()=>{A.preparing=true;renderMatchLobby(A.match);prepareMatch()});arenaVoice('接続を確認できませんでした。');
+  }
+}
+async function waitForBothReady(){
+  const deadline=Date.now()+18000;
+  while(A.match&&Date.now()<deadline){
+    const r=await arena('match',{matchId:A.match.id});if(r.data)A.match=r.data;updateOpponent(A.match);
+    if(A.match?.connection?.meReady&&A.match?.connection?.opponentReady&&A.match?.connection?.startLocked){
+      setCheck('rival');const box=$('#v72ConnectionCheck');if(box){box.classList.add('complete');setTimeout(()=>box.remove(),420)}
+      A.preparing=false;arenaVoice('接続は安定しています。対戦を開始します。');countdownToStart();return;
+    }
+    await sleep(400);
+  }
+  throw new Error('相手との接続確認がタイムアウトしました');
+}
 function countdownToStart(){
-  const tick=()=>{if(!A.match||A.playing)return;const left=Date.parse(A.match.startsAt)-Date.now(),el=$('#v6Countdown');if(left>0){if(el)el.innerHTML=`<b>${Math.ceil(left/1000)}</b><small>READY</small>`;setTimeout(tick,150)}else{if(el)el.innerHTML='<b>GO!</b>';setTimeout(()=>el?.classList.add('gone'),350);startGame(A.match.gameType)}};
-  tick();
+  if(A.counting)return;A.counting=true;
+  const tick=()=>{if(!A.match||A.playing)return;const left=Date.parse(A.match.startsAt)-Date.now(),el=$('#v6Countdown');
+    if(left>0){const n=Math.max(1,Math.ceil(left/1000));if(el)el.innerHTML=`<b>${n}</b><small>SYNC READY</small>`;if(n<=3)arenaSfx('tick');setTimeout(tick,120)}
+    else{if(el)el.innerHTML='<b>GO!</b>';arenaSfx('go');arenaVoice('スタート');$('#v6Battle')?.classList.add('v72-battle-flash');setTimeout(()=>$('#v6Battle')?.classList.remove('v72-battle-flash'),480);setTimeout(()=>el?.classList.add('gone'),350);startGame(A.match.gameType)}
+  };tick();
 }
 async function pollMatch(){
   if(!A.match)return;
@@ -263,13 +352,13 @@ async function pollMatch(){
     const r=await arena('match',{matchId:A.match.id});if(!r.data)return;A.match=r.data;updateOpponent(r.data);
     const status=$('#v6MatchStatus');if(status&&A.playing&&status.textContent==='再接続中…')status.textContent='対戦中';
     if(r.data.status==='finished')showResult(r.data);
-  }catch(e){
-    const status=$('#v6MatchStatus');if(status&&A.playing)status.textContent='再接続中…';
-  }
+  }catch(e){const status=$('#v6MatchStatus');if(status&&A.playing)status.textContent='再接続中…'}
 }
 function livePercent(game,p){
   if(game==='flight')return clamp(Number(p?.height||0)/21600*100,0,100);
   if(game==='kale')return clamp(Number(p?.count||0)/181*100,0,100);
+  if(game==='seedrace')return clamp(Number(p?.count||0)/120*100,0,100);
+  if(game==='ring')return clamp(Number(p?.hits||0)/16*100,0,100);
   return clamp(Number(p?.hits||0)/12*100,0,100);
 }
 function updateLiveMeter(side,p){
@@ -277,62 +366,104 @@ function updateLiveMeter(side,p){
   if(bar)bar.style.width=pct.toFixed(1)+'%';if(label)label.textContent=Math.round(pct)+'%';
 }
 function updateOpponent(m){
-  const el=$('#v6OpponentLive');if(!el)return;
-  const p=m.opponent?.progress||{};updateLiveMeter('rival',p);
-  if(m.gameType==='flight')el.textContent=`RIVAL ${Math.round(p.height||0)}m`;
+  const el=$('#v6OpponentLive');if(!el)return;const p=m.opponent?.progress||{};updateLiveMeter('rival',p);
+  const rival=$('#flightRivalBird');if(rival){rival.style.left=`${clamp((Number(p.x||0)+1)/2*100,6,94)}%`;rival.style.opacity=p.ready===false?'.35':'.86'}
+  const perch=$('#perchRivalBird');if(perch)perch.style.left=`${[17,50,83][clamp(Math.round((Number(p.x||0)+1)),0,2)]}%`;
+  const seed=$('#seedRivalBird');if(seed)seed.style.left=`${clamp(Number(p.count||0)/120*88+5,5,93)}%`;
+  const ring=$('#ringRivalBird');if(ring)ring.style.left=`${clamp(Number(p.hits||0)/16*88+5,5,93)}%`;
+  const rc=$('#v72RivalCount');
+  if(rc){
+    const value=String(p.count||p.hits||0),prev=rc.dataset.last||'';
+    rc.textContent=value;rc.dataset.last=value;
+    if(prev&&prev!==value){const visual=$('.v72-rival-bird,#perchRivalBird,#seedRivalBird,#ringRivalBird,.v72-rival-kale');visual?.classList.remove('v72-rival-action');void visual?.offsetWidth;visual?.classList.add('v72-rival-action')}
+  }
+  if(m.gameType==='flight')el.textContent=`RIVAL ${Math.round((p.height||0)/10)}m / HP ${Math.round(p.hp??100)}`;
   else if(m.gameType==='kale')el.textContent=`RIVAL ${p.count||0} bite`;
+  else if(m.gameType==='seedrace')el.textContent=`RIVAL ${p.count||0} seed`;
   else el.textContent=`RIVAL ${p.hits||0} hit`;
 }
 async function progress(obj){
-  updateLiveMeter('me',obj);
-  if(!A.match||Date.now()-A.lastProgress<650)return;A.lastProgress=Date.now();
+  updateLiveMeter('me',obj);if(!A.match||Date.now()-A.lastProgress<520)return;A.lastProgress=Date.now();
   try{await arena('progress',{matchId:A.match.id,progress:obj})}catch(e){}
 }
 function seeded(seed){let x=(Number(seed)||123456789)>>>0;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967296}}
-function startGame(type){if(A.playing)return;A.playing=true;if(type==='flight')flightGame();else if(type==='kale')kaleGame();else perchGame()}
+function startGame(type){
+  if(A.playing)return;A.playing=true;A.preparing=false;const status=$('#v6MatchStatus');if(status)status.textContent='対戦中';
+  if(type==='flight')flightGame();else if(type==='kale')kaleGame();else if(type==='perch')perchGame();else if(type==='seedrace')seedRaceGame();else ringGame();
+}
 function flightGame(){
-  const stage=$('#v6GameStage'),p=A.match.me.pet,s=p.stats||{},rnd=seeded(A.match.seed),duration=30000;
-  stage.innerHTML='<div class="flight-hud"><span>HEIGHT <b id="fHeight">0</b>m</span><span>体力 <b id="fStamina">100</b>%</span></div><div class="flight-field" id="flightField"><div class="flight-clouds"></div><div class="flight-bird" id="flightBird">🐦</div><div class="flight-obstacles" id="flightObs"></div></div><div class="flight-controls"><button id="fLeft">←</button><small>ドラッグでも移動</small><button id="fRight">→</button></div>';
+  const stage=$('#v6GameStage'),p=A.match.me.pet,rnd=seeded(A.match.seed),duration=30000;
+  stage.innerHTML='<div class="flight-hud"><span>HEIGHT <b id="fHeight">0</b>m</span><span>HP <b id="fHp">100</b></span><span>体力 <b id="fStamina">100</b>%</span></div><div class="flight-field v72-dual-field" id="flightField"><div class="flight-clouds"></div><div class="flight-bird v72-me-bird" id="flightBird">🐦<small>YOU</small></div><div class="flight-bird v72-rival-bird" id="flightRivalBird">🐦<small>RIVAL</small></div><div class="flight-obstacles" id="flightObs"></div></div><div class="flight-controls"><button id="fLeft">←</button><small>同じ障害物を2羽で飛行 / 鳥同士は接触なし</small><button id="fRight">→</button></div>';
   const field=$('#flightField'),bird=$('#flightBird'),obsRoot=$('#flightObs');
-  let x=.5,height=0,collisions=0,stamina=100,last=performance.now(),t0=last,spawn=0,raf=0,done=false,obs=[];
+  let x=.5,height=0,collisions=0,stamina=100,hp=100,last=performance.now(),t0=last,spawn=0,raf=0,done=false,obs=[];
   const weightFit=1-Math.min(Math.abs(stat(p,'weightG',24.5)-stat(p,'idealWeightG',24.5))/Math.max(1,stat(p,'idealWeightG',24.5)),.35);
-  const climb=.31+stat(p,'flightPower')*.0017+stat(p,'endurance')*.0009+weightFit*.06;
-  const handling=.08+stat(p,'agility')*.0012+Math.max(0,30-stat(p,'weightG',24.5))*.001;
+  const climb=.31+stat(p,'flightPower')*.0017+stat(p,'endurance')*.0009+weightFit*.06,handling=.08+stat(p,'agility')*.0012+Math.max(0,30-stat(p,'weightG',24.5))*.001;
   function setX(v){x=clamp(v,.08,.92);bird.style.left=`${x*100}%`}
   function pointer(e){const r=field.getBoundingClientRect();setX((e.clientX-r.left)/r.width)}
   field.addEventListener('pointerdown',e=>{field.setPointerCapture?.(e.pointerId);pointer(e)});field.addEventListener('pointermove',e=>{if(e.buttons)pointer(e)});
   $('#fLeft').onpointerdown=()=>setX(x-handling);$('#fRight').onpointerdown=()=>setX(x+handling);
-  function addObs(){const gap=.23+rnd()*.42,w=.28+clamp(stat(p,'agility'),0,100)/900;const el=document.createElement('div');el.className='flight-gate';el.innerHTML='<i></i><i></i>';obsRoot.appendChild(el);obs.push({gap,w,y:-12,hit:false,el});}
+  function addObs(){const gap=.23+rnd()*.42,w=.28+clamp(stat(p,'agility'),0,100)/900,el=document.createElement('div');el.className='flight-gate';el.innerHTML='<i></i><i></i>';obsRoot.appendChild(el);obs.push({gap,w,y:-12,hit:false,el})}
+  function hit(){collisions++;height=Math.max(0,height-190);stamina=Math.max(0,stamina-12);hp=Math.max(0,hp-14);field.classList.add('hit','v72-hit-shake');arenaSfx('hit');setTimeout(()=>field.classList.remove('hit','v72-hit-shake'),290)}
   function frame(now){
-    const dt=Math.min(34,now-last);last=now;const t=now-t0;if(done)return;
-    stamina=Math.max(0,100-t/1000*(1.45-stat(p,'endurance')*.006));
-    height+=dt*climb*(.72+stamina/360);
-    spawn+=dt;if(spawn>850){spawn=0;addObs()}
-    const H=field.clientHeight,birdY=H-86;
-    for(const o of obs){o.y+=dt*(.19+height/160000);o.el.style.transform=`translateY(${o.y}px)`;const left=(o.gap-o.w/2)*100,right=(o.gap+o.w/2)*100;o.el.children[0].style.width=`${Math.max(0,left)}%`;o.el.children[1].style.left=`${Math.min(100,right)}%`;o.el.children[1].style.width=`${Math.max(0,100-right)}%`;if(!o.hit&&o.y>birdY-20&&o.y<birdY+22&&(x<o.gap-o.w/2||x>o.gap+o.w/2)){o.hit=true;collisions++;height=Math.max(0,height-150);stamina=Math.max(0,stamina-8);field.classList.add('hit');setTimeout(()=>field.classList.remove('hit'),180)}}obs=obs.filter(o=>{if(o.y>H+30){o.el.remove();return false}return true});
-    $('#fHeight').textContent=Math.round(height/10);$('#fStamina').textContent=Math.round(stamina);
-    progress({t:Math.round(t),x,height:Math.round(height)});
-    if(t>=duration){done=true;cancelAnimationFrame(raf);submitGame({durationMs:duration,height,collisions});return}
-    raf=requestAnimationFrame(frame)
-  }
-  setX(x);raf=requestAnimationFrame(frame);A.gameState={stop:()=>{done=true;cancelAnimationFrame(raf)}};
+    const dt=Math.min(34,now-last);last=now;const t=now-t0;if(done)return;stamina=Math.max(0,100-t/1000*(1.45-stat(p,'endurance')*.006));height+=dt*climb*(.72+stamina/360)*(hp<=0?.72:1);
+    spawn+=dt;if(spawn>850){spawn-=850;addObs()}const H=field.clientHeight,birdY=H-86;
+    for(const o of obs){o.y+=dt*(.19+height/160000);o.el.style.transform=`translateY(${o.y}px)`;const left=(o.gap-o.w/2)*100,right=(o.gap+o.w/2)*100;o.el.children[0].style.width=`${Math.max(0,left)}%`;o.el.children[1].style.left=`${Math.min(100,right)}%`;o.el.children[1].style.width=`${Math.max(0,100-right)}%`;if(!o.hit&&o.y>birdY-20&&o.y<birdY+22&&(x<o.gap-o.w/2||x>o.gap+o.w/2)){o.hit=true;hit()}}
+    obs=obs.filter(o=>{if(o.y>H+30){o.el.remove();return false}return true});$('#fHeight').textContent=Math.round(height/10);$('#fStamina').textContent=Math.round(stamina);$('#fHp').textContent=Math.round(hp);
+    progress({t:Math.round(t),x:x*2-1,height:Math.round(height),hp});
+    if(t>=duration){done=true;cancelAnimationFrame(raf);submitGame({durationMs:duration,height,collisions});return}raf=requestAnimationFrame(frame)
+  }setX(x);raf=requestAnimationFrame(frame);A.gameState={stop:()=>{done=true;cancelAnimationFrame(raf)}}
 }
 function kaleGame(){
   const stage=$('#v6GameStage'),p=A.match.me.pet,duration=10000;let taps=0,done=false,t0=Date.now(),timer;
-  stage.innerHTML='<div class="kale-hud"><span>TIME <b id="kTime">10.0</b></span><span>BITES <b id="kCount">0</b></span></div><button id="kaleTap" class="kale-tap"><span>🥬</span><b>連打！</b><i></i></button><p class="kale-power" id="kPower"></p>';
-  const btn=$('#kaleTap');
-  btn.onclick=()=>{if(done)return;taps++;$('#kCount').textContent=taps;btn.classList.remove('bite');void btn.offsetWidth;btn.classList.add('bite');btn.style.setProperty('--eat',Math.max(15,100-(taps%20)*4)+'%');$('#kPower').textContent=`食いしん坊 ${Math.round(stat(p,'appetite'))} / くちばし速度 ${Math.round(stat(p,'beakSpeed'))}`;progress({t:Date.now()-t0,count:taps})};
-  timer=setInterval(()=>{const left=Math.max(0,duration-(Date.now()-t0));$('#kTime').textContent=(left/1000).toFixed(1);if(left<=0){clearInterval(timer);done=true;btn.disabled=true;submitGame({durationMs:duration,taps})}},50);
-  A.gameState={stop:()=>{done=true;clearInterval(timer)}};
+  stage.innerHTML=`<div class="kale-hud"><span>TIME <b id="kTime">10.0</b></span><span>YOU <b id="kCount">0</b></span><span>RIVAL <b id="v72RivalCount">0</b></span></div><div class="v72-kale-duel"><article><div class="v72-duel-bird v72-me-bird">${petIcon(A.match.me.pet)}</div><b>YOU</b><button id="kaleTap" class="kale-tap"><span>🥬</span><strong>連打！</strong><i></i></button></article><article><div class="v72-duel-bird v72-rival-bird">${petIcon(A.match.opponent.pet)}</div><b>RIVAL</b><div class="v72-rival-kale">🥬<small>相手も食べています</small></div></article></div><p class="kale-power" id="kPower"></p>`;
+  const btn=$('#kaleTap');btn.onclick=()=>{if(done)return;taps++;$('#kCount').textContent=taps;btn.classList.remove('bite');void btn.offsetWidth;btn.classList.add('bite');$('#kPower').textContent=`食いしん坊 ${Math.round(stat(p,'appetite'))} / くちばし速度 ${Math.round(stat(p,'beakSpeed'))}`;progress({t:Date.now()-t0,count:taps})};
+  timer=setInterval(()=>{const left=Math.max(0,duration-(Date.now()-t0));$('#kTime').textContent=(left/1000).toFixed(1);if(left<=0){clearInterval(timer);done=true;btn.disabled=true;submitGame({durationMs:duration,taps})}},50);A.gameState={stop:()=>{done=true;clearInterval(timer)}}
 }
 function perchGame(){
-  const stage=$('#v6GameStage'),p=A.match.me.pet;let round=0,hits=0,misses=0,reactions=[],target=-1,started=0,timeout=null,done=false;
-  stage.innerHTML='<div class="perch-hud"><span>ROUND <b id="pRound">1/12</b></span><span>HIT <b id="pHits">0</b></span></div><div class="perch-stage"><div class="perch-bird" id="perchBird">🐦</div><button data-perch="0">左</button><button data-perch="1">中央</button><button data-perch="2">右</button></div><p id="pGuide">光ったとまり木をタップ！</p>';
+  const stage=$('#v6GameStage'),p=A.match.me.pet,rnd=seeded(A.match.seed^0x51f15e),rounds=12;let round=0,hits=0,misses=0,reactions=[],target=-1,started=0,timeout=null,done=false;
+  stage.innerHTML='<div class="perch-hud"><span>ROUND <b id="pRound">1/12</b></span><span>YOU <b id="pHits">0</b></span><span>RIVAL <b id="v72RivalCount">0</b></span></div><div class="perch-stage v72-dual-perch"><div class="perch-bird v72-me-bird" id="perchBird">🐦<small>YOU</small></div><div class="perch-bird v72-rival-bird" id="perchRivalBird">🐦<small>RIVAL</small></div><button data-perch="0">左</button><button data-perch="1">中央</button><button data-perch="2">右</button></div><p id="pGuide">同じ合図を2羽が見ています。光ったとまり木をタップ！</p>';
   const buttons=$$('[data-perch]',stage),bird=$('#perchBird');
-  function next(){if(done)return;if(round>=12)return finish();buttons.forEach(b=>b.classList.remove('target','wrong'));target=Math.floor(Math.random()*3);buttons[target].classList.add('target');started=performance.now();$('#pRound').textContent=`${round+1}/12`;const limit=900+stat(p,'focus')*5+stat(p,'temperament')*2;timeout=setTimeout(()=>{misses++;round++;next()},limit)}
-  buttons.forEach(b=>b.onclick=()=>{if(done||target<0)return;clearTimeout(timeout);const n=+b.dataset.perch;if(n===target){hits++;reactions.push(performance.now()-started);bird.style.left=[17,50,83][n]+'%';$('#pHits').textContent=hits}else{misses++;b.classList.add('wrong')}round++;progress({t:round*1000,hits});setTimeout(next,120)});
+  function next(){if(done)return;if(round>=rounds)return finish();buttons.forEach(b=>b.classList.remove('target','wrong'));target=Math.floor(rnd()*3);buttons[target].classList.add('target');started=performance.now();$('#pRound').textContent=`${round+1}/${rounds}`;const limit=900+stat(p,'focus')*5+stat(p,'temperament')*2;timeout=setTimeout(()=>{misses++;round++;progress({t:round*1000,hits,x:target-1});next()},limit)}
+  buttons.forEach(b=>b.onclick=()=>{if(done||target<0)return;clearTimeout(timeout);const n=+b.dataset.perch;if(n===target){hits++;reactions.push(performance.now()-started);bird.style.left=[17,50,83][n]+'%';$('#pHits').textContent=hits;arenaSfx('tick')}else{misses++;b.classList.add('wrong');arenaSfx('hit')}round++;progress({t:round*1000,hits,x:n-1});setTimeout(next,120)});
   function finish(){done=true;buttons.forEach(b=>b.disabled=true);const avg=reactions.length?reactions.reduce((a,b)=>a+b,0)/reactions.length:1500;submitGame({hits,misses,avgReactionMs:avg})}
-  next();A.gameState={stop:()=>{done=true;clearTimeout(timeout)}};
+  next();A.gameState={stop:()=>{done=true;clearTimeout(timeout)}}
+}
+function seedRaceGame(){
+  const stage=$('#v6GameStage'),duration=15000;let count=0,done=false,t0=Date.now(),timer;
+  stage.innerHTML=`<div class="perch-hud"><span>TIME <b id="srTime">15.0</b></span><span>YOU <b id="srCount">0</b></span><span>RIVAL <b id="v72RivalCount">0</b></span></div><div class="v72-race-track"><i class="lane one"></i><i class="lane two"></i><div class="v72-race-bird v72-me-bird" id="seedMeBird">${petIcon(A.match.me.pet)}<small>YOU</small></div><div class="v72-race-bird v72-rival-bird" id="seedRivalBird">${petIcon(A.match.opponent.pet)}<small>RIVAL</small></div><div class="v72-finish">🏁</div></div><button id="seedRaceTap" class="v72-race-tap">🌾 シードを取る！</button>`;
+  const btn=$('#seedRaceTap'),me=$('#seedMeBird');btn.onclick=()=>{if(done)return;count++;$('#srCount').textContent=count;me.style.left=`${clamp(count/120*88+5,5,93)}%`;btn.classList.remove('pop');void btn.offsetWidth;btn.classList.add('pop');progress({t:Date.now()-t0,count})};
+  timer=setInterval(()=>{const left=Math.max(0,duration-(Date.now()-t0));$('#srTime').textContent=(left/1000).toFixed(1);if(left<=0){clearInterval(timer);done=true;btn.disabled=true;submitGame({durationMs:duration,count})}},50);A.gameState={stop:()=>{done=true;clearInterval(timer)}}
+}
+function ringGame(){
+  const stage=$('#v6GameStage'),rnd=seeded(A.match.seed^0x77331),rounds=16,duration=20000;
+  let round=0,hits=0,misses=0,errors=[],roundStart=0,raf=0,done=false,t0=performance.now(),locked=true,unlockTimer=null,missTimer=null;
+  stage.innerHTML=`<div class="perch-hud"><span>RING <b id="rgRound">1/${rounds}</b></span><span>YOU <b id="rgHits">0</b></span><span>RIVAL <b id="v72RivalCount">0</b></span></div><div class="v72-ring-track"><div class="v72-race-bird v72-me-bird" id="ringMeBird">${petIcon(A.match.me.pet)}</div><div class="v72-race-bird v72-rival-bird" id="ringRivalBird">${petIcon(A.match.opponent.pet)}</div><div class="v72-ring">⭕</div></div><div class="v72-timing-track"><i></i><em id="ringCursor"></em></div><button id="ringTap" class="v72-race-tap" disabled>待って…</button>`;
+  const cur=$('#ringCursor'),btn=$('#ringTap'),me=$('#ringMeBird');
+  function clearRoundTimers(){clearTimeout(unlockTimer);clearTimeout(missTimer)}
+  function begin(){
+    if(done)return;if(round>=rounds)return finish();clearRoundTimers();locked=true;btn.disabled=true;btn.textContent='タイミングを見て…';
+    roundStart=performance.now()-(rnd()*.06)*900;$('#rgRound').textContent=`${round+1}/${rounds}`;
+    const thisRound=round;
+    unlockTimer=setTimeout(()=>{if(done||round!==thisRound)return;locked=false;btn.disabled=false;btn.textContent='今！'},450);
+    missTimer=setTimeout(()=>{if(done||round!==thisRound)return;locked=true;btn.disabled=true;misses++;errors.push(900);round++;arenaSfx('hit');progress({t:Math.round(performance.now()-t0),hits,x:0});setTimeout(begin,90)},1100);
+  }
+  function frame(now){if(done)return;const phase=((now-roundStart)%900)/900;cur.style.left=`${phase*100}%`;raf=requestAnimationFrame(frame)}
+  btn.onclick=()=>{
+    if(done||locked)return;locked=true;btn.disabled=true;clearRoundTimers();
+    const phase=((performance.now()-roundStart)%900)/900,error=Math.abs(phase-.5)*1800;errors.push(error);
+    if(error<=190){hits++;arenaSfx('tick')}else{misses++;arenaSfx('hit')}
+    round++;$('#rgHits').textContent=hits;me.style.left=`${clamp(hits/rounds*88+5,5,93)}%`;
+    progress({t:Math.round(performance.now()-t0),hits,x:(phase-.5)*2});
+    setTimeout(begin,650);
+  };
+  begin();raf=requestAnimationFrame(frame);
+  function finish(){
+    if(done)return;done=true;clearRoundTimers();cancelAnimationFrame(raf);btn.disabled=true;btn.textContent='FINISH';
+    misses=Math.max(misses,rounds-hits);const avg=errors.length?errors.reduce((a,b)=>a+b,0)/errors.length:900;
+    const elapsed=performance.now()-t0,wait=Math.max(0,15500-elapsed);
+    setTimeout(()=>submitGame({durationMs:duration,hits,misses,avgReactionMs:avg}),wait);
+  }
+  A.gameState={stop:()=>{done=true;clearRoundTimers();cancelAnimationFrame(raf)}}
 }
 async function submitGame(raw){
   $('#v6MatchStatus').textContent='結果を送信中…';
@@ -345,7 +476,7 @@ function showResult(m){
   A.playing=false;A.gameState?.stop?.();const me=m.me?.profile?.playerId,w=m.winnerPlayerId;const draw=!w,win=w===me;
   const root=$('#v6Result');if(!root)return;$('#v6MatchStatus').textContent='FINISHED';$('#v6GameStage').innerHTML='';
   root.innerHTML=`<div class="result-burst ${draw?'draw':win?'win':'lose'}"><small>${draw?'DRAW':win?'WIN':'LOSE'}</small><h2>${draw?'引き分け':win?'勝利！':'惜敗'}</h2><div><span><b>${Number(m.me.score||0).toLocaleString()}</b><small>YOU</small></span><strong>:</strong><span><b>${Number(m.opponent.score||0).toLocaleString()}</b><small>RIVAL</small></span></div><p>RATING ${m.me.pet?.stats?.rating||1000}</p><div class="v71-result-actions"><button id="v6ResultAgain">もう一戦</button><button id="v6ResultClose" class="subtle">閉じる</button></div></div>`;
-  clearInterval(A.matchPoll);window.v7RefreshProgress?.(true);
+  clearInterval(A.matchPoll);arenaSfx(win?'go':draw?'match':'hit');arenaVoice(draw?'引き分けです。おつかれさまでした。':win?'勝利です！ おめでとうございます。':'対戦終了です。次は取り返しましょう。');window.v7RefreshProgress?.(true);
   $('#v6ResultAgain').onclick=()=>{closeBattle();openArena()};
   $('#v6ResultClose').onclick=()=>{closeBattle();refreshArena(true)}
 }
@@ -354,7 +485,7 @@ async function leaveBattle(){
   try{if(A.match&&['ready','running'].includes(A.match.status))await arena('abandon',{matchId:A.match.id})}catch(e){}
   closeBattle();
 }
-function closeBattle(){A.gameState?.stop?.();clearInterval(A.matchPoll);A.matchPoll=null;A.playing=false;A.match=null;A.gameState=null;$('#v6Battle')?.classList.remove('show');$('#v6Battle').innerHTML=''}
+function closeBattle(){A.gameState?.stop?.();clearInterval(A.matchPoll);A.matchPoll=null;A.playing=false;A.preparing=false;A.ready=false;A.counting=false;A.match=null;A.gameState=null;try{speechSynthesis?.cancel?.()}catch(e){}$('#v6Battle')?.classList.remove('show');$('#v6Battle').innerHTML=''}
 function watchFriends(){
   const root=$('#friendList');if(!root)return;
   const inject=()=>{$$('.friend-card-v5',root).forEach(card=>{if(card.querySelector('[data-v6-challenge]'))return;const pid=card.querySelector('[data-view]')?.dataset.view;if(!pid)return;const actions=card.querySelector('.friend-actions');if(!actions)return;const b=document.createElement('button');b.dataset.v6Challenge=pid;b.textContent='⚔️ 対戦';b.onclick=()=>openArena(pid);actions.appendChild(b)})};

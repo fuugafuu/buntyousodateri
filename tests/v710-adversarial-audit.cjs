@@ -79,7 +79,7 @@ const v7=fs.readFileSync('v7-ui.js','utf8');
 assert.ok(css.includes('v7.1 theme consolidation'));
 assert.ok(css.includes('body.night.mofumori-v6 #birdModal .pet-card'));
 assert.ok(css.includes('body.night.mofumori-v6 .v6-battle'));
-assert.ok(v7.includes('data-v7-collection-tab="pets"'));
-assert.ok(v7.includes('data-v7-collection-tab="gacha"'));
+assert.ok(v7.includes('v72-collection-screen'));
+assert.ok(!v7.includes('data-v7-collection-tab="gacha"'));
 
 console.log('v7.1 adversarial audit: malformed online results, fuzzing, DOM integrity, curated local games and night-theme guards OK');

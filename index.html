@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-title" content="Mofumori">
   <meta name="theme-color" content="#102d2a">
   <script>
-    window.MOFUMORI_BUILD='7.1.0';
+    window.MOFUMORI_BUILD='7.2.0';
     window.__mofumoriCacheResetPromise=(async()=>{
       const build=window.MOFUMORI_BUILD,key='mofumori_asset_build';
       let previous='';
@@ -42,16 +42,16 @@
     });
     document.addEventListener('dblclick',event=>event.preventDefault(),{passive:false});
   </script>
-  <link rel="manifest" href="manifest.webmanifest?v=7.1.0">
+  <link rel="manifest" href="manifest.webmanifest?v=7.2.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
   <title>Mofumori - どうぶつ育成ゲーム</title>
   
-  <link rel="stylesheet" href="style.css?v=7.1.0">
-  <link rel="stylesheet" href="pet-system.css?v=7.1.0">
-  <link rel="stylesheet" href="v52-ui.css?v=7.1.0">
-  <link rel="stylesheet" href="v6-ui.css?v=7.1.0">
-  <link rel="stylesheet" href="v7-ui.css?v=7.1.0">
+  <link rel="stylesheet" href="style.css?v=7.2.0">
+  <link rel="stylesheet" href="pet-system.css?v=7.2.0">
+  <link rel="stylesheet" href="v52-ui.css?v=7.2.0">
+  <link rel="stylesheet" href="v6-ui.css?v=7.2.0">
+  <link rel="stylesheet" href="v7-ui.css?v=7.2.0">
 </head>
 <body class="day">
   <div class="loading-overlay v6-loading" id="loadingOverlay">
@@ -111,11 +111,34 @@
   </div>
   <div class="modal" id="birdModal">
     <div class="modal-content">
-      <div class="modal-title">🐦 仲間・ガチャ</div>
+      <div class="modal-title">🐦 仲間一覧</div>
+      <div class="v72-companion-toolbar">
+        <label>並び順
+          <select id="petSortSelect" aria-label="仲間の並び順">
+            <option value="rank">個体ランクが高い順</option>
+            <option value="rating">対戦レートが高い順</option>
+            <option value="newest">新しい順</option>
+            <option value="oldest">古い順</option>
+            <option value="name">名前順</option>
+            <option value="species">種類順</option>
+          </select>
+        </label>
+        <button type="button" id="openGachaFromList" class="modal-btn primary" onclick="hideModal('birdModal');showModal('gachaModal')">✨ ガチャへ</button>
+      </div>
       <div class="bird-grid" id="birdGrid"></div>
       <div class="modal-buttons">
         <button class="modal-btn secondary" onclick="hideModal('birdModal')">閉じる</button>
-        <button class="modal-btn primary" id="buyBirdBtn" onclick="buyBird()">購入</button>
+        <button class="modal-btn primary" id="buyBirdBtn" onclick="hideModal('birdModal');showModal('gachaModal')">ガチャ</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="gachaModal">
+    <div class="modal-content v72-gacha-modal">
+      <div class="modal-title">✨ どうぶつガチャ</div>
+      <div id="gachaMount"></div>
+      <div class="modal-buttons">
+        <button class="modal-btn secondary" onclick="hideModal('gachaModal')">閉じる</button>
+        <button class="modal-btn primary" onclick="hideModal('gachaModal');showModal('birdModal')">🐦 仲間一覧へ</button>
       </div>
     </div>
   </div>
@@ -239,7 +262,8 @@
     </aside>
   </main>
   <div class="quick-actions quick-dock">
-    <button class="quick-btn birds" onclick="showModal('birdModal')"><span class="quick-nav-icon">🦊</span><b>動物</b></button>
+    <button class="quick-btn birds" onclick="showModal('birdModal')"><span class="quick-nav-icon">🐦</span><b>仲間</b></button>
+    <button class="quick-btn gacha" onclick="showModal('gachaModal')"><span class="quick-nav-icon">✨</span><b>ガチャ</b></button>
     <button class="quick-btn social" id="socialOpenBtn" data-panel="social" onclick="openAccountHub()"><span class="quick-nav-icon">👤</span><b>ログイン</b></button>
     <button class="quick-btn shop" data-panel="shop" onclick="togglePanel('shop')"><span class="quick-nav-icon">🛒</span><b>ショップ</b></button>
     <button class="quick-btn inventory" data-panel="inventory" onclick="togglePanel('inventory')"><span class="quick-nav-icon">🎒</span><b>持ち物</b></button>
@@ -395,12 +419,12 @@
     <button class="reset-btn" onclick="resetGame()">🔄 リセット</button>
   </div>
 
-  <script src="social.js?v=7.1.0"></script>
-  <script src="main.js?v=7.1.0"></script>
-  <script src="pet-system.js?v=7.1.0"></script>
-  <script src="v52-ui.js?v=7.1.0"></script>
-  <script src="v6-ui.js?v=7.1.0"></script>
-  <script src="v7-ui.js?v=7.1.0"></script>
-  <!-- deploy-marker:7.1.0 -->
+  <script src="social.js?v=7.2.0"></script>
+  <script src="main.js?v=7.2.0"></script>
+  <script src="pet-system.js?v=7.2.0"></script>
+  <script src="v52-ui.js?v=7.2.0"></script>
+  <script src="v6-ui.js?v=7.2.0"></script>
+  <script src="v7-ui.js?v=7.2.0"></script>
+  <!-- deploy-marker:7.2.0 -->
 </body>
 </html>
