@@ -70,12 +70,12 @@ async function pullCloudSave(){
           bugReports:Array.isArray(localPrivate.bugReports)?localPrivate.bugReports:[],
           errorLogs:Array.isArray(localPrivate.errorLogs)?localPrivate.errorLogs:[]
         });
-        await saveDbSet(accountKey,{version:'6.1.2',savedAt:remote.savedAt,data:stateForStorage()});
+        await saveDbSet(accountKey,{version:'6.1.3',savedAt:remote.savedAt,data:stateForStorage()});
         showToast('Googleアカウントの続きから再開しました','achievement');
       }
     }else{
       const guest=await saveDbGet(SAVE_RECORD).catch(()=>null);
-      const initial=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'6.1.2',savedAt:new Date().toISOString(),data:stateForStorage()});
+      const initial=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'6.1.3',savedAt:new Date().toISOString(),data:stateForStorage()});
       G=normalizeGameState(initial.data);
       const saved=await putCloudSave(initial);
       await saveDbSet(accountKey,{...initial,savedAt:saved.savedAt||initial.savedAt,data:stateForStorage()});
@@ -86,18 +86,18 @@ async function pullCloudSave(){
     }
     activeSaveUserId=userId;
     document.body.dataset.sync='cloud';
-    renderSyncedGameState();
+    try{renderSyncedGameState()}catch(renderError){console.warn('Cloud data loaded but UI render failed',renderError)}
     renderIdentity();
     return true;
   }catch(error){
     const guest=await saveDbGet(SAVE_RECORD).catch(()=>null);
-    const fallback=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'6.1.2',savedAt:new Date().toISOString(),data:stateForStorage()});
+    const fallback=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'6.1.3',savedAt:new Date().toISOString(),data:stateForStorage()});
     G=normalizeGameState(fallback.data);
     await saveDbSet(accountKey,{...fallback,data:stateForStorage()}).catch(()=>{});
     activeSaveUserId=userId;
     cloudSaveEnabled=false;
     document.body.dataset.sync='local';
-    renderSyncedGameState();
+    try{renderSyncedGameState()}catch(renderError){console.warn('Local fallback UI render failed',renderError)}
     console.warn('Cloud load skipped',error);
     return false;
   }

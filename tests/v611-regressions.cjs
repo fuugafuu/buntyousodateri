@@ -10,7 +10,8 @@ function mustNot(file,needle,message){
 }
 
 must('v6-ui.js',"$$('[data-tool]',s).forEach",'More menu must bind every button');
-must('social.js',"document.body.dataset.sync='cloud';\n    renderSyncedGameState();",'Successful cloud pull must mark UI connected');
+must('social.js',"document.body.dataset.sync='cloud';",'Successful cloud pull must mark UI connected');
+must('social.js',"try{renderSyncedGameState()}catch(renderError)",'Cloud UI rendering must not break sync state');
 must('v52-ui.js',"if(document.body.classList.contains('mofumori-v6'))return",'Legacy tap animation must be disabled in v6');
 const version=JSON.parse(fs.readFileSync('package.json','utf8')).version;
 must('index.html',`window.MOFUMORI_BUILD='${version}'`,'Build cache guard must match package version');

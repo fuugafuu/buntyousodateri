@@ -13,5 +13,6 @@ has('v6-ui.js',"const recovered=await refreshArena()", 'client must recover an a
 has('pet-system.js',"if(t==='friends'&&identityUser){N.last=0;refresh(true)}",'friends tab must refresh requests immediately');
 has('pet-system.js',"friendsTab?.classList.contains('active')", 'open friends tab must poll for incoming requests');
 has('pet-system.js',"window.addEventListener('focus'", 'returning to app must refresh online state');
-has('index.html',"window.MOFUMORI_BUILD='6.1.2'",'browser build cache must rotate');
-console.log('v6.1.2 online reliability checks passed');
+const version=JSON.parse(fs.readFileSync('package.json','utf8')).version;
+has('index.html',`window.MOFUMORI_BUILD='${version}'`,'browser build cache must rotate');
+console.log(version+' online reliability checks passed');
