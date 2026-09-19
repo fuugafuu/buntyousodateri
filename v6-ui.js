@@ -371,7 +371,12 @@ function updateOpponent(m){
   const perch=$('#perchRivalBird');if(perch)perch.style.left=`${[17,50,83][clamp(Math.round((Number(p.x||0)+1)),0,2)]}%`;
   const seed=$('#seedRivalBird');if(seed)seed.style.left=`${clamp(Number(p.count||0)/120*88+5,5,93)}%`;
   const ring=$('#ringRivalBird');if(ring)ring.style.left=`${clamp(Number(p.hits||0)/16*88+5,5,93)}%`;
-  const rc=$('#v72RivalCount');if(rc)rc.textContent=String(p.count||p.hits||0);
+  const rc=$('#v72RivalCount');
+  if(rc){
+    const value=String(p.count||p.hits||0),prev=rc.dataset.last||'';
+    rc.textContent=value;rc.dataset.last=value;
+    if(prev&&prev!==value){const visual=$('.v72-rival-bird,#perchRivalBird,#seedRivalBird,#ringRivalBird,.v72-rival-kale');visual?.classList.remove('v72-rival-action');void visual?.offsetWidth;visual?.classList.add('v72-rival-action')}
+  }
   if(m.gameType==='flight')el.textContent=`RIVAL ${Math.round((p.height||0)/10)}m / HP ${Math.round(p.hp??100)}`;
   else if(m.gameType==='kale')el.textContent=`RIVAL ${p.count||0} bite`;
   else if(m.gameType==='seedrace')el.textContent=`RIVAL ${p.count||0} seed`;
