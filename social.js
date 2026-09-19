@@ -86,7 +86,7 @@ async function pullCloudSave(){
     }
     activeSaveUserId=userId;
     document.body.dataset.sync='cloud';
-    renderSyncedGameState();
+    try{renderSyncedGameState()}catch(renderError){console.warn('Cloud data loaded but UI render failed',renderError)}
     renderIdentity();
     return true;
   }catch(error){
@@ -97,7 +97,7 @@ async function pullCloudSave(){
     activeSaveUserId=userId;
     cloudSaveEnabled=false;
     document.body.dataset.sync='local';
-    renderSyncedGameState();
+    try{renderSyncedGameState()}catch(renderError){console.warn('Local fallback UI render failed',renderError)}
     console.warn('Cloud load skipped',error);
     return false;
   }
