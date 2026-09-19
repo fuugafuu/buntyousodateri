@@ -16,5 +16,6 @@ lacks('v52-ui.js',"$('#v52PetCount').textContent",'chrome code must not derefere
 lacks('v52-ui.js',"$('#v52FriendCount').textContent",'chrome code must not dereference removed friend counter');
 has('social.js',"document.body.dataset.sync='cloud';\n    try{renderSyncedGameState()}catch(renderError)",'successful cloud I/O must stay marked cloud even if rendering fails');
 has('social.js',"Cloud data loaded but UI render failed",'cloud render exceptions must be isolated');
-has('index.html',"window.MOFUMORI_BUILD='6.1.3'",'v6.1.3 cache rotation must be present');
-console.log('v6.1.3 compatibility regression checks passed');
+const version=JSON.parse(fs.readFileSync('package.json','utf8')).version;
+has('index.html',`window.MOFUMORI_BUILD='${version}'`,'cache rotation must match package version');
+console.log(version+' compatibility regression checks passed');

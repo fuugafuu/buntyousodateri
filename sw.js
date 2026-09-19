@@ -1,9 +1,9 @@
-const CACHE='mofumori-shell-v6.1.3';
+const CACHE='mofumori-shell-v6.1.4';
 const SHELL=[
   '/','/index.html',
-  '/style.css?v=6.1.3','/pet-system.css?v=6.1.3','/v52-ui.css?v=6.1.3','/v6-ui.css?v=6.1.3',
-  '/social.js?v=6.1.3','/main.js?v=6.1.3','/pet-system.js?v=6.1.3','/v52-ui.js?v=6.1.3','/v6-ui.js?v=6.1.3',
-  '/manifest.webmanifest?v=6.1.3','/icon.svg','/vendor/wllama.js','/wasm/wllama.wasm'
+  '/style.css?v=6.1.4','/pet-system.css?v=6.1.4','/v52-ui.css?v=6.1.4','/v6-ui.css?v=6.1.4',
+  '/social.js?v=6.1.4','/main.js?v=6.1.4','/pet-system.js?v=6.1.4','/v52-ui.js?v=6.1.4','/v6-ui.js?v=6.1.4',
+  '/manifest.webmanifest?v=6.1.4','/icon.svg','/vendor/wllama.js','/wasm/wllama.wasm'
 ];
 
 self.addEventListener('install',event=>{
