@@ -33,6 +33,7 @@ throws(()=>validateSubmission('kale',{durationMs:10000,taps:1000000},{elapsedMs:
 throws(()=>validateSubmission('kale',{durationMs:10000,taps:NaN},{elapsedMs:10000}),'NaN tap count');
 throws(()=>validateSubmission('perch',{hits:12,misses:12,avgReactionMs:50},{elapsedMs:5000}),'too many perch rounds');
 throws(()=>validateSubmission('perch',{hits:12,misses:0,avgReactionMs:1},{elapsedMs:5000}),'impossible reaction time');
+throws(()=>validateSubmission('perch',{hits:12,misses:0,avgReactionMs:100},{elapsedMs:50}),'instant perch completion');
 throws(()=>validateSubmission('flight',{durationMs:30000,height:100,collisions:0},{elapsedMs:30000,expired:true}),'expired match');
 throws(()=>validateSubmission('unknown',{},{}),'unknown game');
 
