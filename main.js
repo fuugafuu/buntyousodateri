@@ -647,6 +647,11 @@ function togglePanel(p){
   document.querySelectorAll('.quick-dock [data-panel]').forEach(button=>{const selected=button.dataset.panel===p&&Boolean(active?.classList.contains('show'));button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));});
 }
 
+function applyBodyThemeClass(){
+  const body=document.body;if(!body)return;
+  body.classList.remove('day','sunset','night');
+  body.classList.add(G.theme);
+}
 function updateUI(){
   const b=birds[G.species];
   checkHiddenUnlocks();
@@ -670,7 +675,7 @@ function updateUI(){
   document.getElementById('tBaths').textContent=G.tBaths;
   document.getElementById('sleepBtn').innerHTML=G.isSleeping?'☀️起こす':'💤寝かす';
   if(G.sleepBoxUntil&&Date.now()<G.sleepBoxUntil){document.getElementById('sleepBtn').innerHTML='🛏️解除';}
-  document.body.className=G.theme;
+  applyBodyThemeClass();
   const svg=document.getElementById('birdSvg');svg.setAttribute('width','260');svg.setAttribute('height','286');svg.dataset.quality=G.resolutionScale>=1.6?'high':G.resolutionScale<=0.8?'low':'normal';svg.style.imageRendering='auto';svg.classList.toggle('bird-3d',G.beta3d===true);svg.classList.toggle('bird-3d-real',G.beta3d===true);svg.style.setProperty('--rx',`${G.threeDRotX}deg`);svg.style.setProperty('--ry',`${G.threeDRotY}deg`);
   document.querySelectorAll('[data-care]').forEach(btn=>{btn.disabled=G.isSleeping&&btn.id!=='sleepBtn';});
   const chatBtn=document.getElementById('chatOpenBtn');if(chatBtn)chatBtn.style.display='inline-flex';
@@ -781,8 +786,9 @@ function renderCustomize(){
   document.getElementById('themeOpts').innerHTML=[{id:'day',n:'☀️昼'},{id:'sunset',n:'🌅夕'},{id:'night',n:'🌙夜'}].map(t=>`<button class="customize-btn ${G.theme===t.id?'active':''}" onclick="setTheme('${t.id}')">${t.n}</button>`).join('');
   document.getElementById('themeAutoOpts').innerHTML=[{v:true,n:'🕒自動'},{v:false,n:'✋手動'}].map(o=>`<button class="customize-btn ${(G.autoTheme===o.v)?'active':''}" onclick="setAutoTheme(${o.v})">${o.n}</button>`).join('');
   document.getElementById('weatherOpts').innerHTML=[{id:'none',n:'☀️なし'},{id:'rain',n:'🌧️雨'},{id:'snow',n:'❄️雪'},{id:'sleet',n:'🌨️みぞれ'},{id:'hail',n:'🧊ひょう'}].map(w=>`<button class="customize-btn ${G.weather===w.id?'active':''}" onclick="setWeather('${w.id}')">${w.n}</button>`).join('');
-  document.getElementById('weatherAutoOpts').innerHTML=[{v:true,n:'📍実天気ON'},{v:false,n:'✋手動'}].map(o=>`<button class="customize-btn ${(G.autoWeather===o.v)?'active':''}" onclick="setAutoWeather(${o.v})">${o.n}</button>`).join('');
-  document.getElementById('weatherHint').textContent=G.autoWeather?'実際の天気と連動中（位置情報）':'手動天気モードです。';
+  document.getElementById('weatherAutoOpts').innerHTML=[{v:true,n:'📍実天気'},{v:false,n:'✋手動'}].map(o=>`<button class="customize-btn ${(G.autoWeather===o.v)?'active':''}" onclick="setAutoWeather(${o.v})">${o.n}</button>`).join('')+(G.autoWeather?'<button class="customize-btn" onclick="getGeoAndWeather(true)">🔄 更新</button>':'');
+  const weatherHint=document.getElementById('weatherHint');
+  if(weatherHint&&!weatherHint.dataset.state)weatherHint.textContent=G.autoWeather?'現在地の天気と連動します。':'手動天気モードです。';
   document.getElementById('soundOpts').innerHTML=[{id:'off',n:'🔇OFF'},{id:'chirp',n:'🐤チュン'},{id:'bell',n:'🔔ベル'}].map(s=>`<button class="customize-btn ${G.soundMode===s.id?'active':''}" onclick="setSoundMode('${s.id}')">${s.n}</button>`).join('');
 }
 function initMissions(){
@@ -1529,7 +1535,7 @@ function cancelSleepBox(){
 }
 
 
-function setAutoTheme(v){G.autoTheme=v===true||v==='true';if(G.autoTheme)applyAutoTheme();save();renderCustomize();updateUI();}
+function setAutoTheme(v){G.autoTheme=v===true||v==='true';if(G.autoTheme){applyAutoTheme();applyBodyThemeClass();}save();renderCustomize();updateUI();}
 function setAutoWeather(v){
   G.autoWeather=v===true||v==='true';
   if(G.autoWeather)getGeoAndWeather();
@@ -1546,29 +1552,53 @@ function weatherCodeToType(code){
   if((code>=51&&code<=67)||(code>=80&&code<=82)||code===95)return'rain';
   return'none';
 }
+function setWeatherHint(text,state=''){
+  const hint=document.getElementById('weatherHint');if(!hint)return;
+  hint.textContent=text;hint.dataset.state=state;
+}
 async function fetchWeather(lat,lon){
-  const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code`);
-  if(!r.ok)throw new Error(`weather_${r.status}`);
-  const d=await r.json();
-  if(!d.current||typeof d.current.weather_code!=='number')throw new Error('weather_invalid_response');
-  const code=d.current.weather_code;
-  G.weather=weatherCodeToType(code);
-  G.lastWeatherFetch=Date.now();save();updateUI();
+  const latitude=Number(lat),longitude=Number(lon);
+  if(!Number.isFinite(latitude)||!Number.isFinite(longitude))throw new Error('weather_invalid_location');
+  setWeatherHint('現在地の天気を取得中…','loading');
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+  try{
+    let r=await fetch(`/api/weather?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}`,{headers:{Accept:'application/json'},signal:controller.signal,cache:'no-store'});
+    let d=await r.json().catch(()=>({}));
+    if(!r.ok||typeof d.weatherCode!=='number')throw new Error(d.message||`weather_${r.status}`);
+    G.weather=weatherCodeToType(d.weatherCode);
+    G.lastWeatherFetch=Date.now();
+    save();updateUI();renderCustomize();
+    setWeatherHint(`実天気と同期済み ・ ${new Date(G.lastWeatherFetch).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} 更新`,'ok');
+    return G.weather;
+  }finally{clearTimeout(timer);}
 }
-function getGeoAndWeather(){
-  if(G.geo&&typeof G.geo.lat==='number'&&typeof G.geo.lon==='number'){
-    fetchWeather(G.geo.lat,G.geo.lon).catch(e=>{logError('weather',String(e));showToast('天気取得に失敗','warning');});
-    return;
+async function getGeoAndWeather(forceLocation=false){
+  if(!forceLocation&&G.geo&&typeof G.geo.lat==='number'&&typeof G.geo.lon==='number'){
+    try{return await fetchWeather(G.geo.lat,G.geo.lon);}
+    catch(e){logError('weather',String(e));G.geo=null;save();}
   }
-  if(!navigator.geolocation){showToast('位置情報が使えません','warning');return;}
+  if(!navigator.geolocation){
+    G.autoWeather=false;save();renderCustomize();
+    setWeatherHint('この端末では位置情報を利用できません。手動天気を使ってください。','error');
+    showToast('位置情報が使えません','warning');return;
+  }
+  setWeatherHint('位置情報を確認しています…','loading');
   navigator.geolocation.getCurrentPosition(async pos=>{
-    const lat=pos.coords.latitude,lon=pos.coords.longitude;G.geo={lat,lon};
-    try{
-      await fetchWeather(lat,lon);
-    }catch(e){logError('weather',String(e));showToast('天気取得に失敗','warning');}
-  },err=>{logError('geolocation',err.message||'geo error');showToast('位置情報が拒否されました','warning');});
+    const lat=pos.coords.latitude,lon=pos.coords.longitude;G.geo={lat,lon};save();
+    try{await fetchWeather(lat,lon);}
+    catch(e){
+      logError('weather',String(e));setWeatherHint('天気サーバーに接続できません。もう一度「更新」を押してください。','error');
+      showToast('天気を取得できませんでした','warning');
+    }
+  },err=>{
+    logError('geolocation',err.message||'geo error');
+    G.autoWeather=false;save();renderCustomize();
+    const denied=err.code===1;
+    setWeatherHint(denied?'位置情報が許可されていません。ブラウザ設定から許可できます。':'現在地を取得できませんでした。もう一度お試しください。','error');
+    showToast(denied?'位置情報を許可すると実天気を使えます':'現在地の取得に失敗しました','warning');
+  },{enableHighAccuracy:false,timeout:10000,maximumAge:30*60*1000});
 }
-function setTheme(t){G.autoTheme=false;G.theme=t;addMissionProgress('customize',1);document.body.className=t;save();renderCustomize()}
+function setTheme(t){G.autoTheme=false;G.theme=t;addMissionProgress('customize',1);applyBodyThemeClass();save();renderCustomize()}
 function setWeather(w){G.autoWeather=false;G.weather=w;addMissionProgress('customize',1);save();renderCustomize();renderWeather()}
 function setAnimationMode(m){G.animationMode=m;addMissionProgress('customize',1);save();renderCustomize();renderWeather()}
 function setResolution(scale){G.resolutionScale=scale;addMissionProgress('customize',1);save();updateUI();renderCustomize()}
