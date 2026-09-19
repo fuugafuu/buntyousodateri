@@ -241,7 +241,7 @@ async function sendFriendRequest(supabase, user, rawPlayerId) {
   if (!/^MF-[A-Z0-9]{8,12}$/.test(playerId)) throw Object.assign(new Error('プレイヤーIDの形式が正しくありません。'), { status: 400 });
   const { data: target, error } = await supabase.from('mofumori_profiles').select('user_key,player_id').eq('player_id', playerId).maybeSingle();
   if (error) throw error;
-  if (!target) throw Object.assign(new Error('そのプレイヤーは見つかりません。'), { status: 404 });
+  if (!target || String(target.user_key || '').startsWith('bot:arena:')) throw Object.assign(new Error('そのプレイヤーは見つかりません。'), { status: 404 });
   if (target.user_key === user.id) throw Object.assign(new Error('自分自身には申請できません。'), { status: 400 });
   const { data: linked, error: linkedError } = await supabase.from('mofumori_friendships').select('friend_key')
     .eq('owner_key', user.id).eq('friend_key', target.user_key).maybeSingle();
