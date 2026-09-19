@@ -17,6 +17,10 @@ const SPECIES_WEIGHTS = {
 };
 const GACHA_SPECIES = new Set(Object.keys(SPECIES_WEIGHTS));
 const RARITY_META = { N:{rank:1}, R:{rank:2}, SR:{rank:3}, SSR:{rank:4}, UR:{rank:5} };
+const DEFAULT_GACHA_CONFIG={
+  activeBanner:'standard',
+  banners:[{id:'standard',name:'森の仲間ガチャ',enabled:true,price1:180,price10:1600,rates:{N:55,R:27,SR:13,SSR:4,UR:1},speciesWeights:{...SPECIES_WEIGHTS}}]
+};
 const VISIT_ACTIONS = new Set(['greet','pet','play','share_seed']);
 
 function playerIdFor(userKey) {
@@ -31,25 +35,37 @@ function uuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(out) ? out : null;
 }
 function randomFloat() { return crypto.randomInt(0, 1_000_000) / 1_000_000; }
-function drawRarity(minRarity = 'N') {
-  const r = randomFloat();
-  let rarity = r < 0.01 ? 'UR' : r < 0.05 ? 'SSR' : r < 0.18 ? 'SR' : r < 0.45 ? 'R' : 'N';
-  if (minRarity === 'R' && rarity === 'N') rarity = 'R';
+function normalizeGachaConfig(raw){
+  const cfg=raw&&typeof raw==='object'?raw:DEFAULT_GACHA_CONFIG;
+  const banners=Array.isArray(cfg.banners)&&cfg.banners.length?cfg.banners:DEFAULT_GACHA_CONFIG.banners;
+  return {activeBanner:String(cfg.activeBanner||banners[0].id),banners};
+}
+async function loadGachaConfig(supabase){
+  const {data,error}=await supabase.from('mofumori_game_config').select('value').eq('key','gacha').maybeSingle();
+  if(error)throw error;return normalizeGachaConfig(data?.value);
+}
+function selectBanner(config,rawId){
+  const enabled=(config.banners||[]).filter(b=>b&&b.enabled!==false);
+  return enabled.find(b=>String(b.id)===String(rawId||''))||enabled.find(b=>String(b.id)===String(config.activeBanner))||enabled[0]||DEFAULT_GACHA_CONFIG.banners[0];
+}
+function drawRarity(minRarity='N',rates=DEFAULT_GACHA_CONFIG.banners[0].rates){
+  const order=['N','R','SR','SSR','UR'],total=order.reduce((s,k)=>s+Math.max(0,Number(rates?.[k]||0)),0)||100;
+  let cursor=randomFloat()*total,rarity='N';
+  for(const key of order){cursor-=Math.max(0,Number(rates?.[key]||0));if(cursor<=0){rarity=key;break}}
+  if(minRarity==='R'&&rarity==='N')rarity='R';
   return rarity;
 }
-function drawSpecies(allowBeaver = true) {
-  const entries = Object.entries(SPECIES_WEIGHTS).filter(([species]) => allowBeaver || species !== 'beaver');
-  const total = entries.reduce((sum, [, weight]) => sum + weight, 0);
-  let cursor = randomFloat() * total;
-  for (const [species, weight] of entries) {
-    cursor -= weight;
-    if (cursor <= 0) return species;
-  }
+function drawSpecies(allowBeaver=true,weights=SPECIES_WEIGHTS){
+  const entries=Object.entries(weights||SPECIES_WEIGHTS).filter(([species,w])=>GACHA_SPECIES.has(species)&&Number(w)>0&&(allowBeaver||species!=='beaver'));
+  const safeEntries=entries.length?entries:Object.entries(SPECIES_WEIGHTS).filter(([species])=>allowBeaver||species!=='beaver');
+  const total=safeEntries.reduce((sum,[,weight])=>sum+Number(weight),0);
+  let cursor=randomFloat()*total;
+  for(const [species,weight] of safeEntries){cursor-=Number(weight);if(cursor<=0)return species}
   return 'buncho_sakura';
 }
-function drawPet(minRarity = 'N', allowBeaver = true) {
-  const species = drawSpecies(allowBeaver), rarity = drawRarity(minRarity), meta = SPECIES_META[species];
-  return { species, rarity, rank: RARITY_META[rarity].rank, name: meta[0], source: 'gacha' };
+function drawPet(minRarity='N',allowBeaver=true,banner=DEFAULT_GACHA_CONFIG.banners[0]){
+  const species=drawSpecies(allowBeaver,banner.speciesWeights),rarity=drawRarity(minRarity,banner.rates),meta=SPECIES_META[species];
+  return {species,rarity,rank:RARITY_META[rarity].rank,name:meta[0],source:'gacha'};
 }
 function petToClient(row) {
   const meta = SPECIES_META[row.species] || SPECIES_META.buncho_sakura;
@@ -194,8 +210,10 @@ async function loadDashboard(supabase, user) {
   const visitPetMap = new Map(visitPets.map(row => [row.id, row]));
   const ownProfile = profileMap.get(user.id) || await ensureProfile(supabase, user);
 
+  const gachaConfig=await loadGachaConfig(supabase);
   return {
     playerId: ownProfile.player_id,
+    gachaConfig,
     newUnlocks: hiddenUnlocked ? ['fuga'] : [],
     pets: (pets || []).map(petToClient),
     friends: friendKeys.map(key => profileMap.get(key)).filter(Boolean).map(row => profileToClient(row, user.id)),
@@ -221,20 +239,23 @@ async function loadDashboard(supabase, user) {
     }
   };
 }
-async function gacha(supabase, user, count) {
-  const rolls = count === 10 ? 10 : 1, cost = rolls === 10 ? 1600 : 180;
-  await takeLimit(supabase, user.id, 'gacha', 60, 12);
+async function gacha(supabase,user,count,bannerId) {
+  const rolls=count===10?10:1;
+  await takeLimit(supabase,user.id,'gacha',60,12);
+  const config=await loadGachaConfig(supabase),banner=selectBanner(config,bannerId);
+  if(!banner||banner.enabled===false)throw Object.assign(new Error('このガチャは現在利用できません。'),{status:400});
+  const cost=rolls===10?Math.round(Number(banner.price10||0)):Math.round(Number(banner.price1||0));
   const {data:progress,error:progressError}=await supabase.from('mofumori_profiles').select('forest_xp').eq('user_key',user.id).single();
   if(progressError)throw progressError;
   const forestLevel=Math.floor(Math.sqrt(Math.max(0,Number(progress?.forest_xp)||0)/75))+1;
-  const results = Array.from({ length: rolls }, (_, index) => drawPet(rolls === 10 && index === 9 ? 'R' : 'N', forestLevel >= 3));
-  const { data, error } = await supabase.rpc('mofumori_award_gacha', { p_owner: user.id, p_cost: cost, p_pets: results });
-  if (error) {
-    if (String(error.message).includes('not_enough_coins')) throw Object.assign(new Error('コインが足りません。'), { status: 400 });
+  const results=Array.from({length:rolls},(_,index)=>drawPet(rolls===10&&index===9?'R':'N',forestLevel>=3,banner));
+  const {data,error}=await supabase.rpc('mofumori_award_gacha',{p_owner:user.id,p_cost:cost,p_pets:results});
+  if(error){
+    if(String(error.message).includes('not_enough_coins'))throw Object.assign(new Error('コインが足りません。'),{status:400});
     throw error;
   }
   await bestEffortRpc(supabase,'mofumori_progress_event',{p_user:user.id,p_event:'gacha'});
-  return { results: (data?.pets || []).map(petToClient), gameState: data?.state?.data || null };
+  return {bannerId:banner.id,results:(data?.pets||[]).map(petToClient),gameState:data?.state?.data||null};
 }
 async function sendFriendRequest(supabase, user, rawPlayerId) {
   await takeLimit(supabase, user.id, 'friend_request', 3600, 20);
@@ -359,7 +380,7 @@ module.exports = async function handler(req, res) {
     const supabase = getSupabase();
     await ensureProfile(supabase, user);
     let extra = {};
-    if (action === 'gacha') extra = await gacha(supabase, user, Number(payload.count) === 10 ? 10 : 1);
+    if (action === 'gacha') extra = await gacha(supabase,user,Number(payload.count)===10?10:1,payload.bannerId);
     else if (action === 'sendFriendRequest') extra = await sendFriendRequest(supabase, user, payload.playerId);
     else if (action === 'respondFriendRequest') await respondFriendRequest(supabase, user, payload.requestId, payload.accept === true);
     else if (action === 'removeFriend') await removeFriend(supabase, user, payload.playerId);
