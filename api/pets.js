@@ -1,4 +1,5 @@
 const crypto = require('node:crypto');
+async function bestEffortRpc(sb,name,args){try{const {error}=await sb.rpc(name,args);if(error)console.warn('[mofumori] best-effort RPC failed',name,error.message)}catch(error){console.warn('[mofumori] best-effort RPC exception',name,error?.message||error)}}
 const { allowMethods, json, requireUser, requireSameOrigin } = require('../server/auth.cjs');
 const { configured, getSupabase } = require('../server/supabase.cjs');
 
@@ -232,7 +233,7 @@ async function gacha(supabase, user, count) {
     if (String(error.message).includes('not_enough_coins')) throw Object.assign(new Error('コインが足りません。'), { status: 400 });
     throw error;
   }
-  await supabase.rpc('mofumori_progress_event',{p_user:user.id,p_event:'gacha'}).catch(()=>{});
+  await bestEffortRpc(supabase,'mofumori_progress_event',{p_user:user.id,p_event:'gacha'});
   return { results: (data?.pets || []).map(petToClient), gameState: data?.state?.data || null };
 }
 async function sendFriendRequest(supabase, user, rawPlayerId) {
@@ -325,7 +326,7 @@ async function startVisit(supabase, user, rawPlayerId, rawPetId) {
     if (message.includes('pet_busy')) throw Object.assign(new Error('その子はすでにお出かけ中です。'), { status: 400 });
     throw rpcError;
   }
-  await supabase.rpc('mofumori_progress_event',{p_user:user.id,p_event:'visit'}).catch(()=>{});
+  await bestEffortRpc(supabase,'mofumori_progress_event',{p_user:user.id,p_event:'visit'});
   return data;
 }
 async function endVisit(supabase, user, rawVisitId) {
