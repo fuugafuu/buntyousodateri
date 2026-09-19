@@ -64,7 +64,7 @@ function syntheticBotProgress(game,seed,startsAt,status){
   const r=rand((Number(seed)||1)^0x72b07),skill=.56+r()*.34,ratio=dur?elapsed/dur:0,x=Math.sin(elapsed/620+(seed%17))*.72;
   const moveRand=rand(((Number(seed)||1)^0x431d^Math.floor(elapsed/720))>>>0);
   if(status==='finished')return {};
-  if(game==='flight')return {ready:true,bot:true,t:elapsed,x:round(x,3),height:Math.round(ratio*(10500+skill*8500)),hp:Math.max(18,Math.round(100-ratio*(1-skill)*62)),count:0,hits:0};
+  if(game==='flight')return {ready:true,bot:true,t:elapsed,x:round(x,3),y:round(Math.sin(elapsed/830+(seed%11))*.62,3),height:Math.round(ratio*(10500+skill*8500)),hp:Math.max(18,Math.round(100-ratio*(1-skill)*62)),count:0,hits:0};
   if(game==='kale')return {ready:true,bot:true,t:elapsed,x:0,count:Math.floor(ratio*(65+skill*104)),height:0,hits:0,hp:100};
   if(game==='seedrace')return {ready:true,bot:true,t:elapsed,x:round(x,3),count:Math.floor(ratio*(62+skill*82)),height:0,hits:0,hp:100};
   if(game==='ring')return {ready:true,bot:true,t:elapsed,x:round(x,3),hits:Math.min(16,Math.floor(ratio*(9+skill*7))),count:0,height:0,hp:100};
