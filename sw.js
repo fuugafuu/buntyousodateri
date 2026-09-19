@@ -1,9 +1,9 @@
-const CACHE='mofumori-shell-v7.0.0';
+const CACHE='mofumori-shell-v7.1.0';
 const SHELL=[
   '/','/index.html',
-  '/style.css?v=7.0.0','/pet-system.css?v=7.0.0','/v52-ui.css?v=7.0.0','/v6-ui.css?v=7.0.0','/v7-ui.css?v=7.0.0',
-  '/social.js?v=7.0.0','/main.js?v=7.0.0','/pet-system.js?v=7.0.0','/v52-ui.js?v=7.0.0','/v6-ui.js?v=7.0.0','/v7-ui.js?v=7.0.0',
-  '/manifest.webmanifest?v=7.0.0','/icon.svg','/vendor/wllama.js','/wasm/wllama.wasm'
+  '/style.css?v=7.1.0','/pet-system.css?v=7.1.0','/v52-ui.css?v=7.1.0','/v6-ui.css?v=7.1.0','/v7-ui.css?v=7.1.0',
+  '/social.js?v=7.1.0','/main.js?v=7.1.0','/pet-system.js?v=7.1.0','/v52-ui.js?v=7.1.0','/v6-ui.js?v=7.1.0','/v7-ui.js?v=7.1.0',
+  '/manifest.webmanifest?v=7.1.0','/icon.svg','/vendor/wllama.js','/wasm/wllama.wasm'
 ];
 
 self.addEventListener('install',event=>{
