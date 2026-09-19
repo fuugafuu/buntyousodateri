@@ -49,7 +49,7 @@ async function pullCloudSave(){
   const accountKey=accountSaveRecordKey(userId);
   const accountLocal=await saveDbGet(accountKey).catch(()=>null);
   try{
-    const response=await fetch('/api/cloud-save',{headers:{Accept:'application/json'}});
+    const response=await fetch('/api/cloud-save',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
     const payload=await response.json().catch(()=>({}));
     if(payload.configured===false)cloudSaveEnabled=false;
     if(!response.ok)throw new Error(payload.message||`cloud_load_${response.status}`);
@@ -70,27 +70,32 @@ async function pullCloudSave(){
           bugReports:Array.isArray(localPrivate.bugReports)?localPrivate.bugReports:[],
           errorLogs:Array.isArray(localPrivate.errorLogs)?localPrivate.errorLogs:[]
         });
-        await saveDbSet(accountKey,{version:'4.0.0',savedAt:remote.savedAt,data:stateForStorage()});
-        document.body.dataset.sync='cloud';
+        await saveDbSet(accountKey,{version:'6.1.1',savedAt:remote.savedAt,data:stateForStorage()});
         showToast('Googleアカウントの続きから再開しました','achievement');
       }
     }else{
       const guest=await saveDbGet(SAVE_RECORD).catch(()=>null);
-      const initial=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'4.0.0',savedAt:new Date().toISOString(),data:stateForStorage()});
+      const initial=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'6.1.1',savedAt:new Date().toISOString(),data:stateForStorage()});
       G=normalizeGameState(initial.data);
       const saved=await putCloudSave(initial);
       await saveDbSet(accountKey,{...initial,savedAt:saved.savedAt||initial.savedAt,data:stateForStorage()});
+      const verify=await fetch('/api/cloud-save',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+      const verifyPayload=await verify.json().catch(()=>({}));
+      if(!verify.ok||!verifyPayload.data?.data)throw new Error('クラウド保存の確認に失敗しました');
       showToast('現在の育成データをGoogleアカウントへ引き継ぎました','achievement');
     }
     activeSaveUserId=userId;
+    document.body.dataset.sync='cloud';
     renderSyncedGameState();
+    renderIdentity();
     return true;
   }catch(error){
     const guest=await saveDbGet(SAVE_RECORD).catch(()=>null);
-    const fallback=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'4.0.0',savedAt:new Date().toISOString(),data:stateForStorage()});
+    const fallback=accountLocal?.data?accountLocal:(guest?.data?guest:{version:'6.1.1',savedAt:new Date().toISOString(),data:stateForStorage()});
     G=normalizeGameState(fallback.data);
     await saveDbSet(accountKey,{...fallback,data:stateForStorage()}).catch(()=>{});
     activeSaveUserId=userId;
+    cloudSaveEnabled=false;
     document.body.dataset.sync='local';
     renderSyncedGameState();
     console.warn('Cloud load skipped',error);
@@ -196,14 +201,14 @@ function openAccountHub(){
 function renderIdentity(){
   const name=document.getElementById('identityName'),cloud=document.getElementById('cloudSaveState'),sync=document.getElementById('socialSyncState');
   if(name)name.textContent=identityUser?.name||'ゲスト';
-  if(cloud)cloud.textContent=identityUser?(document.body.dataset.sync==='cloud'?'コイン・持ち物まで同期済み':'この端末のアカウント保存（クラウド未接続）'):'ゲストデータをこの端末に保存中';
+  if(cloud)cloud.textContent=identityUser?(document.body.dataset.sync==='cloud'?'クラウド同期済み（育成データを保存）':cloudSaveEnabled===false?'クラウド接続に失敗しました':'クラウド接続を確認中…'):'ゲストデータをこの端末に保存中';
   if(sync)sync.textContent=socialState.mode==='cloud'?'クラウド同期':'端末モード';
   const signIn=document.getElementById('googleSignInButton'),logout=document.getElementById('googleLogoutBtn');
   if(signIn)signIn.style.display=identityUser?'none':'block';if(logout)logout.style.display=identityUser?'inline-flex':'none';
   const shortcut=document.getElementById('accountShortcutBtn'),label=document.getElementById('accountShortcutLabel'),state=document.getElementById('accountShortcutState'),dock=document.getElementById('socialOpenBtn');
   if(shortcut){shortcut.classList.toggle('signed-in',Boolean(identityUser));shortcut.setAttribute('aria-label',identityUser?'アカウントと同期状態を開く':'Googleログインとデータ同期を開く');}
   if(label)label.textContent=identityUser?'アカウント':'ログイン';
-  if(state)state.textContent=identityUser?(document.body.dataset.sync==='cloud'?'同期済み':'端末保存'):'データ同期';
+  if(state)state.textContent=identityUser?(document.body.dataset.sync==='cloud'?'同期済み':cloudSaveEnabled===false?'要再接続':'確認中'):'データ同期';
   if(dock){const dockLabel=dock.querySelector('b'),dockIcon=dock.querySelector('.quick-nav-icon');if(dockLabel)dockLabel.textContent=identityUser?'アカウント':'ログイン';if(dockIcon)dockIcon.textContent=identityUser?'🌐':'👤';}
 }
 function recordBondAction(actionName){

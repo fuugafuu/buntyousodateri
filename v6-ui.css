@@ -58,8 +58,8 @@ body.mofumori-v6 .actions-grid{grid-template-columns:repeat(2,minmax(0,1fr))!imp
 .v6-more-list small{font-size:.5rem;color:var(--muted);margin-top:1px}
 body.night.mofumori-v6 .v6-care-more,
 body.night.mofumori-v6 .v6-more-list>button{background:#1a2622;color:var(--ink);border-color:var(--line)}
-.mofumori-v6 #birdSvg.v52-tap{animation:v6BirdTap .52s cubic-bezier(.2,.8,.25,1.35) 1 both}
-@keyframes v6BirdTap{0%,100%{transform:translateY(0) scale(1)}35%{transform:translateY(-9px) scale(1.035) rotate(-1.5deg)}70%{transform:translateY(2px) scale(.99)}}
+body.mofumori-v6 #birdSvg,
+body.mofumori-v6 #birdSvg.v52-tap{animation:none!important;transform:none!important}
 .mofumori-v6 #birdSvg .v52-live-decor{display:none!important}
 #weatherHint[data-state="loading"]{color:#7b806e}
 #weatherHint[data-state="ok"]{color:#2e8b72}

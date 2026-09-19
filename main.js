@@ -443,7 +443,7 @@ function cancelQueuedCloudSave(){
   cloudSaveTimer=null;
 }
 async function putCloudSave(record){
-  const response=await fetch('/api/cloud-save',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(recordForCloudStorage(record))});
+  const response=await fetch('/api/cloud-save',{method:'PUT',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},cache:'no-store',body:JSON.stringify(recordForCloudStorage(record))});
   const payload=await response.json().catch(()=>({}));
   if(!response.ok){if(payload.configured===false)cloudSaveEnabled=false;throw new Error(payload.message||`cloud_save_${response.status}`);}
   cloudSaveEnabled=true;
@@ -473,14 +473,14 @@ function clearLegacySave(){
 }
 function save(){
   G.lastUpdate=Date.now();
-  const record={version:'4.0.0',savedAt:new Date().toISOString(),data:stateForStorage()};
+  const record={version:'6.1.1',savedAt:new Date().toISOString(),data:stateForStorage()};
   const recordKey=activeSaveRecordKey();
   pendingSave=pendingSave.catch(()=>{}).then(()=>saveDbSet(recordKey,record)).catch(error=>{if(!scanCache.idb){scanCache.idb=true;console.error('IndexedDB save failed',error);}});
   queueCloudSave(record);
   return pendingSave;
 }
 function exportSave(){
-  const payload={version:'4.0.0',savedAt:new Date().toISOString(),data:stateForStorage()};
+  const payload={version:'6.1.1',savedAt:new Date().toISOString(),data:stateForStorage()};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
@@ -1015,7 +1015,15 @@ function renderBird(){
       ${action==='bath'?[0,1,2,3,4,5,6].map(i=>`<ellipse cx="${58+i*12+Math.sin(animF*0.25+i)*4}" cy="${154+(animF*1.4+i*9)%44}" rx="${1.4+Math.sin(animF*0.1+i)*0.6}" ry="${2.2+Math.cos(animF*0.12+i)*0.7}" fill="#9bd7ff" opacity="${1-((animF*1.4+i*9)%44)/45}"/>`).join(''):''}
     </g>`;
 }
-function doAction(n,cb){if(action||(G.isSleeping&&n!=='wake')){if(G.isSleeping)setMsg('いまは眠っているよ。起こしてからお世話してね。');return false}action=n;recordBondAction(n);cb();updateUI();setTimeout(()=>{action=null;updateUI();},1400);return true}
+let actionStopTimer=null;
+function doAction(n,cb){
+  if(action||(G.isSleeping&&n!=='wake')){if(G.isSleeping)setMsg('いまは眠っているよ。起こしてからお世話してね。');return false}
+  action=n;recordBondAction(n);cb();updateUI();
+  if(actionStopTimer)clearTimeout(actionStopTimer);
+  const duration=n==='pet'?520:1400;
+  actionStopTimer=setTimeout(()=>{action=null;actionStopTimer=null;updateUI();renderBird();},duration);
+  return true;
+}
 function addCoins(amount,opts={}){
   if(!amount)return;
   G.coins=Math.max(0,G.coins+amount);
@@ -1877,6 +1885,8 @@ window.render_game_to_text=renderGameToText;
 let deterministicRemainder=0;
 window.advanceTime=(ms)=>{deterministicRemainder+=Math.max(0,Number(ms)||0);while(deterministicRemainder>=1000){deterministicRemainder-=1000;gameTick();}renderBird();};
 async function init(){
+  if(window.__mofumoriCacheResetPromise)await window.__mofumoriCacheResetPromise;
+  if(window.__mofumoriCacheResetting)return;
   await load();initMissions();renderStars();renderShop();renderInv();renderCustomize();renderMissions();updateUI();
   void initLocalAi();
   void initIdentityAndSocial();
@@ -1909,7 +1919,7 @@ async function init(){
   });
   const overlay=document.getElementById('loadingOverlay');
   if(overlay){setTimeout(()=>overlay.classList.add('hide'),950);}
-  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js').catch(error=>console.warn('Offline cache registration skipped',error));
+  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js?v=6.1.1',{updateViaCache:'none'}).catch(error=>console.warn('Offline cache registration skipped',error));
 }
 function saveName(){const n=document.getElementById('nameInput').value.trim();if(n){setCurrentBirdName(n);playBirdSound('feed');setMsg(`名前が「${n}」になった！`);save();updateUI()}hideModal('nameModal')}
 init();
