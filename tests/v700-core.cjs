@@ -27,6 +27,6 @@ has('main.js','if(isBeaver){','Beaver must have dedicated renderer');
 has('v7-ui.js','Mofumoriログイン','Local account UI must be present');
 has('v7-ui.js','FOREST JOURNEY','Forest progression UI must be present');
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
-assert.equal(pkg.version,'7.0.0');
-has('index.html',"window.MOFUMORI_BUILD='7.0.0'",'Browser build must rotate to v7');
+assert.match(pkg.version,/^7\./);
+has('index.html',`window.MOFUMORI_BUILD='${pkg.version}'`,'Browser build must match package version');
 console.log('v7 core regression checks passed');

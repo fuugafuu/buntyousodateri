@@ -20,20 +20,12 @@ const birds={
 };
 const minigameCategories={all:'すべて',quick:'サクッと',brain:'ひらめき',action:'アクション'};
 const minigames=[
-  {id:'catch',name:'シードキャッチ',icon:'🌾',desc:'動くシードを見つけてキャッチ',cost:8,type:'catch',category:'quick',difficulty:'かんたん'},
-  {id:'timing',name:'ぴったりストップ',icon:'🎯',desc:'緑のゾーンで止めよう',cost:8,type:'timing',category:'quick',difficulty:'ふつう'},
-  {id:'tap',name:'もぐもぐ連打',icon:'👆',desc:'15秒でどこまで連打できる？',cost:8,type:'tap',category:'quick',difficulty:'かんたん'},
-  {id:'sort',name:'ごはん仕分け',icon:'🥣',desc:'食べてよい物をすばやく判断',cost:10,type:'sort',category:'quick',difficulty:'ふつう',isNew:true},
-  {id:'memory',name:'なかま神経衰弱',icon:'🧠',desc:'同じ絵柄のペアを探そう',cost:12,type:'memory',category:'brain',difficulty:'ふつう'},
-  {id:'quiz',name:'どうぶつクイズ',icon:'❓',desc:'鳥や動物の豆知識に挑戦',cost:10,type:'quiz',category:'brain',difficulty:'ふつう'},
-  {id:'sing',name:'メロディまねっこ',icon:'🎹',desc:'光った音の順番を再現',cost:12,type:'sing',category:'brain',difficulty:'むずかしい'},
-  {id:'path',name:'ひかりの足あと',icon:'✨',desc:'番号どおりに足あとをたどる',cost:10,type:'path',category:'brain',difficulty:'ふつう'},
-  {id:'maze',name:'おうちへ帰ろう',icon:'🏡',desc:'迷路を抜けておうちを目指す',cost:12,type:'maze',category:'brain',difficulty:'ふつう',isNew:true},
-  {id:'rhythm',name:'リズムステップ',icon:'🎵',desc:'ノーツが線に来たらタップ',cost:10,type:'rhythm',category:'action',difficulty:'むずかしい'},
-  {id:'fly',name:'フライトラン',icon:'🕊️',desc:'障害物をよけて進もう',cost:12,type:'fly',category:'action',difficulty:'むずかしい'},
-  {id:'balance',name:'しっぽバランス',icon:'⚖️',desc:'左右を押して中央をキープ',cost:10,type:'balance',category:'action',difficulty:'ふつう'},
-  {id:'treasure',name:'森の宝探し',icon:'💎',desc:'少ない手数で宝を探そう',cost:10,type:'treasure',category:'action',difficulty:'ふつう'},
-  {id:'dodge',name:'しずくよけ',icon:'☔',desc:'左右に動いて雨粒をよける',cost:10,type:'dodge',category:'action',difficulty:'むずかしい'}
+  {id:'catch',name:'シードキャッチ',icon:'🌾',desc:'動くシードをすばやく追いかけよう',cost:0,type:'catch',category:'quick',difficulty:'かんたん'},
+  {id:'timing',name:'止まり木ストップ',icon:'🎯',desc:'ちょうどいい位置でピタッと止める',cost:0,type:'timing',category:'quick',difficulty:'ふつう'},
+  {id:'memory',name:'なかま神経衰弱',icon:'🧠',desc:'同じ仲間のカードをそろえよう',cost:0,type:'memory',category:'brain',difficulty:'ふつう'},
+  {id:'rhythm',name:'さえずりリズム',icon:'🎵',desc:'ラインに来た音符をタイミングよくタップ',cost:0,type:'rhythm',category:'action',difficulty:'むずかしい'},
+  {id:'fly',name:'森のフライト',icon:'🪽',desc:'タップで高度を調整して障害物を避ける',cost:0,type:'fly',category:'action',difficulty:'むずかしい'},
+  {id:'maze',name:'おうちへ帰ろう',icon:'🏡',desc:'迷路を抜けて最短でおうちへ帰ろう',cost:0,type:'maze',category:'brain',difficulty:'ふつう'}
 ];
 const shopData={
   food:[
@@ -474,14 +466,14 @@ function clearLegacySave(){
 }
 function save(){
   G.lastUpdate=Date.now();
-  const record={version:'7.0.0',savedAt:new Date().toISOString(),data:stateForStorage()};
+  const record={version:'7.1.0',savedAt:new Date().toISOString(),data:stateForStorage()};
   const recordKey=activeSaveRecordKey();
   pendingSave=pendingSave.catch(()=>{}).then(()=>saveDbSet(recordKey,record)).catch(error=>{if(!scanCache.idb){scanCache.idb=true;console.error('IndexedDB save failed',error);}});
   queueCloudSave(record);
   return pendingSave;
 }
 function exportSave(){
-  const payload={version:'7.0.0',savedAt:new Date().toISOString(),data:stateForStorage()};
+  const payload={version:'7.1.0',savedAt:new Date().toISOString(),data:stateForStorage()};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
@@ -1092,7 +1084,7 @@ function selectMinigame(id){
   document.getElementById('minigameSelect').style.display='none';
   document.getElementById('minigamePlay').style.display='block';
   document.getElementById('mgName').textContent=currentMg.name;
-  document.getElementById('startMgBtn').textContent=`開始(${currentMg.cost}💰)`;
+  document.getElementById('startMgBtn').textContent=currentMg.cost>0?`開始(${currentMg.cost}💰)`:'無料で開始';
   const best=document.getElementById('mgBest');if(best)best.textContent=`ベスト ${G.minigameStats.bestScores[currentMg.id]||0}`;
   document.getElementById('mgScore').textContent='0';
   document.getElementById('mgTime').textContent='15';
@@ -1125,22 +1117,17 @@ function startCurrentMinigame(){
   document.getElementById('startMgBtn').style.display='none';
   save();updateUI();
   const type=currentMg.type||currentMg.id;
+  const best=Number(G.minigameStats.bestScores[currentMg.id]||0);
+  const variant=Math.max(0,Math.min(3,Math.floor(best/15)));
+  mgData.difficulty=variant+1;
   switch(type){
-    case'catch':startCatchGame(currentMg.variant);break;
-    case'timing':startTimingGame(currentMg.variant);break;
-    case'memory':startMemoryGame(currentMg.variant);break;
-    case'rhythm':startRhythmGame(currentMg.variant);break;
-    case'tap':startTapGame(currentMg.variant);break;
-    case'quiz':startQuizGame(currentMg.variant);break;
-    case'fly':startFlyGame(currentMg.variant);break;
-    case'sing':startSingGame(currentMg.variant);break;
-    case'balance':startBalanceGame(currentMg.variant);break;
-    case'treasure':startTreasureGame(currentMg.variant);break;
-    case'dodge':startDodgeGame(currentMg.variant);break;
-    case'path':startPathGame(currentMg.variant);break;
-    case'sort':startSortGame();break;
+    case'catch':startCatchGame(variant);break;
+    case'timing':startTimingGame(variant);break;
+    case'memory':startMemoryGame(variant);break;
+    case'rhythm':startRhythmGame(variant);break;
+    case'fly':startFlyGame(variant);break;
     case'maze':startMazeGame();break;
-    default:startTapGame(currentMg.variant);break;
+    default:startCatchGame(variant);break;
   }
   mgTimer=setInterval(()=>{mgData.time--;document.getElementById('mgTime').textContent=mgData.time;if(mgData.time<=0)endMinigame()},1000);
 }
@@ -1150,7 +1137,8 @@ function startExtraMinigame(){startTapGame();}
 function endMinigame(){
   if(!mgActive)return;
   mgActive=false;clearMinigameRuntime();
-  const r=Math.floor(mgScore*3);addCoins(r);G.happiness=Math.min(100,G.happiness+Math.min(mgScore,10));
+  const difficulty=Math.max(1,Number(mgData.difficulty)||1);
+  const r=Math.min(60,Math.floor(mgScore*2+difficulty*2));addCoins(r);G.happiness=Math.min(100,G.happiness+Math.min(mgScore,10));
   const gameId=currentMg&&currentMg.id;
   let newBest=false;
   if(gameId){const oldBest=G.minigameStats.bestScores[gameId]||0;newBest=mgScore>oldBest;G.minigameStats.bestScores[gameId]=Math.max(oldBest,mgScore);G.minigameStats.lastPlayed=gameId;G.minigameStats.lastPlayedDate=new Date().toLocaleDateString('sv-SE');}
@@ -1161,7 +1149,7 @@ function endMinigame(){
   document.getElementById('startMgBtn').style.display='block';
   document.getElementById('mgTarget').style.display='none';
   document.getElementById('mgContent').innerHTML='';
-  showToast(`${newBest?'🏆 NEW BEST! ':'ゲーム終了！'}${r}コイン獲得`,'achievement');
+  const grade=mgScore>=30?'S':mgScore>=18?'A':mgScore>=9?'B':'C';showToast(`${newBest?'🏆 NEW BEST! ':'ゲーム終了！'}RANK ${grade} / ${r}コイン`,'achievement');
   setMsg(`スコア${mgScore}！🎮`);save();updateUI();
 }
 
@@ -1812,12 +1800,12 @@ function localChatReply(text){
   }
   if(/お腹|ごはん|食べ/.test(text))return G.hunger<45?'お腹がすいたよ。シードを少しもらえるとうれしいな。':'今はお腹いっぱい。ありがとう！';
   if(/好き|かわいい|大事/.test(text))return `${name}も、あなたと過ごす時間が大好き！`;
-  if(/遊|ゲーム/.test(text))return 'ミニゲームなら「ごはん仕分け」と「おうちへ帰ろう」が新しく増えたよ！';
+  if(/遊|ゲーム/.test(text))return 'ミニゲームは6種類に整理したよ。シードキャッチや森のフライトで遊ぼう！';
   return pickDialog('idle',[`${name}はうれしそうにうなずいた。`]);
 }
 function renderChangeLog(){
   const el=document.getElementById('changeLogArea');if(!el)return;
-  el.innerHTML=`<div><strong>v3.0 まるごとリニューアル</strong></div><ul><li>お部屋・UI・動物テクスチャを全面刷新</li><li>ミニゲームを14種類に整理し、新作2種類を追加</li><li>セーブ復旧、残留タイマー、睡眠入力、状態変化を安定化</li><li>ミッション5個ごとにダイヤ+2</li></ul>`;
+  el.innerHTML=`<div><strong>v7.1 安定化アップデート</strong></div><ul><li>夜テーマの配色と仲間画面を全面調整</li><li>ローカルゲームを遊びやすい6種類に厳選</li><li>オンライン対戦の不正値・早送り送信をサーバー側で検査</li><li>異常操作を含む自動バグ監査を追加</li></ul>`;
 }
 function submitBugReport(){
   const inp=document.getElementById('bugInput');const text=inp.value.trim();if(!text)return;
@@ -1944,7 +1932,7 @@ async function init(){
   });
   const overlay=document.getElementById('loadingOverlay');
   if(overlay){setTimeout(()=>overlay.classList.add('hide'),950);}
-  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js?v=7.0.0',{updateViaCache:'none'}).catch(error=>console.warn('Offline cache registration skipped',error));
+  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js?v=7.1.0',{updateViaCache:'none'}).catch(error=>console.warn('Offline cache registration skipped',error));
 }
 function saveName(){const n=document.getElementById('nameInput').value.trim();if(n){setCurrentBirdName(n);playBirdSound('feed');setMsg(`名前が「${n}」になった！`);save();updateUI()}hideModal('nameModal')}
 init();

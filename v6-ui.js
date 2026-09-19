@@ -191,7 +191,7 @@ function friendRows(){
 }
 function renderArena(){
   const root=$('#v6ArenaBody');if(!root)return;
-  if(!logged()){root.innerHTML='<div class="v6-login-gate"><span>⚔</span><h3>オンライン対戦</h3><p>Googleログインするとランダムマッチとフレンド対戦が使えます。</p><button id="v6LoginArena">ログイン画面を開く</button></div>';$('#v6LoginArena')?.addEventListener('click',()=>{closeSheet($('#v6Arena'));openAccountHub?.()});return}
+  if(!logged()){root.innerHTML='<div class="v6-login-gate"><span>⚔</span><h3>オンライン対戦</h3><p>ログインするとランダムマッチとフレンド対戦が使えます。</p><button id="v6LoginArena">ログイン画面を開く</button></div>';$('#v6LoginArena')?.addEventListener('click',()=>{closeSheet($('#v6Arena'));openAccountHub?.()});return}
   const q=A.dash?.queue;
   root.innerHTML=`<section class="v6-arena-intro"><div><small>BUNCHO ARENA</small><h3>3つの競技で育てた個体を試す</h3></div><span>SERVER MATCH</span></section>
     <section class="v6-mode"><h3>ゲームを選ぶ</h3><div class="v6-game-list">${gameCards()}</div></section>
@@ -249,6 +249,7 @@ function renderMatchLobby(m){
   const b=$('#v6Battle'),g=GAME[m.gameType]||GAME.flight;
   b.innerHTML=`<div class="v6-match-top"><button id="v6LeaveBattle">×</button><div><small>${g.icon} ${g.name}</small><b id="v6MatchStatus">対戦準備中</b></div><span id="v6OpponentLive">相手接続中</span></div>
   <div class="v6-versus"><article><span>${petIcon(m.me.pet)}</span><b>${esc(m.me.pet?.name)}</b><small>YOU / ${m.me.pet?.stats?.rating||1000}</small></article><strong>VS</strong><article><span>${petIcon(m.opponent.pet)}</span><b>${esc(m.opponent.pet?.name)}</b><small>${esc(m.opponent.profile?.displayName||'RIVAL')} / ${m.opponent.pet?.stats?.rating||1000}</small></article></div>
+  <div class="v71-live-duel"><div><small>YOU</small><i><em id="v71MeLive"></em></i><b id="v71MeLiveText">0%</b></div><div><small>RIVAL</small><i><em id="v71RivalLive"></em></i><b id="v71RivalLiveText">0%</b></div></div>
   <div id="v6Countdown" class="v6-countdown"></div><div id="v6GameStage" class="v6-game-stage"></div><div id="v6Result" class="v6-result"></div>`;
   $('#v6LeaveBattle').onclick=leaveBattle;
 }
@@ -260,17 +261,30 @@ async function pollMatch(){
   if(!A.match)return;
   try{
     const r=await arena('match',{matchId:A.match.id});if(!r.data)return;A.match=r.data;updateOpponent(r.data);
+    const status=$('#v6MatchStatus');if(status&&A.playing&&status.textContent==='再接続中…')status.textContent='対戦中';
     if(r.data.status==='finished')showResult(r.data);
-  }catch(e){}
+  }catch(e){
+    const status=$('#v6MatchStatus');if(status&&A.playing)status.textContent='再接続中…';
+  }
+}
+function livePercent(game,p){
+  if(game==='flight')return clamp(Number(p?.height||0)/21600*100,0,100);
+  if(game==='kale')return clamp(Number(p?.count||0)/181*100,0,100);
+  return clamp(Number(p?.hits||0)/12*100,0,100);
+}
+function updateLiveMeter(side,p){
+  const pct=livePercent(A.match?.gameType,p),bar=$(side==='me'?'#v71MeLive':'#v71RivalLive'),label=$(side==='me'?'#v71MeLiveText':'#v71RivalLiveText');
+  if(bar)bar.style.width=pct.toFixed(1)+'%';if(label)label.textContent=Math.round(pct)+'%';
 }
 function updateOpponent(m){
   const el=$('#v6OpponentLive');if(!el)return;
-  const p=m.opponent?.progress||{};
+  const p=m.opponent?.progress||{};updateLiveMeter('rival',p);
   if(m.gameType==='flight')el.textContent=`RIVAL ${Math.round(p.height||0)}m`;
   else if(m.gameType==='kale')el.textContent=`RIVAL ${p.count||0} bite`;
   else el.textContent=`RIVAL ${p.hits||0} hit`;
 }
 async function progress(obj){
+  updateLiveMeter('me',obj);
   if(!A.match||Date.now()-A.lastProgress<650)return;A.lastProgress=Date.now();
   try{await arena('progress',{matchId:A.match.id,progress:obj})}catch(e){}
 }
@@ -330,8 +344,10 @@ async function submitGame(raw){
 function showResult(m){
   A.playing=false;A.gameState?.stop?.();const me=m.me?.profile?.playerId,w=m.winnerPlayerId;const draw=!w,win=w===me;
   const root=$('#v6Result');if(!root)return;$('#v6MatchStatus').textContent='FINISHED';$('#v6GameStage').innerHTML='';
-  root.innerHTML=`<div class="result-burst ${draw?'draw':win?'win':'lose'}"><small>${draw?'DRAW':win?'WIN':'LOSE'}</small><h2>${draw?'引き分け':win?'勝利！':'惜敗'}</h2><div><span><b>${Number(m.me.score||0).toLocaleString()}</b><small>YOU</small></span><strong>:</strong><span><b>${Number(m.opponent.score||0).toLocaleString()}</b><small>RIVAL</small></span></div><p>RATING ${m.me.pet?.stats?.rating||1000}</p><button id="v6ResultClose">ホームへ戻る</button></div>`;
-  clearInterval(A.matchPoll);window.v7RefreshProgress?.(true);$('#v6ResultClose').onclick=()=>{closeBattle();refreshArena(true)}
+  root.innerHTML=`<div class="result-burst ${draw?'draw':win?'win':'lose'}"><small>${draw?'DRAW':win?'WIN':'LOSE'}</small><h2>${draw?'引き分け':win?'勝利！':'惜敗'}</h2><div><span><b>${Number(m.me.score||0).toLocaleString()}</b><small>YOU</small></span><strong>:</strong><span><b>${Number(m.opponent.score||0).toLocaleString()}</b><small>RIVAL</small></span></div><p>RATING ${m.me.pet?.stats?.rating||1000}</p><div class="v71-result-actions"><button id="v6ResultAgain">もう一戦</button><button id="v6ResultClose" class="subtle">閉じる</button></div></div>`;
+  clearInterval(A.matchPoll);window.v7RefreshProgress?.(true);
+  $('#v6ResultAgain').onclick=()=>{closeBattle();openArena()};
+  $('#v6ResultClose').onclick=()=>{closeBattle();refreshArena(true)}
 }
 async function leaveBattle(){
   if(A.playing&&!confirm('対戦を途中で終了しますか？'))return;

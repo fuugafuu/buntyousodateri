@@ -10,3 +10,190 @@
 .v7-next-unlock{display:flex;align-items:center;gap:9px;border:1px dashed #cfdcd6;border-radius:12px;padding:9px 10px;background:#f8fbf9}.v7-next-unlock>span{font-size:1.25rem}.v7-next-unlock>div{display:grid}.v7-next-unlock small{font-size:.46rem;letter-spacing:.1em;color:#75857f}.v7-next-unlock b{font-size:.58rem}
 body.night .v7-journey,body.night .v7-auth-field input,body.night .v7-auth-tabs button,body.night .v7-goals article,body.night .v7-next-unlock{background:#18231f;color:#edf4f1;border-color:#34433e}body.night .v7-auth-tabs button.active,body.night .v7-auth-submit,body.night .v7-goals article.done>span{background:#d8eee6;color:#17342d}
 @media(max-width:700px){.v7-goals{grid-template-columns:1fr}.v7-journey{width:calc(100% - 14px);padding:11px}.v7-goals article{grid-template-columns:26px 1fr auto}}
+
+
+/* v7.1 theme consolidation + companion collection */
+body.night.mofumori-v6{
+  --ink:#edf5f2;--muted:#a8b8b2;--line:#354842;--paper:#17231f;--soft:#1d2a26;--accent:#77d2b2;--accent2:#9be0c8;
+  background:#101815!important;color:var(--ink)!important;
+}
+body.night.mofumori-v6 .header,
+body.night.mofumori-v6 .habitat-card,
+body.night.mofumori-v6 .care-card,
+body.night.mofumori-v6 .panel,
+body.night.mofumori-v6 .modal-content,
+body.night.mofumori-v6 .v6-sheet-card,
+body.night.mofumori-v6 .v7-journey{
+  background:#17231f!important;color:#edf5f2!important;border-color:#354842!important;
+}
+body.night.mofumori-v6 .habitat-toolbar,
+body.night.mofumori-v6 .message-bubble,
+body.night.mofumori-v6 .stat-card,
+body.night.mofumori-v6 .v6-profile-mini,
+body.night.mofumori-v6 .v6-key-stats,
+body.night.mofumori-v6 .v6-pet-hero,
+body.night.mofumori-v6 .v6-sex-card,
+body.night.mofumori-v6 .v6-body-grid>div,
+body.night.mofumori-v6 .v6-metric,
+body.night.mofumori-v6 .v6-game-card,
+body.night.mofumori-v6 .v6-pet-choice,
+body.night.mofumori-v6 .v6-random,
+body.night.mofumori-v6 .v6-friend-arena>button,
+body.night.mofumori-v6 .v6-challenges article,
+body.night.mofumori-v6 .v6-target,
+body.night.mofumori-v6 .v6-more-list>button,
+body.night.mofumori-v6 .v7-goals article,
+body.night.mofumori-v6 .v7-next-unlock,
+body.night.mofumori-v6 .minigame-card,
+body.night.mofumori-v6 .shop-item,
+body.night.mofumori-v6 .inventory-item{
+  background:#1d2b26!important;color:#edf5f2!important;border-color:#3b5049!important;
+}
+body.night.mofumori-v6 .v6-sheet-card>header{background:rgba(23,35,31,.97)!important}
+body.night.mofumori-v6 .v6-sheet-card>header button,
+body.night.mofumori-v6 .back-btn,
+body.night.mofumori-v6 .modal-btn.secondary,
+body.night.mofumori-v6 .customize-btn,
+body.night.mofumori-v6 .shop-tab{
+  background:#24342f!important;color:#edf5f2!important;border-color:#40564f!important;
+}
+body.night.mofumori-v6 small,
+body.night.mofumori-v6 em,
+body.night.mofumori-v6 .v6-metric span,
+body.night.mofumori-v6 .v6-body-grid small,
+body.night.mofumori-v6 .v6-body-grid em,
+body.night.mofumori-v6 .v6-game-card small,
+body.night.mofumori-v6 .v6-pet-choice small,
+body.night.mofumori-v6 .v6-random p,
+body.night.mofumori-v6 .v6-friend-arena small,
+body.night.mofumori-v6 .v7-goals small,
+body.night.mofumori-v6 .v7-next-unlock small,
+body.night.mofumori-v6 .minigame-card-desc{
+  color:#a8b8b2!important;opacity:1!important;
+}
+body.night.mofumori-v6 .v6-mode>h3,
+body.night.mofumori-v6 .v6-friend-arena>h3,
+body.night.mofumori-v6 .v6-challenges>h3,
+body.night.mofumori-v6 .panel-title,
+body.night.mofumori-v6 .modal-title,
+body.night.mofumori-v6 .minigame-name{color:#f3f8f6!important}
+body.night.mofumori-v6 .v6-metric i,
+body.night.mofumori-v6 .v7-xp{background:#2b3b36!important}
+body.night.mofumori-v6 .main-display{
+  background:linear-gradient(180deg,#101f2b 0 64%,#18272b 64% 100%)!important;
+}
+body.night.mofumori-v6 .room-scene{
+  background-image:linear-gradient(90deg,rgba(177,220,208,.035) 1px,transparent 1px),linear-gradient(rgba(177,220,208,.035) 1px,transparent 1px)!important;
+}
+body.night.mofumori-v6 .room-scene:after{border-top-color:rgba(255,255,255,.12)!important;background:repeating-linear-gradient(95deg,rgba(0,0,0,.13) 0 2px,transparent 2px 72px)!important}
+body.night.mofumori-v6 .scene-window{border-color:#263a35!important;background:linear-gradient(#111a32,#334866)!important}
+body.night.mofumori-v6 .scene-cloud,
+body.night.mofumori-v6 .scene-cloud:before{background:#8395ad!important;opacity:.35!important}
+body.night.mofumori-v6 .scene-shelf{filter:brightness(.66)}
+body.night.mofumori-v6 .scene-plant{filter:brightness(.72) saturate(.85)}
+body.night.mofumori-v6 .scene-rug{filter:brightness(.5) saturate(.75)}
+body.night.mofumori-v6 .message-bubble{background:#16231f!important;border-top-color:#354842!important}
+body.night.mofumori-v6 .message-avatar{background:#22342e!important;color:#fff!important;box-shadow:none!important}
+body.night.mofumori-v6 .fullscreen-btn{background:#22342e!important;color:#eaf4f0!important;border-color:#40564f!important}
+body.night.mofumori-v6 .v6-nav{background:rgba(20,31,27,.96)!important;border-color:#354842!important}
+body.night.mofumori-v6 .v6-nav button{color:#aab9b3!important}
+body.night.mofumori-v6 .v6-nav button.active{background:#284239!important;color:#9de4c9!important}
+body.night.mofumori-v6 .v6-nav .arena{border-color:#101815!important;background:#dcebe5!important;color:#18322a!important}
+body.night.mofumori-v6 .v6-battle{background:#101815!important;color:#edf5f2!important}
+body.night.mofumori-v6 .v6-match-top>button,
+body.night.mofumori-v6 .v6-match-top>span,
+body.night.mofumori-v6 .v6-versus article>span,
+body.night.mofumori-v6 .result-burst{
+  background:#1c2a25!important;color:#edf5f2!important;border-color:#3a5048!important;
+}
+body.night.mofumori-v6 .flight-controls button,
+body.night.mofumori-v6 .kale-tap,
+body.night.mofumori-v6 .perch-stage{
+  background:#1c2a25!important;color:#edf5f2!important;border-color:#3a5048!important;
+}
+body.night.mofumori-v6 .flight-field{background:linear-gradient(#142536,#1d342f 60%,#2b2c24)!important;border-color:#40564f!important}
+body.night.mofumori-v6 .perch-stage{background:linear-gradient(#192b26,#27291f)!important}
+body.night.mofumori-v6 input,
+body.night.mofumori-v6 select,
+body.night.mofumori-v6 textarea{
+  background:#111b18!important;color:#edf5f2!important;border-color:#40564f!important;
+}
+body.night.mofumori-v6 input::placeholder,
+body.night.mofumori-v6 textarea::placeholder{color:#899a94!important}
+
+/* Companion collection v7 */
+#birdModal .v7-collection-modal{width:min(760px,calc(100vw - 20px));max-height:min(90vh,860px);overflow:auto;padding:16px!important;border-radius:24px!important}
+.v7-collection-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.v7-collection-head small{font-size:.48rem;letter-spacing:.16em;color:#2e8b72;font-weight:900}
+.v7-collection-head h2{font-size:1.18rem;margin:2px 0}
+.v7-collection-head>button{width:36px;height:36px;border:1px solid #dce5e1;border-radius:50%;background:#fff;color:#687972;font-size:1.25rem}
+.v7-collection-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #dde7e2;background:#f8fbf9;border-radius:16px;margin-bottom:9px}
+.v7-current-pet{display:flex;align-items:center;gap:10px;min-width:0}.v7-current-pet>span{width:48px;height:48px;border-radius:13px;background:#eaf5f0;display:grid;place-items:center;font-size:1.65rem;flex:0 0 48px}.v7-current-pet>div{display:grid;min-width:0}.v7-current-pet small{font-size:.47rem;letter-spacing:.1em;color:#788880}.v7-current-pet b{font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.v7-current-pet em{font-size:.5rem;color:#75857f;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v7-collection-count{display:grid;justify-items:center;min-width:52px}.v7-collection-count b{font-size:1.1rem}.v7-collection-count small{font-size:.46rem;color:#75857f}.v7-collection-count span{font-size:.48rem;margin-top:2px;color:#6b786f}
+.v7-collection-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:4px;border-radius:13px;background:#eef3f0;margin-bottom:10px}
+.v7-collection-tabs button{border:0;border-radius:10px;background:transparent;padding:9px 10px;color:#6d7e77;font-size:.58rem;font-weight:900}
+.v7-collection-tabs button.active{background:#fff;color:#1e4237;box-shadow:0 3px 12px rgba(38,69,59,.08)}
+#birdModal[data-v7-tab="pets"] #gachaHub{display:none!important}
+#birdModal[data-v7-tab="gacha"] #birdGrid{display:none!important}
+#birdModal[data-v7-tab="gacha"] #gachaHub{margin-top:2px}
+#birdModal .bird-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important;gap:7px!important;max-height:52vh!important;overflow:auto;padding:2px!important}
+#birdModal .pet-card{min-height:145px;border:1px solid #dfe7e3!important;border-radius:15px!important;background:#fff!important;box-shadow:none!important;padding:11px!important;display:grid!important;align-content:center;justify-items:center;gap:3px}
+#birdModal .pet-card.selected{border-color:#54aa8d!important;box-shadow:inset 0 0 0 1px #54aa8d!important;background:#f2faf6!important}
+#birdModal .pet-card .pet-icon{font-size:2.2rem!important}
+#birdModal .pet-card b{font-size:.67rem!important}
+#birdModal .pet-card small{font-size:.49rem!important;color:#76867f!important}
+#birdModal .pet-card em{font-size:.48rem!important;color:#2e8b72!important;font-style:normal!important}
+#birdModal .modal-buttons{margin-top:10px!important}
+#birdModal #buyBirdBtn{display:none!important}
+#birdModal .gacha-hub{border:1px solid #dce6e1!important;border-radius:16px!important;background:#f8fbf9!important;padding:14px!important}
+body.night.mofumori-v6 #birdModal .v7-collection-modal,
+body.night.mofumori-v6 #birdModal .pet-card,
+body.night.mofumori-v6 #birdModal .gacha-hub,
+body.night.mofumori-v6 .v7-collection-summary{
+  background:#1a2823!important;color:#edf5f2!important;border-color:#3a4e47!important;
+}
+body.night.mofumori-v6 .v7-current-pet>span{background:#263b34!important}
+body.night.mofumori-v6 .v7-collection-tabs{background:#111a17!important}
+body.night.mofumori-v6 .v7-collection-tabs button{color:#a8b8b2!important}
+body.night.mofumori-v6 .v7-collection-tabs button.active{background:#294139!important;color:#b8f0dc!important;box-shadow:none!important}
+body.night.mofumori-v6 #birdModal .pet-card.selected{background:#233b32!important;border-color:#6dc9a9!important;box-shadow:inset 0 0 0 1px #6dc9a9!important}
+body.night.mofumori-v6 #birdModal .pet-card small{color:#a8b8b2!important}
+body.night.mofumori-v6 #birdModal .pet-card em{color:#8bd8bd!important}
+body.night.mofumori-v6 .v7-collection-head>button{background:#24342f!important;color:#edf5f2!important;border-color:#40564f!important}
+
+/* Local games: clearer, larger and less noisy */
+body.mofumori-v6 #minigamePanel{border-radius:18px!important}
+body.mofumori-v6 #minigamePanel .minigame-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:none}
+body.mofumori-v6 #minigamePanel .minigame-card{min-height:118px;border:1px solid var(--line)!important;border-radius:14px!important;background:#fafcfb!important;display:grid;align-content:center}
+body.mofumori-v6 #minigamePanel .minigame-card-icon{font-size:1.65rem}
+body.mofumori-v6 #minigamePanel .minigame-card-name{font-size:.68rem}
+body.mofumori-v6 #minigamePanel .minigame-card-desc{font-size:.52rem;line-height:1.45}
+body.mofumori-v6 #minigamePanel .minigame-card-meta{font-size:.47rem}
+body.night.mofumori-v6 #minigamePanel .minigame-card{background:#1d2b26!important;border-color:#3b5049!important;color:#edf5f2!important}
+body.night.mofumori-v6 #minigamePanel .minigame-area,
+body.night.mofumori-v6 #minigamePanel .minigame-content{color:#edf5f2!important}
+
+@media(max-width:520px){
+  #birdModal .v7-collection-modal{width:calc(100vw - 10px);padding:12px!important}
+  #birdModal .bird-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-height:55vh!important}
+  #birdModal .pet-card{min-height:132px!important;padding:8px!important}
+  .v7-collection-summary{padding:9px}
+  .v7-current-pet>span{width:42px;height:42px;flex-basis:42px;font-size:1.4rem}
+  body.mofumori-v6 #minigamePanel .minigame-grid{grid-template-columns:1fr}
+}
+
+.v71-result-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:14px}
+.v71-result-actions button{border:0;border-radius:11px;background:var(--ink);color:white;padding:10px 12px;font-size:.58rem;font-weight:900}
+.v71-result-actions button.subtle{background:#edf2ef;color:#63736d}
+body.night.mofumori-v6 .v71-result-actions button{background:#dcebe5;color:#18322a}
+body.night.mofumori-v6 .v71-result-actions button.subtle{background:#263730;color:#b8c6c1}
+
+.v71-live-duel{width:min(620px,100%);margin:0 auto 10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.v71-live-duel>div{display:grid;grid-template-columns:auto 1fr auto;gap:7px;align-items:center;border:1px solid #d6e1dc;background:#fff;border-radius:11px;padding:7px 9px}
+.v71-live-duel small,.v71-live-duel b{font-size:.48rem;color:#687a72}
+.v71-live-duel i{height:5px;background:#edf2ef;border-radius:999px;overflow:hidden}
+.v71-live-duel i em{display:block;height:100%;width:0;background:#54ae90;border-radius:inherit;transition:width .35s linear}
+.v71-live-duel>div:nth-child(2) i em{background:#8a9eb8}
+body.night.mofumori-v6 .v71-live-duel>div{background:#1c2a25;border-color:#3a5048}
+body.night.mofumori-v6 .v71-live-duel small,body.night.mofumori-v6 .v71-live-duel b{color:#b5c5bf}
+body.night.mofumori-v6 .v71-live-duel i{background:#2c3d37}
