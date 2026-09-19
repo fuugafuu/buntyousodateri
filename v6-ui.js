@@ -73,7 +73,7 @@ function build(){
     const s=document.createElement('div');s.id='v6More';s.className='v6-sheet';
     s.innerHTML='<div class="v6-sheet-card v6-more-card"><header><div><small>MORE</small><h2>その他</h2></div><button data-close>×</button></header><div class="v6-more-list"><button data-tool="shop"><span>🛒</span><div><b>ショップ</b><small>ごはん・アイテムを買う</small></div></button><button data-tool="inventory"><span>🎒</span><div><b>持ち物</b><small>持っている道具を使う</small></div></button><button data-tool="minigame"><span>🎮</span><div><b>ひとり遊び</b><small>オフラインのミニゲーム</small></div></button><button data-tool="missions"><span>✅</span><div><b>ミッション</b><small>今日の目標を見る</small></div></button><button data-tool="chat"><span>🧠</span><div><b>端末AI</b><small>文鳥とおしゃべり</small></div></button><button data-tool="customize"><span>⚙️</span><div><b>設定</b><small>天気・表示・サウンド</small></div></button><button data-tool="logs"><span>🧰</span><div><b>記録</b><small>セーブ・不具合情報</small></div></button></div></div>';
     document.body.appendChild(s);s.querySelector('[data-close]').onclick=()=>closeSheet(s);
-    $('[data-tool]',s).forEach(b=>b.addEventListener('click',()=>openLegacyTool(b.dataset.tool)));
+    $$('[data-tool]',s).forEach(b=>b.addEventListener('click',()=>openLegacyTool(b.dataset.tool)));
   }
   if(!$('#v6Battle')){
     const b=document.createElement('div');b.id='v6Battle';b.className='v6-battle';document.body.appendChild(b);
