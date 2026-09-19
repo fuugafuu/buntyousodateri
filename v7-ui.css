@@ -255,3 +255,42 @@ body.night .v72-cpu-badge{background:#2b3b36;color:#b7c7c1}
   .v72-companion-toolbar{align-items:stretch;flex-direction:column}
   .v72-companion-toolbar .modal-btn{width:100%!important}
 }
+
+
+/* v7.2 arena tutorial / secure-ready / dual-bird games */
+.v72-arena-tutorial{width:min(560px,calc(100vw - 24px))!important}
+.v72-tutorial-steps{display:grid;gap:8px;margin:12px 0}
+.v72-tutorial-steps article{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:13px;background:var(--soft)}
+.v72-tutorial-steps article>span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#54ae90;color:white;font-size:.62rem;font-weight:900}
+.v72-tutorial-steps b{font-size:.64rem;display:block}.v72-tutorial-steps small{font-size:.52rem;line-height:1.45;color:var(--muted)}
+.v72-connection-check{width:min(620px,calc(100% - 22px));margin:10px auto 12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.78);display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;box-shadow:0 12px 35px rgba(25,72,58,.09)}
+.v72-connection-check>div:last-child{display:grid;gap:4px}.v72-connection-check b{font-size:.68rem}.v72-connection-check small{display:block;font-size:.5rem}.v72-connection-check button{margin-top:8px;border:0;border-radius:10px;padding:9px 12px;background:#244d40;color:#fff;font-weight:900}
+.v72-connection-check.complete{animation:v72ReadyOut .42s ease both}
+body.night .v72-connection-check{background:#1b2824;border-color:#3b5049}
+.v72-dual-field{position:relative}
+.flight-bird small,.perch-bird small,.v72-race-bird small{display:block;font-size:.38rem;line-height:1;font-weight:900;letter-spacing:.08em;background:rgba(255,255,255,.8);border-radius:999px;padding:2px 4px;margin-top:-2px;white-space:nowrap}
+#flightRivalBird{bottom:74px!important;transform:translateX(-50%) scale(.9);z-index:3}
+#flightBird{z-index:4}
+.v72-kale-duel{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(620px,100%);margin:0 auto}
+.v72-kale-duel article{min-height:230px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;border:1px solid var(--line);border-radius:16px;background:var(--soft)}
+.v72-duel-bird{font-size:3rem;filter:drop-shadow(0 8px 10px rgba(0,0,0,.12));animation:v72BirdIdle 1.8s ease-in-out infinite}
+.v72-rival-kale{display:grid;place-items:center;gap:6px;font-size:3rem;opacity:.72}.v72-rival-kale small{font-size:.48rem;color:var(--muted)}
+.v72-kale-duel .kale-tap{width:min(180px,80%)}
+.v72-dual-perch{min-height:190px!important;padding-top:50px!important}
+.v72-dual-perch #perchBird{top:12px!important;bottom:auto!important;z-index:4}
+.v72-dual-perch #perchRivalBird{top:52px!important;bottom:auto!important;z-index:3}
+.v72-race-track,.v72-ring-track{width:min(680px,100%);height:190px;position:relative;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#eaf7f2,#f7edd5)}
+.v72-race-track .lane{position:absolute;left:4%;right:4%;height:2px;background:rgba(46,92,77,.2)}.v72-race-track .lane.one{top:35%}.v72-race-track .lane.two{top:70%}
+.v72-race-bird{position:absolute;left:5%;transform:translateX(-50%);font-size:2.3rem;transition:left .18s cubic-bezier(.2,.8,.2,1);z-index:3}.v72-race-track #seedMeBird{top:16%}.v72-race-track #seedRivalBird{top:52%}
+.v72-finish{position:absolute;right:2%;top:8%;bottom:8%;display:grid;place-items:center;font-size:2rem}
+.v72-race-tap{width:min(440px,92%);margin:10px auto 0;display:block;border:0;border-radius:14px;padding:14px 18px;background:linear-gradient(145deg,#4faf8d,#2d8065);color:#fff;font-weight:900;font-size:.72rem;box-shadow:0 8px 20px rgba(45,128,101,.2)}
+.v72-race-tap.pop{animation:v72TapPop .14s ease}
+.v72-ring-track{height:150px;background:linear-gradient(180deg,#eef7ff,#f7f4df)}.v72-ring-track #ringMeBird{top:28%}.v72-ring-track #ringRivalBird{top:58%}.v72-ring{position:absolute;right:8%;top:36%;font-size:3.2rem;filter:drop-shadow(0 5px 8px rgba(0,0,0,.12))}
+.v72-timing-track{width:min(560px,90%);height:18px;margin:12px auto 0;position:relative;border-radius:999px;background:#e5ece8;overflow:hidden}.v72-timing-track i{position:absolute;left:43%;width:14%;top:0;bottom:0;background:rgba(84,174,144,.32)}.v72-timing-track em{position:absolute;top:-2px;left:0;width:8px;height:22px;border-radius:4px;background:#ff6577;transform:translateX(-50%)}
+body.night .v72-kale-duel article,body.night .v72-race-track,body.night .v72-ring-track{background:#192722;border-color:#3a5048}
+body.night .v72-timing-track{background:#2a3b35}
+.v72-debug-modal{width:min(760px,calc(100vw - 24px))!important}.v72-debug-modal textarea{width:100%;min-height:360px;margin-top:10px;padding:10px;border-radius:12px;font:500 .58rem/1.45 ui-monospace,SFMono-Regular,Menlo,monospace}
+.debug-friend{outline:1px dashed #8b64d6}
+@keyframes v72BirdIdle{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes v72TapPop{50%{transform:scale(.97)}}
+@keyframes v72ReadyOut{to{opacity:0;transform:translateY(-8px);height:0;margin:0;padding-top:0;padding-bottom:0;overflow:hidden}}
