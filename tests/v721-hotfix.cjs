@@ -11,6 +11,9 @@ const config=fs.readFileSync('api/config.js','utf8');
 const helper=fs.readFileSync('server/admin.cjs','utf8');
 const css=fs.readFileSync('v7-ui.css','utf8');
 const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
+const vercel=JSON.parse(fs.readFileSync('vercel.json','utf8'));
+const timeoutSql=fs.readFileSync('supabase/mofumori_v7_2_1_arena_timeout_priority.sql','utf8');
+const auditSql=fs.readFileSync('supabase/mofumori_v7_2_1_admin_audit.sql','utf8');
 
 assert.equal(pkg.version,'7.2.1');
 assert.ok(html.includes("window.MOFUMORI_BUILD='7.2.1'"));
@@ -38,5 +41,12 @@ assert.ok(ui.includes('id="v721ExitBattle"'),'visible exit-battle control missin
 assert.ok(ui.includes('id="fUp"')&&ui.includes('id="fDown"'),'2D flight vertical controls missing');
 assert.ok(ui.includes('y:y*2-1'),'flight vertical progress must sync online');
 assert.ok(css.includes('.v721-flight-2d')&&css.includes('.v721-admin-modal'));
+assert.equal(vercel.git.deploymentEnabled.main,true);
+assert.equal(vercel.git.deploymentEnabled['*'],false);
+assert.ok(timeoutSql.indexOf("now_ts>deadline")<timeoutSql.indexOf("m.status='ready'"),'hard timeout must be evaluated before ready-state handling');
+assert.ok(timeoutSql.includes("interval '2 seconds'"),'ready presence freshness must be strict');
+assert.ok(auditSql.includes('mofumori_admin_audit'),'admin audit migration missing');
+assert.ok(admin.includes("await audit(sb,user,'set_gacha_config'"));
+assert.ok(admin.includes("await audit(sb,user,'adjust_currency'"));
 
 console.log('v7.2.1 hotfix regression: gacha RPC, authenticated admin mode, heartbeat, timeout UX and 2D flight guards OK');
