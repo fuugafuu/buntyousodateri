@@ -94,7 +94,7 @@ async function loadMatch(sb,userKey,matchId){
   let oppProgress=side===1?(m.p2_progress||{}):(m.p1_progress||{});
   if(oppProfile?.isBot&&!((side===1?m.p2_score:m.p1_score)!=null))oppProgress={...oppProgress,...syntheticBotProgress(m.game_type,m.seed,m.starts_at,m.status)};
   const meSeen=side===1?m.p1_last_seen_at:m.p2_last_seen_at,oppSeen=side===1?m.p2_last_seen_at:m.p1_last_seen_at;
-  const opponentFresh=oppProfile?.isBot===true||(oppSeen&&Date.now()-Date.parse(oppSeen)<3500);
+  const opponentFresh=oppProfile?.isBot===true||(oppSeen&&Date.now()-Date.parse(oppSeen)<2500);
   return {
     id:m.id,gameType:m.game_type,status:m.status,seed:Number(m.seed||0),side,
     startsAt:m.starts_at,expiresAt:m.expires_at,finishedAt:m.finished_at||null,
