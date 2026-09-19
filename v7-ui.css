@@ -294,3 +294,7 @@ body.night .v72-timing-track{background:#2a3b35}
 @keyframes v72BirdIdle{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 @keyframes v72TapPop{50%{transform:scale(.97)}}
 @keyframes v72ReadyOut{to{opacity:0;transform:translateY(-8px);height:0;margin:0;padding-top:0;padding-bottom:0;overflow:hidden}}
+
+.v72-rival-action{animation:v72RivalAction .22s cubic-bezier(.2,.9,.3,1)}
+@keyframes v72RivalAction{50%{transform:translateY(-5px) scale(1.08);filter:brightness(1.08) saturate(.9)}}
+@media(prefers-reduced-motion:reduce){.v72-rival-action{animation:none!important}}
