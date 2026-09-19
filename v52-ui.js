@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const VERSION='5.2.0';
+const VERSION=window.MOFUMORI_BUILD||'6.1.3';
 const BOARDS={total:['🏆','総合','コレクション・交流・訪問を合算'],collection:['🪶','コレクション','種類・個体数・レア度から集計'],social:['🤝','交流','フレンド・訪問・交流回数から集計'],explorer:['🧭','おでかけ','訪問実績と直近7日の活動から集計']};
 const S={board:'total',rank:null,busy:false,last:0};
 const $=(q,r=document)=>r.querySelector(q), $$=(q,r=document)=>[...r.querySelectorAll(q)];
