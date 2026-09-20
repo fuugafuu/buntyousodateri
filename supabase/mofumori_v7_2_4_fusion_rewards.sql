@@ -159,3 +159,76 @@ end
 $$;
 revoke execute on function public.mofumori_arena_submit(text,uuid,integer,jsonb) from public,anon,authenticated;
 grant execute on function public.mofumori_arena_submit(text,uuid,integer,jsonb) to service_role;
+
+
+-- Bulk gifts and live visit care
+create or replace function public.mofumori_send_gift(
+  p_sender text,p_recipient text,p_item text,p_quantity integer
+) returns jsonb
+language plpgsql
+security definer
+set search_path=''
+as $$
+declare current_state jsonb; current_count integer;
+begin
+  if p_quantity is null or p_quantity<1 or p_quantity>9999 then raise exception 'invalid_quantity'; end if;
+  if not exists(select 1 from public.mofumori_friendships where owner_key=p_sender and friend_key=p_recipient) then raise exception 'not_friends'; end if;
+  select state into current_state from public.mofumori_saves where user_key=p_sender for update;
+  if current_state is null then raise exception 'save_missing'; end if;
+  current_count:=coalesce((current_state #>> array['data','inv',p_item])::integer,0);
+  if current_count<p_quantity then raise exception 'not_enough'; end if;
+  current_state:=jsonb_set(current_state,array['data','inv',p_item],to_jsonb(current_count-p_quantity),true);
+  current_state:=jsonb_set(current_state,array['savedAt'],to_jsonb(to_char(clock_timestamp() at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')),true);
+  update public.mofumori_saves set state=current_state,saved_at=now() where user_key=p_sender;
+  insert into public.mofumori_gifts(sender_key,recipient_key,item_code,quantity) values(p_sender,p_recipient,p_item,p_quantity);
+  return current_state;
+end
+$$;
+revoke execute on function public.mofumori_send_gift(text,text,text,integer) from public,anon,authenticated;
+grant execute on function public.mofumori_send_gift(text,text,text,integer) to service_role;
+
+create or replace function public.mofumori_claim_all_gifts(p_recipient text)
+returns jsonb
+language plpgsql
+security definer
+set search_path=''
+as $$
+declare current_state jsonb; r record; current_count integer; gift_count integer:=0; item_count integer:=0;
+begin
+  select state into current_state from public.mofumori_saves where user_key=p_recipient for update;
+  if current_state is null then raise exception 'save_missing'; end if;
+  perform 1 from public.mofumori_gifts where recipient_key=p_recipient and claimed_at is null for update;
+  select count(*),coalesce(sum(quantity),0) into gift_count,item_count from public.mofumori_gifts where recipient_key=p_recipient and claimed_at is null;
+  if gift_count=0 then return jsonb_build_object('state',current_state,'claimedCount',0,'itemCount',0); end if;
+  for r in select item_code,sum(quantity)::integer qty from public.mofumori_gifts where recipient_key=p_recipient and claimed_at is null group by item_code loop
+    current_count:=coalesce((current_state #>> array['data','inv',r.item_code])::integer,0);
+    current_state:=jsonb_set(current_state,array['data','inv',r.item_code],to_jsonb(current_count+r.qty),true);
+  end loop;
+  current_state:=jsonb_set(current_state,array['savedAt'],to_jsonb(to_char(clock_timestamp() at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')),true);
+  update public.mofumori_saves set state=current_state,saved_at=now() where user_key=p_recipient;
+  update public.mofumori_gifts set claimed_at=now() where recipient_key=p_recipient and claimed_at is null;
+  return jsonb_build_object('state',current_state,'claimedCount',gift_count,'itemCount',item_count);
+end
+$$;
+revoke execute on function public.mofumori_claim_all_gifts(text) from public,anon,authenticated;
+grant execute on function public.mofumori_claim_all_gifts(text) to service_role;
+
+create or replace function public.mofumori_visit_care(p_user text,p_visit uuid,p_action text)
+returns jsonb
+language plpgsql
+security definer
+set search_path=''
+as $$
+declare visit_row public.mofumori_visits%rowtype; care_result jsonb;
+begin
+  if p_action not in ('feed','treat','play','sing','bath','pet') then raise exception 'invalid_care_action'; end if;
+  select * into visit_row from public.mofumori_visits where id=p_visit and ended_at is null and expires_at>now() for update;
+  if visit_row.id is null or visit_row.host_key<>p_user then raise exception 'visit_care_forbidden'; end if;
+  select public.mofumori_record_pet_care(visit_row.visitor_key,visit_row.pet_id,p_action) into care_result;
+  insert into public.mofumori_visit_actions(visit_id,actor_key,action) values(p_visit,p_user,'care:'||p_action);
+  update public.mofumori_visits set last_action='care:'||p_action,interaction_count=interaction_count+1 where id=p_visit returning * into visit_row;
+  return jsonb_build_object('visit',to_jsonb(visit_row),'stats',care_result);
+end
+$$;
+revoke execute on function public.mofumori_visit_care(text,uuid,text) from public,anon,authenticated;
+grant execute on function public.mofumori_visit_care(text,uuid,text) to service_role;
