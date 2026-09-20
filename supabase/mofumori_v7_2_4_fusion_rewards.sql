@@ -232,3 +232,15 @@ end
 $$;
 revoke execute on function public.mofumori_visit_care(text,uuid,text) from public,anon,authenticated;
 grant execute on function public.mofumori_visit_care(text,uuid,text) to service_role;
+
+
+alter table public.mofumori_gifts drop constraint if exists mofumori_gifts_quantity_check;
+alter table public.mofumori_gifts add constraint mofumori_gifts_quantity_check check (quantity between 1 and 9999);
+
+alter table public.mofumori_visit_actions drop constraint if exists mofumori_visit_actions_action_check;
+alter table public.mofumori_visit_actions add constraint mofumori_visit_actions_action_check check (
+  action in (
+    'greet','pet','play','share_seed',
+    'care:feed','care:treat','care:play','care:sing','care:bath','care:pet'
+  )
+);
