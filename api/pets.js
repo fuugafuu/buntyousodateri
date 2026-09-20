@@ -86,6 +86,7 @@ function petToClient(row) {
     id: row.id, species: row.species, speciesName: meta[0], icon: meta[1],
     name: row.name || meta[0], rarity: row.rarity || 'N', rank: Number(row.rank || 1),
     source: row.source || 'legacy', obtainedAt: row.obtained_at || null,
+    customNamed: row.custom_named === true, fusionLevel: Number(row.fusion_level||0), fusionCount: Number(row.fusion_count||0), fusedAt: row.fused_at||null,
     sexKnown: row.sex_known === true, sex: row.sex_known === true ? row.sex : null,
     sexDeterminedAt: row.sex_determined_at || null, stats
   };
@@ -137,7 +138,7 @@ async function ensureLegacyPets(supabase, user) {
     const meta = SPECIES_META[species];
     return {
       owner_key: user.id, species, rarity: 'N', rank: 1, source: 'legacy',
-      migration_key: `legacy:${species}`, name: text(game.birdNames?.[species], 12, meta[0])
+      migration_key: `legacy:${species}`, name: text(game.birdNames?.[species], 12, meta[0]), custom_named: text(game.birdNames?.[species], 12, meta[0]) !== meta[0]
     };
   });
   if (rows.length) {
@@ -177,7 +178,7 @@ async function loadDashboard(supabase, user) {
   const hiddenUnlocked = await ensureHiddenReward(supabase, user);
   const now = new Date().toISOString();
   const [{ data: pets, error: petError }, { data: links, error: linkError }, { data: requests, error: requestError }, { data: visits, error: visitError }] = await Promise.all([
-    supabase.from('mofumori_pets').select('id,owner_key,species,rarity,rank,name,source,obtained_at,sex,sex_known,sex_determined_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').eq('owner_key', user.id).order('obtained_at', { ascending: true }).limit(250),
+    supabase.from('mofumori_pets').select('id,owner_key,species,rarity,rank,name,source,obtained_at,custom_named,fusion_level,fusion_count,fused_at,sex,sex_known,sex_determined_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').eq('owner_key', user.id).order('obtained_at', { ascending: true }).limit(250),
     supabase.from('mofumori_friendships').select('friend_key').eq('owner_key', user.id).limit(200),
     supabase.from('mofumori_friend_requests').select('id,sender_key,recipient_key,status,created_at').eq('status', 'pending')
       .or(`sender_key.eq.${user.id},recipient_key.eq.${user.id}`).order('created_at', { ascending: false }).limit(100),
@@ -206,7 +207,7 @@ async function loadDashboard(supabase, user) {
   let visitPets = [];
   if (visitPetIds.length) {
     const { data, error } = await supabase.from('mofumori_pets')
-      .select('id,owner_key,species,rarity,rank,name,source,obtained_at,sex,sex_known,sex_determined_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').in('id', visitPetIds);
+      .select('id,owner_key,species,rarity,rank,name,source,obtained_at,custom_named,fusion_level,fusion_count,fused_at,sex,sex_known,sex_determined_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').in('id', visitPetIds);
     if (error) throw error;
     visitPets = data || [];
   }
@@ -323,11 +324,26 @@ async function selectPet(supabase, user, rawPetId) {
 async function renamePet(supabase, user, rawPetId, rawName) {
   const petId = uuid(rawPetId), name = text(rawName, 12);
   if (!petId || !name) throw Object.assign(new Error('名前が不正です。'), { status: 400 });
-  const { data: pet, error } = await supabase.from('mofumori_pets').update({ name }).eq('id', petId).eq('owner_key', user.id)
+  const { data: pet, error } = await supabase.from('mofumori_pets').update({ name, custom_named: true }).eq('id', petId).eq('owner_key', user.id)
     .select('id,species,rarity,rank,name,source,obtained_at,sex,sex_known,sex_determined_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').maybeSingle();
   if (error) throw error;
   if (!pet) throw Object.assign(new Error('その子の名前は変更できません。'), { status: 403 });
   return petToClient(pet);
+}
+async function fusePets(supabase,user,rawTarget,rawMaterials){
+  await takeLimit(supabase,user.id,'pet_fusion',60,12);
+  const targetId=uuid(rawTarget),materialIds=Array.isArray(rawMaterials)?rawMaterials.map(uuid).filter(Boolean):[];
+  if(!targetId||!materialIds.length||materialIds.length>20)throw Object.assign(new Error('合成する鳥を確認してください。'),{status:400});
+  const {data,error}=await supabase.rpc('mofumori_fuse_pets',{p_owner:user.id,p_target:targetId,p_materials:materialIds});
+  if(error){
+    const m=String(error.message||'');
+    if(m.includes('target_protected'))throw Object.assign(new Error('名前を変更した鳥は合成対象から除外されています。'),{status:409});
+    if(m.includes('fusion_level_max'))throw Object.assign(new Error('この鳥は合成Lvが最大です。'),{status:409});
+    if(m.includes('target_busy'))throw Object.assign(new Error('対戦中・訪問中の鳥は合成できません。'),{status:409});
+    if(m.includes('material_invalid_or_protected'))throw Object.assign(new Error('素材にできない鳥が含まれています。名前変更済み・強化済み・装備中などは除外されます。'),{status:409});
+    throw error;
+  }
+  return data;
 }
 async function determinePetSex(supabase, user, rawPetId) {
   const petId = uuid(rawPetId);
@@ -393,6 +409,7 @@ module.exports = async function handler(req, res) {
     else if (action === 'removeFriend') await removeFriend(supabase, user, payload.playerId);
     else if (action === 'selectPet') extra.selectedPet = await selectPet(supabase, user, payload.petId);
     else if (action === 'renamePet') extra.renamedPet = await renamePet(supabase, user, payload.petId, payload.name);
+    else if (action === 'fusePets') extra.fusion = await fusePets(supabase,user,payload.targetPetId,payload.materialPetIds);
     else if (action === 'determinePetSex') extra.sexResult = await determinePetSex(supabase, user, payload.petId);
     else if (action === 'startVisit') extra.visit = await startVisit(supabase, user, payload.playerId, payload.petId);
     else if (action === 'endVisit') await endVisit(supabase, user, payload.visitId);
