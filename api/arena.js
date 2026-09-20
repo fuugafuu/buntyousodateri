@@ -9,7 +9,7 @@ const PET_SELECT = [
   'appetite','frame','metabolism','temperament','curiosity','sociability',
   'endurance','agility','flight_power','focus','beak_speed','balance',
   'weight_g','ideal_weight_g','body_length_cm','wing_span_cm','fitness',
-  'care_counters','arena_rating','arena_wins','arena_losses','arena_draws','sex','sex_known','sex_determined_at'
+  'care_counters','arena_rating','arena_wins','arena_losses','arena_draws','sex','sex_known','sex_determined_at','life_stage','father_id','mother_id','generation','phenotype','growth_points','hatch_at','adult_earliest_at','adult_latest_at'
 ].join(',');
 
 function text(v,max,fallback=''){const s=String(v??'').trim().slice(0,max);return s||fallback}
@@ -39,7 +39,7 @@ function stats(row){
 }
 function pet(row){return row?{
   id:row.id,species:row.species,name:row.name,rarity:row.rarity,rank:Number(row.rank||1),
-  source:row.source,obtainedAt:row.obtained_at,customNamed:row.custom_named===true,fusionLevel:Number(row.fusion_level||0),fusionCount:Number(row.fusion_count||0),fusedAt:row.fused_at||null,eligible:isBuncho(row.species),sexKnown:row.sex_known===true,sex:row.sex_known===true?row.sex:null,sexDeterminedAt:row.sex_determined_at||null,stats:stats(row)
+  source:row.source,obtainedAt:row.obtained_at,lifeStage:row.life_stage||'adult',fatherId:row.father_id||null,motherId:row.mother_id||null,generation:Number(row.generation||0),phenotype:row.phenotype||{},growthPoints:Number(row.growth_points||0),hatchAt:row.hatch_at||null,adultEarliestAt:row.adult_earliest_at||null,adultLatestAt:row.adult_latest_at||null,customNamed:row.custom_named===true,fusionLevel:Number(row.fusion_level||0),fusionCount:Number(row.fusion_count||0),fusedAt:row.fused_at||null,eligible:isBuncho(row.species)&&(row.life_stage||'adult')==='adult',sexKnown:row.sex_known===true,sex:row.sex_known===true?row.sex:null,sexDeterminedAt:row.sex_determined_at||null,stats:stats(row)
 }:null}
 function profile(row){return row?{playerId:row.player_id,displayName:row.display_name,character:row.character||{},isBot:String(row.user_key||'').startsWith('bot:arena:')}:null}
 async function takeLimit(sb,userKey,action,windowSeconds,limit){
@@ -52,6 +52,10 @@ async function ownPet(sb,userKey,petId){
   const {data,error}=await sb.from('mofumori_pets').select(PET_SELECT).eq('id',id).eq('owner_key',userKey).maybeSingle();
   if(error)throw error;
   if(!data)throw Object.assign(new Error('その文鳥は選べません。'),{status:403});
+  if((data.life_stage||'adult')!=='adult')throw Object.assign(new Error('卵・雛はまだ対戦できません。'),{status:409});
+  const {data:busy,error:busyError}=await sb.from('mofumori_breeding_jobs').select('id').eq('status','running').or(`male_pet_id.eq.${id},female_pet_id.eq.${id}`).limit(1);
+  if(busyError)throw busyError;
+  if(busy?.length)throw Object.assign(new Error('この文鳥は交配中です。'),{status:409});
   return data;
 }
 function rand(seed){
