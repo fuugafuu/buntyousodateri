@@ -553,7 +553,7 @@ function patchCare(){
 }
 async function recordCare(action){
   const p=activePet();if(!logged()||!uuid(p?.id))return;
-  try{const r=await arena('care',{petId:p.id,care:action});if(r.data){if(r.data.lifeStage)p.lifeStage=r.data.lifeStage;if(Number.isFinite(Number(r.data.growthPoints)))p.growthPoints=Number(r.data.growthPoints);p.stats={...(p.stats||{}),...r.data};renderOverview();renderPetSheet();window.v7RefreshProgress?.();if(p.lifeStage==='adult'&&typeof refresh==='function'){N.last=0;refresh(true)}}}catch(e){}
+  try{const beforeStage=p.lifeStage;const r=await arena('care',{petId:p.id,care:action});if(r.data){if(r.data.lifeStage)p.lifeStage=r.data.lifeStage;if(Number.isFinite(Number(r.data.growthPoints)))p.growthPoints=Number(r.data.growthPoints);p.stats={...(p.stats||{}),...r.data};renderOverview();renderPetSheet();window.v7RefreshProgress?.();if(beforeStage==='chick'&&p.lifeStage==='adult')window.mofumoriRefreshPets?.()}}catch(e){}
 }
 function startPolling(){clearInterval(A.poll);A.poll=setInterval(()=>{if(logged()&&(!document.hidden||$('#v6Arena')?.classList.contains('show')))refreshArena()},2200)}
 function boot(){build();startPolling();if(logged())setTimeout(()=>refreshArena(),600)}
