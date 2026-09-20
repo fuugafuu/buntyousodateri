@@ -17,8 +17,8 @@ const isBuncho=p=>String(p?.species||'').startsWith('buncho_');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function clamp(n,a,b){return Math.max(a,Math.min(b,Number(n)||0))}
 function stat(p,k,d=50){return Number(p?.stats?.[k]??d)}
-function sexLabel(p){return p?.sexKnown?(p.sex==='male'?'♂ オス':'♀ メス'):'？ 未判定'}
-function petIcon(p){const b=typeof birds!=='undefined'?birds[p?.species]:null;return b?.icon||'🐦'}
+function sexLabel(p){if(p?.lifeStage==='egg')return'🥚 未孵化';if(p?.lifeStage==='chick')return'🐣 雛・未判定';return p?.sexKnown?(p.sex==='male'?'♂ オス':'♀ メス'):'？ 未判定'}
+function petIcon(p){if(p?.lifeStage==='egg')return'🥚';if(p?.lifeStage==='chick')return'🐣';const b=typeof birds!=='undefined'?birds[p?.species]:null;return b?.icon||'🐦'}
 function petName(p){return p?.name||birds?.[p?.species]?.name||'文鳥'}
 async function post(url,action,payload={}){
   const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,payload})});
@@ -41,7 +41,7 @@ function activeArenaPet(){
   const all=A.dash?.pets||[];
   return all.find(p=>String(p.id)===String(A.petId))||all.find(p=>String(p.id)===String(G?.activePetId))||all.find(isBuncho)||null;
 }
-function eligiblePets(){return (A.dash?.pets||[]).filter(isBuncho)}
+function eligiblePets(){return (A.dash?.pets||[]).filter(p=>isBuncho(p)&&(p.lifeStage||'adult')==='adult'&&p.eligible!==false)}
 function ensurePetSelection(){
   const all=eligiblePets();
   if(!all.some(p=>String(p.id)===String(A.petId)))A.petId=(all.find(p=>String(p.id)===String(G?.activePetId))||all[0])?.id||null;
@@ -132,32 +132,61 @@ function openBirdCollection(){
 function openPet(){renderPetSheet();openSheet($('#v6PetSheet'));refreshArena(true).catch(()=>{})}
 
 function metric(label,val,suffix=''){return `<div class="v6-metric"><span>${esc(label)}</span><b>${Number(val||0).toFixed(suffix==='g'||suffix==='cm'?1:0)}${suffix}</b><i><em style="width:${clamp(val,0,100)}%"></em></i></div>`}
+function lifeStageLabel(p){
+  return p?.lifeStage==='egg'?'🥚 卵':p?.lifeStage==='chick'?'🐣 雛':'成鳥';
+}
+function familyPet(id){return (G?.petCollection||[]).find(p=>String(p.id)===String(id))||null}
+function familyNode(p,depth=0,seen=new Set()){
+  if(!p)return '<div class="v730-family-missing">記録なし</div>';
+  if(seen.has(String(p.id)))return '<div class="v730-family-missing">↻</div>';
+  const next=new Set(seen);next.add(String(p.id));
+  const hasParents=(p.fatherId||p.motherId)&&depth<5;
+  return '<div class="v730-family-node depth-'+depth+'"><div class="v730-family-person"><span>'+petIcon(p)+'</span><div><b>'+esc(p.name||petName(p))+'</b><small>G'+Number(p.generation||0)+' ・ '+esc(sexLabel(p))+'</small></div></div>'+(hasParents?'<div class="v730-family-parents"><div><em>父</em>'+familyNode(familyPet(p.fatherId),depth+1,next)+'</div><div><em>母</em>'+familyNode(familyPet(p.motherId),depth+1,next)+'</div></div>':'')+'</div>';
+}
+function geneticsSummary(p){
+  const ph=p?.phenotype||{},g=p?.genetics||{},colors=Array.isArray(g.color)?g.color.join(' × '):'未解析',mut=Array.isArray(ph.mutations)?ph.mutations.length:Array.isArray(g.mutations)?g.mutations.length:0;
+  return '<section class="v730-genetics"><div class="v730-genetics-head"><div><small>GENETICS</small><h3>遺伝・特徴</h3></div><span>G'+Number(p?.generation||0)+'</span></div><div class="v730-gene-chips"><span>🎨 '+esc(ph.colorName||'標準')+'</span><span>📏 '+esc(ph.sizeClass||'標準')+'</span><span>💚 '+esc(ph.personality||'個性的')+'</span><span>🧬 '+esc(colors)+'</span>'+(mut?'<span>✨ 変異 '+mut+'</span>':'')+'</div></section>';
+}
+function familyTreeHtml(p){
+  if(!(p?.fatherId||p?.motherId||Number(p?.generation||0)>0))return'';
+  return '<section class="v730-family"><div class="v730-family-head"><small>FAMILY TREE</small><h3>関係図</h3><p>交配で生まれた個体だけ表示。世代が増えるほど枝が伸びます。</p></div><div class="v730-family-scroll">'+familyNode(p,0,new Set())+'</div></section>';
+}
 function renderOverview(){
   const root=$('#v6Overview');if(!root)return;
-  const p=activePet(),s=p?.stats;
+  const p=activePet(),s=p?.stats,stage=lifeStageLabel(p);
   root.innerHTML=`<button class="v6-profile-mini" id="v6OpenProfile">
-    <span class="v6-avatar">${petIcon(p)}</span><span><small>いま一緒</small><b>${esc(petName(p))}</b><em>${esc(sexLabel(p))} ・ ${p?.rarity||'N'} / Rank ${p?.rank||1}</em></span>
+    <span class="v6-avatar">${petIcon(p)}</span><span><small>${p?.lifeStage==='adult'?'いま一緒':stage}</small><b>${esc(petName(p))}</b><em>${esc(sexLabel(p))} ・ ${p?.rarity||'N'} / Rank ${p?.rank||1}${Number(p?.generation||0)>0?' ・ G'+Number(p.generation):''}</em></span>
   </button>
   <div class="v6-key-stats">
     <span><small>体重</small><b>${s?Number(s.weightG).toFixed(1)+'g':'--'}</b></span>
-    <span><small>体力</small><b>${s?Math.round(s.endurance):'--'}</b></span>
+    <span><small>${p?.lifeStage==='chick'?'成長':'体力'}</small><b>${p?.lifeStage==='chick'?Number(p.growthPoints||0)+'/6':s?Math.round(s.endurance):'--'}</b></span>
     <span><small>敏捷</small><b>${s?Math.round(s.agility):'--'}</b></span>
-    <span><small>レート</small><b>${s?Math.round(s.rating):'--'}</b></span>
+    <span><small>レート</small><b>${p?.lifeStage==='adult'&&s?Math.round(s.rating):'--'}</b></span>
   </div>
-  <button class="v6-arena-cta" id="v6ArenaCta"><span>⚔</span><b>対戦する</b><small>ランダム / フレンド</small></button>`;
-  $('#v6OpenProfile')?.addEventListener('click',openPet);$('#v6ArenaCta')?.addEventListener('click',()=>openArena());
+  <button class="v6-arena-cta" id="v6ArenaCta" ${p?.lifeStage!=='adult'?'disabled':''}><span>⚔</span><b>対戦する</b><small>${p?.lifeStage==='adult'?'ランダム / フレンド':'成鳥になると参加可能'}</small></button>`;
+  $('#v6OpenProfile')?.addEventListener('click',openPet);$('#v6ArenaCta')?.addEventListener('click',()=>{if(p?.lifeStage==='adult')openArena()});
 }
 function renderPetSheet(){
   const root=$('#v6PetDetail');if(!root)return;const p=activePet();if(!p){root.innerHTML='<p>文鳥がいません。</p>';return}
-  const s=p.stats;
-  root.innerHTML=`<section class="v6-pet-hero"><div class="v6-big-bird">${petIcon(p)}</div><div><small>${esc(p.speciesName||birds?.[p.species]?.name||'文鳥')}</small><h3>${esc(petName(p))}</h3><div class="v6-tags"><span>${p.rarity||'N'}</span><span>Rank ${p.rank||1}</span><span>${esc(sexLabel(p))}</span></div></div></section>
-  <section class="v6-sex-card"><div><small>SEX</small><b>${esc(sexLabel(p))}</b><p>${p.sexKnown?'判定済み。この個体の性別は固定です。':'将来の相性・繁殖などに使える個体情報です。'}</p></div>${p.sexKnown?'':'<button id="v6SexCheck">性別を判定</button>'}</section>
-  ${s?`<section class="v6-body-grid"><div><small>体重</small><b>${Number(s.weightG).toFixed(1)} g</b><em>適正 ${Number(s.idealWeightG).toFixed(1)} g</em></div><div><small>体長</small><b>${Number(s.bodyLengthCm).toFixed(1)} cm</b><em>翼幅 ${Number(s.wingSpanCm).toFixed(1)} cm</em></div><div><small>性格</small><b>${esc(s.personality||'個性的')}</b><em>体格 ${Math.round(s.frame||0)}</em></div><div><small>対戦</small><b>${s.rating||1000}</b><em>${s.wins||0}勝 ${s.losses||0}敗 ${s.draws||0}分</em></div></section>
-  <section class="v6-stat-grid">${metric('食いしん坊',s.appetite)}${metric('体格',s.frame)}${metric('代謝',s.metabolism)}${metric('落ち着き',s.temperament)}${metric('好奇心',s.curiosity)}${metric('社交性',s.sociability)}${metric('体力',s.endurance)}${metric('敏捷性',s.agility)}${metric('飛行力',s.flightPower)}${metric('集中力',s.focus)}${metric('くちばし速度',s.beakSpeed)}${metric('バランス',s.balance)}${metric('フィットネス',s.fitness)}</section>`:'<div class="v6-cloud-note">ログインすると個体ステータスが同期されます。</div>'}`;
+  const s=p.stats,stage=p.lifeStage||'adult',ph=p.phenotype||{};
+  const stageCard=stage==='egg'
+    ?`<section class="v730-stage-profile egg"><span>🥚</span><div><small>EGG ・ GENERATION ${Number(p.generation||0)}</small><b>孵化を待っています</b><p>孵化予定 ${p.hatchAt?new Date(p.hatchAt).toLocaleString('ja-JP'):'--'}</p></div></section>`
+    :stage==='chick'
+      ?`<section class="v730-stage-profile chick"><span>🐣</span><div><small>CHICK ・ GENERATION ${Number(p.generation||0)}</small><b>成長ポイント ${Number(p.growthPoints||0)} / 6</b><p>ごはん・遊び・訓練などのお世話で早く成長します。</p></div></section>`
+      :'';
+  const sexCard=stage==='adult'
+    ?`<section class="v6-sex-card"><div><small>SEX</small><b>${esc(sexLabel(p))}</b><p>${p.sexKnown?'判定済み。この個体の性別は固定です。交配にも使えます。':'交配するには先に性別判定が必要です。'}</p></div>${p.sexKnown?'':'<button id="v6SexCheck">性別を判定</button>'}</section>`
+    :`<section class="v6-sex-card locked"><div><small>SEX</small><b>${esc(sexLabel(p))}</b><p>性別判定は成鳥になってからできます。</p></div></section>`;
+  root.innerHTML=`<section class="v6-pet-hero"><div class="v6-big-bird">${petIcon(p)}</div><div><small>${esc(p.speciesName||birds?.[p.species]?.name||'文鳥')}</small><h3>${esc(petName(p))}</h3><div class="v6-tags"><span>${p.rarity||'N'}</span><span>Rank ${p.rank||1}</span><span>${esc(lifeStageLabel(p))}</span><span>${esc(sexLabel(p))}</span>${Number(p.generation||0)>0?'<span>G'+Number(p.generation)+'</span>':''}</div></div></section>
+  ${stageCard}${sexCard}
+  ${Number(p.generation||0)>0||p.fatherId||p.motherId?geneticsSummary(p):''}
+  ${s?`<section class="v6-body-grid"><div><small>体重</small><b>${Number(s.weightG).toFixed(1)} g</b><em>適正 ${Number(s.idealWeightG).toFixed(1)} g</em></div><div><small>体長</small><b>${Number(s.bodyLengthCm).toFixed(1)} cm</b><em>翼幅 ${Number(s.wingSpanCm).toFixed(1)} cm</em></div><div><small>特徴</small><b>${esc(ph.personality||s.personality||'個性的')}</b><em>${esc(ph.sizeClass||'標準')} ・ 体格 ${Math.round(s.frame||0)}</em></div><div><small>対戦</small><b>${stage==='adult'?s.rating||1000:'--'}</b><em>${stage==='adult'?((s.wins||0)+'勝 '+(s.losses||0)+'敗 '+(s.draws||0)+'分'):'成鳥から参加可能'}</em></div></section>
+  <section class="v6-stat-grid">${metric('食いしん坊',s.appetite)}${metric('体格',s.frame)}${metric('代謝',s.metabolism)}${metric('落ち着き',s.temperament)}${metric('好奇心',s.curiosity)}${metric('社交性',s.sociability)}${metric('体力',s.endurance)}${metric('敏捷性',s.agility)}${metric('飛行力',s.flightPower)}${metric('集中力',s.focus)}${metric('くちばし速度',s.beakSpeed)}${metric('バランス',s.balance)}${metric('フィットネス',s.fitness)}</section>`:'<div class="v6-cloud-note">ログインすると個体ステータスが同期されます。</div>'}
+  ${familyTreeHtml(p)}`;
   $('#v6SexCheck')?.addEventListener('click',determineSex);
 }
 async function determineSex(){
-  const p=activePet();if(!logged())return showToast?.('Googleログインすると性別判定できます','warning');
+  const p=activePet();if(p?.lifeStage!=='adult')return showToast?.('性別判定は成鳥になってからできます','warning');if(!logged())return showToast?.('Googleログインすると性別判定できます','warning');
   if(!uuid(p?.id))return showToast?.('この個体はクラウド同期後に判定できます','warning');
   const btn=$('#v6SexCheck');if(btn){btn.disabled=true;btn.textContent='判定中…'}
   try{
@@ -524,7 +553,7 @@ function patchCare(){
 }
 async function recordCare(action){
   const p=activePet();if(!logged()||!uuid(p?.id))return;
-  try{const r=await arena('care',{petId:p.id,care:action});if(r.data){p.stats={...(p.stats||{}),...r.data};renderOverview();renderPetSheet();window.v7RefreshProgress?.()}}catch(e){}
+  try{const r=await arena('care',{petId:p.id,care:action});if(r.data){if(r.data.lifeStage)p.lifeStage=r.data.lifeStage;if(Number.isFinite(Number(r.data.growthPoints)))p.growthPoints=Number(r.data.growthPoints);p.stats={...(p.stats||{}),...r.data};renderOverview();renderPetSheet();window.v7RefreshProgress?.();if(p.lifeStage==='adult'&&typeof refresh==='function'){N.last=0;refresh(true)}}}catch(e){}
 }
 function startPolling(){clearInterval(A.poll);A.poll=setInterval(()=>{if(logged()&&(!document.hidden||$('#v6Arena')?.classList.contains('show')))refreshArena()},2200)}
 function boot(){build();startPolling();if(logged())setTimeout(()=>refreshArena(),600)}
