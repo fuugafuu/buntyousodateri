@@ -116,8 +116,24 @@ function applyDebugState(){
 }
 const adminApi=async(action,payload={})=>{const r=await fetch('/api/admin',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...payload})}),j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.message||'管理操作に失敗しました');return j.data};
 function adminFriend(){return {playerId:'MF-ADMIN',displayName:'Mofumori Administration',character:{icon:'🐦',name:'管理者文鳥',species:'buncho_sakura'},admin:true}}
-async function summonAdminBird(){
-  try{const data=await adminApi('status');N.admin=data;N.adminFriend=true;localStorage.setItem('mofumoriAdminBird','1');sessionStorage.setItem('mofumoriAdminBird','1');friends();showToast('管理者文鳥が現れました 🔐🐦','achievement')}catch(e){N.adminFriend=false;localStorage.removeItem('mofumoriAdminBird');sessionStorage.removeItem('mofumoriAdminBird');showToast('そのプレイヤーには管理者権限がありません','warning')}
+function rememberAdminBird(data){
+  N.admin=data;N.adminFriend=true;localStorage.setItem('mofumoriAdminBird','1');sessionStorage.setItem('mofumoriAdminBird','1');friends();
+}
+async function summonAdminBird(persist=true,silent=false){
+  try{const data=await adminApi(persist?'summonBird':'status');rememberAdminBird(data);if(!silent)showToast('管理者文鳥が現れました 🔐🐦','achievement');return true}
+  catch(e){N.adminFriend=false;localStorage.removeItem('mofumoriAdminBird');sessionStorage.removeItem('mofumoriAdminBird');if(!silent)showToast('そのプレイヤーには管理者権限がありません','warning');return false}
+}
+async function restoreAdminBird(){
+  if(!identityUser)return false;
+  try{
+    let data=await adminApi('status');
+    const localKnown=localStorage.getItem('mofumoriAdminBird')==='1'||sessionStorage.getItem('mofumoriAdminBird')==='1';
+    if(data?.adminBirdEnabled===true){rememberAdminBird(data);return true}
+    if(localKnown){data=await adminApi('summonBird');rememberAdminBird(data);return true}
+  }catch(e){
+    if(N.adminFriend){N.adminFriend=false;friends()}
+  }
+  return false;
 }
 function adminUi(){
   if(document.getElementById('adminModeModal'))return;
@@ -161,7 +177,7 @@ function visits(){let l=document.getElementById('visitList');if(!l)return;if(!id
 async function back(i){try{apply((await api('endVisit',{visitId:i})).data);showToast('おうちに戻りました')}catch(e){showToast(e.message,'warning')}}
 function presence(){visitUi();let g=document.getElementById('visitGuestDock'),v=N.visits.incoming[0];if(g){if(v?.pet){g.innerHTML=`<span>${meta(v.pet).b.icon}</span><b>${escapeHtml(v.pet.name)}</b><small>フレンドの子が来ています</small>`;g.classList.add('show')}else{g.classList.remove('show');g.innerHTML=''}}let p=active(),o=N.visits.outgoing.find(v=>v.pet?.id===p.id),d=document.querySelector('.main-display'),z=document.getElementById('petAwayOverlay');d?.classList.toggle('pet-away',!!o);if(z){if(o){z.innerHTML=`<div><span>🧳</span><b>${escapeHtml(p.name)}はおでかけ中</b><small>${escapeHtml(o.host?.displayName||'フレンド')}のところにいます</small><button data-home>呼び戻す</button></div>`;z.classList.add('show');z.querySelector('[data-home]').onclick=()=>back(o.id)}else{z.classList.remove('show');z.innerHTML=''}}document.querySelectorAll('[data-care]').forEach(b=>{b.disabled=!!o||(G.isSleeping&&b.id!=='sleepBtn')})}
 
-ensureNewSettings=function(){O.ensureNewSettings();ensure()};getCurrentBirdName=function(){return active().name};setCurrentBirdName=function(n){let p=active(),s=String(n||'').trim().slice(0,12)||birds[p.species].name;p.name=s;G.name=s;G.birdNames[p.species]=s;if(identityUser&&!p.id.startsWith('local-'))api('renamePet',{petId:p.id,name:s}).then(x=>apply(x.data)).catch(()=>{})};renderBirdGrid=function(){ui();collection()};updateBuyBtn=function(){let b=document.getElementById('buyBirdBtn');if(b){b.hidden=true;b.disabled=true}};buyBird=function(){gacha(1)};showModal=function(i){O.showModal(i);if(i==='birdModal'){ui();collection()}if(i==='gachaModal'){ui()}};updateUI=function(){ensure();O.updateUI();presence()};renderSocial=function(){O.renderSocial();social()};renderFriendList=function(){identityUser?friends():O.renderFriendList()};addFriendById=async function(){let x=document.getElementById('friendIdInput'),raw=String(x?.value||'').trim(),p=raw.toUpperCase();if(p===ADMIN_BIRD_CODE){if(x)x.value='';if(!identityUser)return showToast('管理者文鳥を呼ぶにはログインしてください','warning');await summonAdminBird();return}if(DEV_MODE&&p===DEBUG_FRIEND_CODE){N.debugFriend=true;sessionStorage.setItem('mofumoriDebugFriend','1');if(x)x.value='';social();showToast('デバッグ文鳥がフレンドになりました 🧪🐦','achievement');return}if(!identityUser)return O.addFriendById();if(!/^MF-[A-Z0-9]{8,12}$/.test(p))return showToast('IDは MF- に続く8〜12文字で入力してください','warning');try{let r=await api('sendFriendRequest',{playerId:p});x.value='';apply(r.data);showToast(r.autoAccepted?'フレンドになりました！':'フレンド申請を送りました','achievement')}catch(e){showToast(e.message,'warning')}};setSocialTab=function(t){
+ensureNewSettings=function(){O.ensureNewSettings();ensure()};getCurrentBirdName=function(){return active().name};setCurrentBirdName=function(n){let p=active(),s=String(n||'').trim().slice(0,12)||birds[p.species].name;p.name=s;G.name=s;G.birdNames[p.species]=s;if(identityUser&&!p.id.startsWith('local-'))api('renamePet',{petId:p.id,name:s}).then(x=>apply(x.data)).catch(()=>{})};renderBirdGrid=function(){ui();collection()};updateBuyBtn=function(){let b=document.getElementById('buyBirdBtn');if(b){b.hidden=true;b.disabled=true}};buyBird=function(){gacha(1)};showModal=function(i){O.showModal(i);if(i==='birdModal'){ui();collection()}if(i==='gachaModal'){ui()}};updateUI=function(){ensure();O.updateUI();presence()};renderSocial=function(){O.renderSocial();social()};renderFriendList=function(){identityUser?friends():O.renderFriendList()};addFriendById=async function(){let x=document.getElementById('friendIdInput'),raw=String(x?.value||'').trim(),p=raw.toUpperCase();if(p===ADMIN_BIRD_CODE){if(x)x.value='';if(!identityUser)return showToast('管理者文鳥を呼ぶにはログインしてください','warning');await summonAdminBird(true,false);return}if(DEV_MODE&&p===DEBUG_FRIEND_CODE){N.debugFriend=true;sessionStorage.setItem('mofumoriDebugFriend','1');if(x)x.value='';social();showToast('デバッグ文鳥がフレンドになりました 🧪🐦','achievement');return}if(!identityUser)return O.addFriendById();if(!/^MF-[A-Z0-9]{8,12}$/.test(p))return showToast('IDは MF- に続く8〜12文字で入力してください','warning');try{let r=await api('sendFriendRequest',{playerId:p});x.value='';apply(r.data);showToast(r.autoAccepted?'フレンドになりました！':'フレンド申請を送りました','achievement')}catch(e){showToast(e.message,'warning')}};setSocialTab=function(t){
   if(t!=='visits'){
     const out=O.setSocialTab(t);
     if(t==='friends'&&identityUser){N.last=0;refresh(true)}
@@ -172,11 +188,11 @@ ensureNewSettings=function(){O.ensureNewSettings();ensure()};getCurrentBirdName=
   document.querySelectorAll('.social-tab-page').forEach(p=>p.classList.toggle('active',p.id==='socialVisitsTab'));
   visits();
   if(identityUser){N.last=0;refresh(true)}
-};initIdentityAndSocial=async function(f=false){await O.initIdentityAndSocial(f);ensure();ui();identityUser?await refresh(true):social()};logoutGoogle=async function(){await O.logoutGoogle();N.mode='local';N.friends=[];N.requests={incoming:[],outgoing:[]};N.visits={incoming:[],outgoing:[]};social();presence()};
+};initIdentityAndSocial=async function(f=false){await O.initIdentityAndSocial(f);ensure();ui();if(identityUser){await refresh(true);await restoreAdminBird()}else social()};logoutGoogle=async function(){await O.logoutGoogle();N.mode='local';N.friends=[];N.requests={incoming:[],outgoing:[]};N.visits={incoming:[],outgoing:[]};social();presence()};
 window.render_game_to_text=function(){let b={};try{b=JSON.parse(O.renderText?.()||'{}')}catch(e){}let p=active();return JSON.stringify({...b,pets:{active:{id:p.id,species:p.species,rarity:p.rarity,rank:p.rank},owned:G.petCollection.length,friendRequests:N.requests.incoming.length,visitors:N.visits.incoming.length,away:N.visits.outgoing.length}})};
 function boot(){
   N.debugFriend=DEV_MODE&&sessionStorage.getItem('mofumoriDebugFriend')==='1';N.adminFriend=localStorage.getItem('mofumoriAdminBird')==='1'||sessionStorage.getItem('mofumoriAdminBird')==='1';
-  ui();ensure();collection();social();presence();loadPublicGachaConfig();if(N.adminFriend&&identityUser)summonAdminBird();
+  ui();ensure();collection();social();presence();loadPublicGachaConfig();if(identityUser)restoreAdminBird();
   setInterval(()=>identityUser&&!document.hidden&&refresh(),30000);
   setInterval(()=>{
     if(!identityUser||document.hidden)return;
