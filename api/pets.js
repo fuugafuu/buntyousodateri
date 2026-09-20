@@ -315,6 +315,8 @@ async function startBreeding(supabase,user,rawMale,rawFemale){
   await takeLimit(supabase,user.id,'start_breeding',3600,20);
   const male=uuid(rawMale),female=uuid(rawFemale);
   if(!male||!female)throw Object.assign(new Error('オスとメスを選んでください。'),{status:400});
+  const {data:parents,error:parentError}=await supabase.from('mofumori_pets').select('id,owner_key,species,genetics,phenotype,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,fitness').eq('owner_key',user.id).in('id',[male,female]);
+  if(parentError)throw parentError;if((parents||[]).length!==2)throw Object.assign(new Error('交配する鳥が見つかりません。'),{status:404});for(const p of parents)await stableGenes(supabase,p);
   const {data,error}=await supabase.rpc('mofumori_start_breeding',{p_owner:user.id,p_male:male,p_female:female});
   if(error){
     const m=String(error.message||'');
@@ -338,7 +340,7 @@ async function loadDashboard(supabase, user) {
   await resolveBreedingAndLifecycle(supabase,user);
   const now = new Date().toISOString();
   const [{ data: pets, error: petError }, { data: links, error: linkError }, { data: requests, error: requestError }, { data: visits, error: visitError }] = await Promise.all([
-    supabase.from('mofumori_pets').select('id,owner_key,species,rarity,rank,name,source,obtained_at,custom_named,fusion_level,fusion_count,fused_at,sex,sex_known,sex_determined_at,father_id,mother_id,generation,life_stage,genetics,phenotype,laid_at,hatch_at,hatched_at,adult_earliest_at,adult_latest_at,adult_at,growth_points,bred_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').eq('owner_key', user.id).order('obtained_at', { ascending: true }).limit(250),
+    supabase.from('mofumori_pets').select('id,owner_key,species,rarity,rank,name,source,obtained_at,custom_named,fusion_level,fusion_count,fused_at,sex,sex_known,sex_determined_at,father_id,mother_id,generation,life_stage,genetics,phenotype,laid_at,hatch_at,hatched_at,adult_earliest_at,adult_latest_at,adult_at,growth_points,bred_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').eq('owner_key', user.id).order('obtained_at', { ascending: true }).limit(1000),
     supabase.from('mofumori_friendships').select('friend_key').eq('owner_key', user.id).limit(200),
     supabase.from('mofumori_friend_requests').select('id,sender_key,recipient_key,status,created_at').eq('status', 'pending')
       .or(`sender_key.eq.${user.id},recipient_key.eq.${user.id}`).order('created_at', { ascending: false }).limit(100),
