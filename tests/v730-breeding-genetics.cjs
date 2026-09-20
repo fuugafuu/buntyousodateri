@@ -21,7 +21,7 @@ assert.ok(pets.includes('.limit(1000)'),'multigeneration collection must not kee
 assert.ok(ui.includes('function breedingUi()')&&ui.includes('function startBreedingNow()'));
 assert.ok(ui.includes('function queueLifecycleEvents(')&&ui.includes('function showNextLifeEvent('));
 assert.ok(ui.includes("type==='egg_laid'")&&ui.includes("type==='hatched'"));
-assert.ok(ui.includes("p.lifeStage==='egg'")&&ui.includes("p.lifeStage==='chick'"));
+assert.ok(ui.includes("p.lifeStage==='egg'")&&ui.includes("stage==='chick'"));
 assert.ok(ui.includes('breedingBusySet')&&ui.includes('parentIds'),'breeding parents and lineage parents must be protected from destructive flows');
 assert.ok(css.includes('.breeding-modal')&&css.includes('.life-reveal')&&css.includes('.life-stage-dock'));
 
