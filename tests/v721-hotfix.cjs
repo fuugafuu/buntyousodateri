@@ -15,8 +15,8 @@ const vercel=JSON.parse(fs.readFileSync('vercel.json','utf8'));
 const timeoutSql=fs.readFileSync('supabase/mofumori_v7_2_1_arena_timeout_priority.sql','utf8');
 const auditSql=fs.readFileSync('supabase/mofumori_v7_2_1_admin_audit.sql','utf8');
 
-assert.equal(pkg.version,'7.2.1');
-assert.ok(html.includes("window.MOFUMORI_BUILD='7.2.1'"));
+assert.ok(/^7\.2\.[1-9][0-9]*$/.test(pkg.version),'current release must remain compatible with v7.2.1+ guards');
+assert.ok(/window\.MOFUMORI_BUILD='7\.2\.[1-9][0-9]*'/.test(html));
 assert.ok(html.includes('id="friendIdInput" maxlength="72"'));
 
 assert.ok(!/\.rpc\([^;\n]+\)\.catch/.test(pets),'pets API must not call .catch directly on Supabase RPC builders');
