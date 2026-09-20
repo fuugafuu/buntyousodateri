@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const RR={N:[1,'★'],R:[2,'★★'],SR:[3,'★★★'],SSR:[4,'★★★★'],UR:[5,'★★★★★']},C={1:180,10:1600},W={buncho_sakura:16,buncho_white:14,buncho_cinnamon:11,buncho_silver:9,canary:8,inko_green:7,inko_blue:7,buncho_pied:6,buncho_black:5,finch_zebra:5,lovebird:4,cockatiel:4,cat:4,penguin:4,beaver:3,fox:3,owl:2};
-const A={greet:'👋 あいさつ',pet:'✋ なでる',play:'🎾 遊ぶ',share_seed:'🌾 シードを見せる'},VCARE={feed:'🍚',pet:'✋',play:'🎾',bath:'🛁',treat:'🍬',sing:'🎵'},N={mode:'local',friends:[],requests:{incoming:[],outgoing:[]},visits:{incoming:[],outgoing:[]},breeding:{jobs:[],events:[]},breedMale:null,breedFemale:null,eventQueue:[],eventBusy:false,currentLifeEvent:null,visitFocus:0,last:0,busy:false,debugFriend:false,adminFriend:false,admin:null,gachaConfig:null,gachaBanner:'standard'};
+const A={greet:'👋 あいさつ',pet:'✋ なでる',play:'🎾 遊ぶ',share_seed:'🌾 シードを見せる'},VCARE={feed:'🍚',pet:'✋',play:'🎾',bath:'🛁',treat:'🍬',sing:'🎵'},N={mode:'local',friends:[],requests:{incoming:[],outgoing:[]},visits:{incoming:[],outgoing:[]},breeding:{jobs:[],events:[]},breedMale:null,breedFemale:null,eventQueue:[],eventBusy:false,currentLifeEvent:null,lifecycleDueRefreshAt:0,visitFocus:0,last:0,busy:false,debugFriend:false,adminFriend:false,admin:null,gachaConfig:null,gachaBanner:'standard'};
 const DEV_MODE=['localhost','127.0.0.1','::1'].includes(location.hostname)||location.hostname.endsWith('.local');
 const DEBUG_FRIEND_CODE='MF-DEBUGBIRD';
 const ADMIN_BIRD_CODE='MF::M0FUM0RI-ADMIN::BIRD-7Z2::OWNER';
@@ -116,7 +116,12 @@ async function startBreedingNow(){
   }catch(e){showToast(e.message||'交配を開始できませんでした','warning');await refresh(true);renderBreeding()}
   finally{btn.textContent='🧬 交配を開始'}
 }
-function updateBreedCountdowns(){document.querySelectorAll('[data-breed-end]').forEach(el=>el.textContent=fmtRemain(el.dataset.breedEnd));renderLifeStagePresence()}
+function updateBreedCountdowns(){
+  document.querySelectorAll('[data-breed-end]').forEach(el=>el.textContent=fmtRemain(el.dataset.breedEnd));renderLifeStagePresence();
+  if(!identityUser||document.hidden||N.busy)return;
+  const now=Date.now(),dueJob=(N.breeding?.jobs||[]).some(j=>Date.parse(j.completesAt||0)<=now),dueEgg=G.petCollection.some(p=>p.lifeStage==='egg'&&Date.parse(p.hatchAt||0)<=now),dueAdult=G.petCollection.some(p=>p.lifeStage==='chick'&&Date.parse(p.adultLatestAt||0)<=now);
+  if((dueJob||dueEgg||dueAdult)&&now-Number(N.lifecycleDueRefreshAt||0)>5000){N.lifecycleDueRefreshAt=now;N.last=0;refresh(true)}
+}
 function lifecycleUi(){
   if(document.getElementById('lifeReveal'))return;
   const e=document.createElement('div');e.id='lifeReveal';e.className='life-reveal';e.innerHTML='<div class="life-reveal-glow"></div><div class="life-reveal-card"><small id="lifeRevealKicker">NEW LIFE</small><div id="lifeRevealIcon" class="life-reveal-icon">🥚</div><h2 id="lifeRevealTitle"></h2><p id="lifeRevealCopy"></p><div id="lifeRevealTraits"></div><button id="lifeRevealOk">確認する</button></div>';document.body.appendChild(e);document.getElementById('lifeRevealOk').onclick=closeLifeReveal;
@@ -379,6 +384,7 @@ ensureNewSettings=function(){O.ensureNewSettings();ensure()};getCurrentBirdName=
   visits();
   if(identityUser){N.last=0;refresh(true)}
 };initIdentityAndSocial=async function(f=false){await O.initIdentityAndSocial(f);ensure();ui();if(identityUser){await refresh(true);await restoreAdminBird()}else social()};logoutGoogle=async function(){await O.logoutGoogle();N.mode='local';N.friends=[];N.requests={incoming:[],outgoing:[]};N.visits={incoming:[],outgoing:[]};social();presence()};
+window.mofumoriRefreshPets=()=>{N.last=0;return refresh(true)};
 window.render_game_to_text=function(){let b={};try{b=JSON.parse(O.renderText?.()||'{}')}catch(e){}let p=active();return JSON.stringify({...b,pets:{active:{id:p.id,species:p.species,rarity:p.rarity,rank:p.rank},owned:G.petCollection.length,friendRequests:N.requests.incoming.length,visitors:N.visits.incoming.length,away:N.visits.outgoing.length}})};
 function boot(){
   N.debugFriend=DEV_MODE&&sessionStorage.getItem('mofumoriDebugFriend')==='1';N.adminFriend=localStorage.getItem('mofumoriAdminBird')==='1'||sessionStorage.getItem('mofumoriAdminBird')==='1';
