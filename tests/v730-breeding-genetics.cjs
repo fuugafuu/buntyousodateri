@@ -26,7 +26,9 @@ assert.ok(ui.includes('breedingBusySet')&&ui.includes('parentIds'),'breeding par
 assert.ok(css.includes('.breeding-modal')&&css.includes('.life-reveal')&&css.includes('.life-stage-dock'));
 
 assert.ok(profile.includes('function familyTreeHtml(')&&profile.includes('function familyNode('));
+assert.ok(profile.includes('function descendantBranch(')&&profile.includes('function familyChildren('),'family tree must expand toward descendants too');
 assert.ok(profile.includes('function geneticsSummary(')&&profile.includes('FAMILY TREE'));
+assert.ok(profile.includes('function genePairChip(')&&profile.includes('父系・母系から受け継いだ遺伝値'),'inherited allele pairs must be inspectable');
 assert.ok(profile.includes("p?.lifeStage==='egg'")&&profile.includes("p?.lifeStage==='chick'"));
 assert.ok(profileCss.includes('.v730-family')&&profileCss.includes('.v730-genetics'));
 
@@ -38,6 +40,7 @@ assert.ok(sql.includes("life_stage in ('egg','chick','adult')"));
 assert.ok(sql.includes("raise exception 'close_relation'"));
 assert.ok(sql.includes('180+floor(random()*1261)'),'breeding duration must be 3-24h');
 assert.ok(sql.includes('120+floor(random()*481)'),'egg hatch duration must be 2-10h');
+assert.ok(sql.includes('laid_time:=j.completes_at')&&sql.includes('hatch_time:=laid_time+make_interval'),'egg/hatch timers must continue while app is closed');
 assert.ok(sql.includes("growth_points>=6"),'chick growth gate missing');
 assert.ok(sql.includes('enable row level security'));
 assert.ok(sql.includes('to service_role'));
