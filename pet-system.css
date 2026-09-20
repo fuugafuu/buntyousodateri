@@ -30,3 +30,18 @@
   .visit-card{grid-template-columns:auto 1fr}.visit-actions,.return-visit{grid-column:1/-1}.friend-card-v5{display:grid;grid-template-columns:auto 1fr}.friend-actions{grid-column:1/-1;justify-content:stretch}.friend-actions button{flex:1}
 }
 @media(prefers-reduced-motion:reduce){.gacha-reveal::before,.gacha-orbit,.gacha-capsule,.gacha-result,.gacha-reveal.rarity-ur::after{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+/* v7.2.4 duplicate fusion */
+.fusion-open-btn{background:linear-gradient(135deg,#6750a4,#8d6bc7)!important;color:#fff!important;border:0!important}
+.fusion-modal{width:min(720px,calc(100vw - 18px));max-height:88vh;overflow:auto}
+.fusion-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.fusion-head small{font-size:.46rem;letter-spacing:.13em;color:#7155a5;font-weight:950}.fusion-head [data-fusion-close]{width:36px;height:36px;border:1px solid #dde5e1;border-radius:50%;background:#fff;font-size:1rem}
+.fusion-note{font-size:.54rem;line-height:1.55;color:#6f7e78;background:#f7f5fb;border:1px solid #e6ddf3;border-radius:12px;padding:9px 11px}
+#fusionGroups{display:grid;gap:9px}#fusionGroups.busy{opacity:.55;pointer-events:none}
+.fusion-group{border:1px solid #dfe6e3;border-radius:15px;padding:11px;background:#fbfdfc;display:grid;gap:8px}
+.fusion-target{display:flex;gap:10px;align-items:center}.fusion-target>span{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:#efe9f7;font-size:1.45rem}.fusion-target>div{display:grid;min-width:0}.fusion-target small{font-size:.43rem;color:#8066a9;font-weight:850}.fusion-target b{font-size:.66rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fusion-target em{font-style:normal;font-size:.48rem;color:#718079}
+.fusion-arrow{font-size:.52rem;text-align:center;color:#5f6f68}.fusion-arrow b{color:#6d4ca2}.fusion-materials{display:flex;gap:5px;flex-wrap:wrap}.fusion-materials>span{display:flex;gap:3px;align-items:center;padding:5px 7px;border-radius:999px;background:#f0f4f2;font-size:.7rem}.fusion-materials small{font-size:.4rem;font-weight:900;color:#6a7a73}.fusion-protected{font-size:.46rem;color:#7d6a58;background:#fff7e8;border-radius:8px;padding:6px 8px}.fusion-group>button{border:0;border-radius:11px;background:#684b9a;color:#fff;padding:10px 12px;font-size:.54rem;font-weight:900}
+.fusion-empty{min-height:180px;display:grid;place-items:center;align-content:center;text-align:center;gap:5px}.fusion-empty>span{font-size:2rem}.fusion-empty b{font-size:.66rem}.fusion-empty small{font-size:.5rem;color:#718079}
+.pet-card.name-protected{box-shadow:inset 0 0 0 1px rgba(184,133,54,.22)}
+body.night .fusion-modal,body.night .fusion-group{background:#18231f;color:#edf5f2;border-color:#354842}body.night .fusion-note{background:#211d2a;color:#b9c5c0;border-color:#4c405d}body.night .fusion-head [data-fusion-close]{background:#202d28;color:#fff;border-color:#40514a}body.night .fusion-materials>span{background:#24322d}.v724-win-reward{margin:9px auto 12px;padding:9px 12px;border-radius:12px;background:linear-gradient(135deg,#fff7d5,#f6ffe9);border:1px solid #ead58a;display:grid;gap:2px;max-width:320px}.v724-win-reward small{font-size:.42rem!important;letter-spacing:.12em;color:#866f20!important;font-weight:950}.v724-win-reward b{font-size:.62rem}.v724-win-reward span{font-size:.44rem;color:#66756f}
+body.night .v724-win-reward{background:linear-gradient(135deg,#322d1b,#213023);border-color:#6d6033;color:#fff}
+@media(max-width:620px){.fusion-modal{max-height:92vh}.fusion-target>span{width:42px;height:42px}.fusion-note{font-size:.5rem}.fusion-group>button{min-height:42px}.v72-companion-toolbar{grid-template-columns:1fr!important}.fusion-open-btn{width:100%}}
