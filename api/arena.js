@@ -61,22 +61,22 @@ function rand(seed){
 function gameDuration(game){return game==='flight'?30000:game==='kale'?10000:game==='seedrace'?15000:game==='ring'?20000:15000}
 function syntheticBotProgress(game,seed,startsAt,status){
   const start=Date.parse(startsAt||0),dur=gameDuration(game),elapsed=Math.max(0,Math.min(dur,Date.now()-start));
-  const r=rand((Number(seed)||1)^0x72b07),skill=.56+r()*.34,ratio=dur?elapsed/dur:0,x=Math.sin(elapsed/620+(seed%17))*.72;
+  const r=rand((Number(seed)||1)^0x72b07),skill=.40+r()*.30,ratio=dur?elapsed/dur:0,x=Math.sin(elapsed/620+(seed%17))*.72;
   const moveRand=rand(((Number(seed)||1)^0x431d^Math.floor(elapsed/720))>>>0);
   if(status==='finished')return {};
-  if(game==='flight')return {ready:true,bot:true,t:elapsed,x:round(x,3),y:round(Math.sin(elapsed/830+(seed%11))*.62,3),height:Math.round(ratio*(10500+skill*8500)),hp:Math.max(18,Math.round(100-ratio*(1-skill)*62)),count:0,hits:0};
-  if(game==='kale')return {ready:true,bot:true,t:elapsed,x:0,count:Math.floor(ratio*(65+skill*104)),height:0,hits:0,hp:100};
-  if(game==='seedrace')return {ready:true,bot:true,t:elapsed,x:round(x,3),count:Math.floor(ratio*(62+skill*82)),height:0,hits:0,hp:100};
-  if(game==='ring')return {ready:true,bot:true,t:elapsed,x:round(x,3),hits:Math.min(16,Math.floor(ratio*(9+skill*7))),count:0,height:0,hp:100};
-  return {ready:true,bot:true,t:elapsed,x:[-1,0,1][Math.floor(moveRand()*3)],hits:Math.min(12,Math.floor(ratio*(7+skill*5))),count:0,height:0,hp:100};
+  if(game==='flight')return {ready:true,bot:true,t:elapsed,x:round(x,3),y:round(Math.sin(elapsed/830+(seed%11))*.62,3),height:Math.round(ratio*(8200+skill*7200)),hp:Math.max(18,Math.round(100-ratio*(1-skill)*62)),count:0,hits:0};
+  if(game==='kale')return {ready:true,bot:true,t:elapsed,x:0,count:Math.floor(ratio*(46+skill*72)),height:0,hits:0,hp:100};
+  if(game==='seedrace')return {ready:true,bot:true,t:elapsed,x:round(x,3),count:Math.floor(ratio*(45+skill*68)),height:0,hits:0,hp:100};
+  if(game==='ring')return {ready:true,bot:true,t:elapsed,x:round(x,3),hits:Math.min(16,Math.floor(ratio*(7+skill*6))),count:0,height:0,hp:100};
+  return {ready:true,bot:true,t:elapsed,x:[-1,0,1][Math.floor(moveRand()*3)],hits:Math.min(12,Math.floor(ratio*(5+skill*5))),count:0,height:0,hp:100};
 }
 function botRaw(game,seed){
-  const r=rand((Number(seed)||1)^0x9e3779b9),skill=.56+r()*.36;
-  if(game==='flight')return {durationMs:30000,height:Math.round(10500+skill*9100),collisions:Math.max(0,Math.floor((1-skill)*11+r()*3))};
-  if(game==='kale')return {durationMs:10000,taps:Math.round(65+skill*105)};
-  if(game==='seedrace')return {durationMs:15000,count:Math.round(60+skill*86)};
-  if(game==='ring'){const hits=Math.max(0,Math.min(16,Math.round(8+skill*8)));return {durationMs:20000,hits,misses:16-hits,avgReactionMs:Math.round(500-skill*310)}}
-  const hits=Math.max(0,Math.min(12,Math.round(6+skill*6)));return {hits,misses:12-hits,avgReactionMs:Math.round(720-skill*390)};
+  const r=rand((Number(seed)||1)^0x9e3779b9),skill=.40+r()*.32;
+  if(game==='flight')return {durationMs:30000,height:Math.round(8200+skill*7600),collisions:Math.max(0,Math.floor((1-skill)*11+r()*3))};
+  if(game==='kale')return {durationMs:10000,taps:Math.round(48+skill*84)};
+  if(game==='seedrace')return {durationMs:15000,count:Math.round(45+skill*72)};
+  if(game==='ring'){const hits=Math.max(0,Math.min(16,Math.round(8+skill*8)));return {durationMs:20000,hits,misses:16-hits,avgReactionMs:Math.round(610-skill*270)}}
+  const hits=Math.max(0,Math.min(12,Math.round(5+skill*5)));return {hits,misses:12-hits,avgReactionMs:Math.round(820-skill*330)};
 }
 async function loadMatch(sb,userKey,matchId){
   const id=uuid(matchId);if(!id)return null;
