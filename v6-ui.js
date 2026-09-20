@@ -549,7 +549,7 @@ function careSnapshot(action){return {feeds:G.tFeeds,pets:G.tPets,plays:G.tPlays
 function careSucceeded(action,b,a){if(action==='feed'||action==='treat')return a.feeds>b.feeds;if(action==='pet')return a.pets>b.pets;if(action==='play')return a.plays>b.plays;if(action==='bath')return a.baths>b.baths;if(action==='sing')return a.sings>b.sings;if(action==='train')return a.energy<b.energy;if(action==='sleep')return !b.sleeping&&a.sleeping;return false}
 function patchCare(){
   const map={feedBird:'feed',petBird:'pet',playBird:'play',bathBird:'bath',giveTreat:'treat',trainBird:'train',singBird:'sing',toggleSleep:'sleep'};
-  for(const [name,action] of Object.entries(map)){const old=window[name];if(typeof old!=='function'||old.__v6)continue;const fn=function(...args){const b=careSnapshot(action),ret=old.apply(this,args),a=careSnapshot(action);if(careSucceeded(action,b,a))recordCare(action);return ret};fn.__v6=true;window[name]=fn}
+  for(const [name,action] of Object.entries(map)){const old=window[name];if(typeof old!=='function'||old.__v6)continue;const fn=function(...args){const p=activePet();if(p?.lifeStage==='egg'){showToast?.('🥚 卵はまだお世話できません。孵化を待ってね','warning');return}const b=careSnapshot(action),ret=old.apply(this,args),a=careSnapshot(action);if(careSucceeded(action,b,a))recordCare(action);return ret};fn.__v6=true;window[name]=fn}
 }
 async function recordCare(action){
   const p=activePet();if(!logged()||!uuid(p?.id))return;
