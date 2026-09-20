@@ -138,7 +138,7 @@ function showNextLifeEvent(){
   document.getElementById('lifeRevealKicker').textContent=type==='egg_laid'?'EGG ARRIVED':type==='hatched'?'HATCHED':'GROWN UP';
   document.getElementById('lifeRevealIcon').textContent=icon;
   document.getElementById('lifeRevealTitle').textContent=type==='egg_laid'?'卵が生まれた！':type==='hatched'?'雛が生まれた！':'成鳥になった！';
-  document.getElementById('lifeRevealCopy').textContent=type==='egg_laid'?`鳥一覧に卵が追加されました。孵化まで ${fmtRemain(p?.hatchAt)}。`:type==='hatched'?`${p?.name||'雛'}が孵化しました。お世話すると成镴が早まります。`:`${p?.name||'鳥'}が成鳥になりました。性別判定後、次の世代へ交配できます。`;
+  document.getElementById('lifeRevealCopy').textContent=type==='egg_laid'?`鳥一覧に卵が追加されました。孵化まで ${fmtRemain(p?.hatchAt)}。`:type==='hatched'?`${p?.name||'雛'}が孵化しました。お世話すると成長が早まります。`:`${p?.name||'鳥'}が成鳥になりました。性別判定後、次の世代へ交配できます。`;
   document.getElementById('lifeRevealTraits').innerHTML=ph.colorName?`<span>🎨 ${escapeHtml(ph.colorName)}</span><span>📏 ${escapeHtml(ph.sizeClass||'標準')}</span><span>💚 ${escapeHtml(ph.personality||'個性的')}</span>`:'';
   document.getElementById('lifeReveal').classList.add('show');
 }
