@@ -259,7 +259,8 @@ module.exports=async function handler(req,res){
     if(action==='dashboard')data=await dashboard(sb,user);
     else if(action==='care'){
       await takeLimit(sb,user.id,'pet_care',60,45);
-      const p=await ownPet(sb,user.id,payload.petId);
+      const petId=uuid(payload.petId);if(!petId)throw Object.assign(new Error('文鳥を選んでください。'),{status:400});
+      const {data:p,error:petError}=await sb.from('mofumori_pets').select('id,life_stage').eq('id',petId).eq('owner_key',user.id).maybeSingle();if(petError)throw petError;if(!p)throw Object.assign(new Error('その文鳥は選べません。'),{status:403});
       const care=text(payload.care,16);
       const {data:d,error}=await sb.rpc('mofumori_record_pet_care',{p_owner:user.id,p_pet:p.id,p_action:care});
       if(error)throw error;data=d;
