@@ -136,20 +136,35 @@ function lifeStageLabel(p){
   return p?.lifeStage==='egg'?'🥚 卵':p?.lifeStage==='chick'?'🐣 雛':'成鳥';
 }
 function familyPet(id){return (G?.petCollection||[]).find(p=>String(p.id)===String(id))||null}
+function familyChildren(id){return (G?.petCollection||[]).filter(p=>String(p.fatherId||'')===String(id)||String(p.motherId||'')===String(id))}
 function familyNode(p,depth=0,seen=new Set()){
   if(!p)return '<div class="v730-family-missing">記録なし</div>';
   if(seen.has(String(p.id)))return '<div class="v730-family-missing">↻</div>';
   const next=new Set(seen);next.add(String(p.id));
   const hasParents=(p.fatherId||p.motherId)&&depth<5;
-  return '<div class="v730-family-node depth-'+depth+'"><div class="v730-family-person"><span>'+petIcon(p)+'</span><div><b>'+esc(p.name||petName(p))+'</b><small>G'+Number(p.generation||0)+' ・ '+esc(sexLabel(p))+'</small></div></div>'+(hasParents?'<div class="v730-family-parents"><div><em>父</em>'+familyNode(familyPet(p.fatherId),depth+1,next)+'</div><div><em>母</em>'+familyNode(familyPet(p.motherId),depth+1,next)+'</div></div>':'')+'</div>';
+  return '<div class="v730-family-node depth-'+depth+'"><div class="v730-family-person"><span>'+petIcon(p)+'</span><div><b>'+esc(p.name||petName(p))+'</b><small>G'+Number(p.generation||0)+' ・ '+esc(sexLabel(p))+(p.phenotype?.colorName?' ・ '+esc(p.phenotype.colorName):'')+'</small></div></div>'+(hasParents?'<div class="v730-family-parents"><div><em>父</em>'+familyNode(familyPet(p.fatherId),depth+1,next)+'</div><div><em>母</em>'+familyNode(familyPet(p.motherId),depth+1,next)+'</div></div>':'')+'</div>';
+}
+function genePairChip(g,key,label){
+  const pair=g?.traits?.[key];if(!Array.isArray(pair)||pair.length<2)return'';
+  return '<span class="gene-pair"><small>'+esc(label)+'</small><b>'+Number(pair[0]||0).toFixed(0)+' / '+Number(pair[1]||0).toFixed(0)+'</b></span>';
 }
 function geneticsSummary(p){
   const ph=p?.phenotype||{},g=p?.genetics||{},colors=Array.isArray(g.color)?g.color.join(' × '):'未解析',mut=Array.isArray(ph.mutations)?ph.mutations.length:Array.isArray(g.mutations)?g.mutations.length:0;
-  return '<section class="v730-genetics"><div class="v730-genetics-head"><div><small>GENETICS</small><h3>遺伝・特徴</h3></div><span>G'+Number(p?.generation||0)+'</span></div><div class="v730-gene-chips"><span>🎨 '+esc(ph.colorName||'標準')+'</span><span>📏 '+esc(ph.sizeClass||'標準')+'</span><span>💚 '+esc(ph.personality||'個性的')+'</span><span>🧬 '+esc(colors)+'</span>'+(mut?'<span>✨ 変異 '+mut+'</span>':'')+'</div></section>';
+  return '<section class="v730-genetics"><div class="v730-genetics-head"><div><small>GENETICS</small><h3>遺伝・特徴</h3></div><span>G'+Number(p?.generation||0)+'</span></div><div class="v730-gene-chips"><span>🎨 '+esc(ph.colorName||'標準')+'</span><span>📏 '+esc(ph.sizeClass||'標準')+'</span><span>💚 '+esc(ph.personality||'個性的')+'</span><span>🧬 '+esc(colors)+'</span>'+(mut?'<span>✨ 変異 '+mut+'</span>':'')+'</div><div class="v730-gene-pairs">'+genePairChip(g,'frame','体格')+genePairChip(g,'endurance','体力')+genePairChip(g,'agility','敏捷')+genePairChip(g,'flightPower','飛行')+genePairChip(g,'focus','集中')+genePairChip(g,'sociability','社交性')+'</div><p class="v730-gene-note">各2値は父系・母系から受け継いだ遺伝値。次の交配では、この2本から1本ずつ子へ渡ります。</p></section>';
+}
+function descendantBranch(p,depth=0,seen=new Set()){
+  if(!p||depth>5)return'';
+  const next=new Set(seen);next.add(String(p.id));
+  const kids=familyChildren(p.id).filter(k=>!next.has(String(k.id)));
+  if(!kids.length)return'';
+  return '<div class="v730-descendants depth-'+depth+'">'+kids.map(k=>'<div class="v730-descendant"><div class="v730-desc-line"></div><div class="v730-family-person child"><span>'+petIcon(k)+'</span><div><b>'+esc(k.name||petName(k))+'</b><small>G'+Number(k.generation||0)+' ・ '+esc(lifeStageLabel(k))+(k.phenotype?.colorName?' ・ '+esc(k.phenotype.colorName):'')+'</small></div></div>'+descendantBranch(k,depth+1,next)+'</div>').join('')+'</div>';
 }
 function familyTreeHtml(p){
-  if(!(p?.fatherId||p?.motherId||Number(p?.generation||0)>0))return'';
-  return '<section class="v730-family"><div class="v730-family-head"><small>FAMILY TREE</small><h3>関係図</h3><p>交配で生まれた個体だけ表示。世代が増えるほど枝が伸びます。</p></div><div class="v730-family-scroll">'+familyNode(p,0,new Set())+'</div></section>';
+  const kids=familyChildren(p?.id);
+  if(!(p?.fatherId||p?.motherId||Number(p?.generation||0)>0||kids.length))return'';
+  const ancestors=(p?.fatherId||p?.motherId)?'<div class="v730-family-zone"><h4>祖先</h4>'+familyNode(p,0,new Set())+'</div>':'';
+  const descendants=kids.length?'<div class="v730-family-zone"><h4>子孫</h4><div class="v730-family-root"><div class="v730-family-person root"><span>'+petIcon(p)+'</span><div><b>'+esc(p.name||petName(p))+'</b><small>G'+Number(p.generation||0)+'</small></div></div>'+descendantBranch(p,0,new Set())+'</div></div>':'';
+  return '<section class="v730-family"><div class="v730-family-head"><small>FAMILY TREE</small><h3>関係図</h3><p>交配を重ねると祖先と子孫の枝が自動で伸びます。</p></div><div class="v730-family-scroll">'+ancestors+descendants+'</div></section>';
 }
 function renderOverview(){
   const root=$('#v6Overview');if(!root)return;
@@ -179,7 +194,7 @@ function renderPetSheet(){
     :`<section class="v6-sex-card locked"><div><small>SEX</small><b>${esc(sexLabel(p))}</b><p>性別判定は成鳥になってからできます。</p></div></section>`;
   root.innerHTML=`<section class="v6-pet-hero"><div class="v6-big-bird">${petIcon(p)}</div><div><small>${esc(p.speciesName||birds?.[p.species]?.name||'文鳥')}</small><h3>${esc(petName(p))}</h3><div class="v6-tags"><span>${p.rarity||'N'}</span><span>Rank ${p.rank||1}</span><span>${esc(lifeStageLabel(p))}</span><span>${esc(sexLabel(p))}</span>${Number(p.generation||0)>0?'<span>G'+Number(p.generation)+'</span>':''}</div></div></section>
   ${stageCard}${sexCard}
-  ${Number(p.generation||0)>0||p.fatherId||p.motherId?geneticsSummary(p):''}
+  ${Number(p.generation||0)>0||p.fatherId||p.motherId||familyChildren(p.id).length?geneticsSummary(p):''}
   ${s?`<section class="v6-body-grid"><div><small>体重</small><b>${Number(s.weightG).toFixed(1)} g</b><em>適正 ${Number(s.idealWeightG).toFixed(1)} g</em></div><div><small>体長</small><b>${Number(s.bodyLengthCm).toFixed(1)} cm</b><em>翼幅 ${Number(s.wingSpanCm).toFixed(1)} cm</em></div><div><small>特徴</small><b>${esc(ph.personality||s.personality||'個性的')}</b><em>${esc(ph.sizeClass||'標準')} ・ 体格 ${Math.round(s.frame||0)}</em></div><div><small>対戦</small><b>${stage==='adult'?s.rating||1000:'--'}</b><em>${stage==='adult'?((s.wins||0)+'勝 '+(s.losses||0)+'敗 '+(s.draws||0)+'分'):'成鳥から参加可能'}</em></div></section>
   <section class="v6-stat-grid">${metric('食いしん坊',s.appetite)}${metric('体格',s.frame)}${metric('代謝',s.metabolism)}${metric('落ち着き',s.temperament)}${metric('好奇心',s.curiosity)}${metric('社交性',s.sociability)}${metric('体力',s.endurance)}${metric('敏捷性',s.agility)}${metric('飛行力',s.flightPower)}${metric('集中力',s.focus)}${metric('くちばし速度',s.beakSpeed)}${metric('バランス',s.balance)}${metric('フィットネス',s.fitness)}</section>`:'<div class="v6-cloud-note">ログインすると個体ステータスが同期されます。</div>'}
   ${familyTreeHtml(p)}`;
