@@ -244,3 +244,46 @@ alter table public.mofumori_visit_actions add constraint mofumori_visit_actions_
     'care:feed','care:treat','care:play','care:sing','care:bath','care:pet'
   )
 );
+
+
+create or replace function public.mofumori_record_pet_care(
+  p_owner text,p_pet uuid,p_action text
+) returns jsonb
+language plpgsql
+security definer
+set search_path=''
+as $$
+declare r public.mofumori_pets%rowtype; old_count integer; new_count integer; delta numeric;
+begin
+  if p_action not in ('feed','treat','play','train','sing','bath','pet','sleep') then raise exception 'invalid_care_action'; end if;
+  select * into r from public.mofumori_pets where id=p_pet and owner_key=p_owner for update;
+  if r.id is null then raise exception 'pet_forbidden'; end if;
+  old_count:=coalesce((r.care_counters->>p_action)::integer,0); new_count:=old_count+1;
+  delta:=case p_action when 'feed' then greatest(0.018,r.ideal_weight_g*0.00045) when 'treat' then greatest(0.055,r.ideal_weight_g*0.0011) when 'play' then -greatest(0.018,r.ideal_weight_g*0.00035) when 'train' then -greatest(0.012,r.ideal_weight_g*0.00028) else 0 end;
+  update public.mofumori_pets set
+    care_counters=jsonb_set(care_counters,array[p_action],to_jsonb(new_count),true),
+    appetite=greatest(1,least(100,appetite+case p_action when 'feed' then .05 when 'treat' then .16 when 'play' then -.02 else 0 end)),
+    temperament=greatest(1,least(100,temperament+case p_action when 'pet' then .08 when 'bath' then .04 when 'sleep' then .03 else 0 end)),
+    curiosity=greatest(1,least(100,curiosity+case p_action when 'play' then .07 when 'train' then .05 else 0 end)),
+    sociability=greatest(1,least(100,sociability+case p_action when 'pet' then .08 when 'sing' then .09 when 'play' then .04 else 0 end)),
+    endurance=greatest(1,least(120,endurance+case p_action when 'train' then .18 when 'play' then .11 when 'sleep' then .07 else 0 end)),
+    agility=greatest(1,least(120,agility+case p_action when 'play' then .18 when 'train' then .09 else 0 end)),
+    flight_power=greatest(1,least(120,flight_power+case p_action when 'train' then .20 when 'play' then .06 else 0 end)),
+    focus=greatest(1,least(120,focus+case p_action when 'train' then .16 when 'sing' then .10 when 'sleep' then .04 else 0 end)),
+    beak_speed=greatest(1,least(120,beak_speed+case p_action when 'feed' then .05 when 'treat' then .03 else 0 end)),
+    balance=greatest(1,least(120,balance+case p_action when 'play' then .12 when 'train' then .12 else 0 end)),
+    fitness=greatest(1,least(120,fitness+case p_action when 'train' then .13 when 'play' then .10 when 'sleep' then .07 when 'treat' then -.12 else 0 end)),
+    weight_g=greatest(ideal_weight_g*.6,least(ideal_weight_g*1.5,weight_g+delta)),
+    last_care_at=now(),stats_updated_at=now()
+  where id=p_pet returning * into r;
+  return jsonb_build_object(
+    'id',r.id,'appetite',r.appetite,'frame',r.frame,'metabolism',r.metabolism,'temperament',r.temperament,
+    'curiosity',r.curiosity,'sociability',r.sociability,'endurance',r.endurance,'agility',r.agility,
+    'flightPower',r.flight_power,'focus',r.focus,'beakSpeed',r.beak_speed,'balance',r.balance,
+    'weightG',r.weight_g,'idealWeightG',r.ideal_weight_g,'bodyLengthCm',r.body_length_cm,'wingSpanCm',r.wing_span_cm,
+    'fitness',r.fitness,'careCounters',r.care_counters,'rating',r.arena_rating,'wins',r.arena_wins,'losses',r.arena_losses,'draws',r.arena_draws
+  );
+end
+$$;
+revoke execute on function public.mofumori_record_pet_care(text,uuid,text) from public,anon,authenticated;
+grant execute on function public.mofumori_record_pet_care(text,uuid,text) to service_role;
