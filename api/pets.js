@@ -26,6 +26,14 @@ const DEFAULT_GACHA_CONFIG={
 };
 const VISIT_ACTIONS = new Set(['greet','pet','play','share_seed']);
 const VISIT_CARE_ACTIONS = new Set(['feed','treat','play','sing','bath','pet']);
+const BREEDABLE_BIRDS = new Set(['buncho_sakura','buncho_white','buncho_cinnamon','buncho_silver','buncho_pied','buncho_black','canary','inko_green','inko_blue','finch_zebra','lovebird','cockatiel','owl','penguin']);
+const BUNCHO_COLORS=['sakura','white','cinnamon','silver','pied','black'];
+const BUNCHO_SPECIES_TO_COLOR={buncho_sakura:'sakura',buncho_white:'white',buncho_cinnamon:'cinnamon',buncho_silver:'silver',buncho_pied:'pied',buncho_black:'black'};
+const BUNCHO_COLOR_TO_SPECIES={sakura:'buncho_sakura',white:'buncho_white',cinnamon:'buncho_cinnamon',silver:'buncho_silver',pied:'buncho_pied',black:'buncho_black'};
+const GENE_TRAITS={
+  appetite:'appetite',frame:'frame',metabolism:'metabolism',temperament:'temperament',curiosity:'curiosity',sociability:'sociability',
+  endurance:'endurance',agility:'agility',flightPower:'flight_power',focus:'focus',beakSpeed:'beak_speed',balance:'balance',fitness:'fitness'
+};
 
 function playerIdFor(userKey) {
   return `MF-${crypto.createHash('sha256').update(String(userKey)).digest('hex').slice(0, 10).toUpperCase()}`;
@@ -39,6 +47,106 @@ function uuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(out) ? out : null;
 }
 function randomFloat() { return crypto.randomInt(0, 1_000_000) / 1_000_000; }
+
+function clampGene(v,min=1,max=120){const n=Number(v);return Math.max(min,Math.min(max,Number.isFinite(n)?n:50))}
+function deterministicUnit(seed,label){
+  const h=crypto.createHash('sha256').update(String(seed)+'|'+String(label)).digest();
+  return h.readUInt32BE(0)/0xffffffff;
+}
+function genePair(raw,seed,label){
+  const base=clampGene(raw,1,120),spread=(deterministicUnit(seed,label)-.5)*16;
+  return [Math.round(clampGene(base+spread,1,120)*100)/100,Math.round(clampGene(base-spread,1,120)*100)/100];
+}
+function baselineGenetics(row){
+  const seed=row?.id||row?.migration_key||row?.species||crypto.randomUUID();
+  const traits={};
+  for(const [key,col] of Object.entries(GENE_TRAITS))traits[key]=genePair(row?.[col],seed,key);
+  traits.colorTone=genePair(50+(deterministicUnit(seed,'tone')-.5)*30,seed,'colorTone');
+  let baseColor=BUNCHO_SPECIES_TO_COLOR[row?.species]||String(row?.species||'base');
+  let second=baseColor;
+  if(String(row?.species||'').startsWith('buncho_')&&deterministicUnit(seed,'recessive')<.22){
+    const opts=BUNCHO_COLORS.filter(x=>x!==baseColor);
+    second=opts[Math.floor(deterministicUnit(seed,'recessive-choice')*opts.length)]||baseColor;
+  }
+  return {version:1,color:[baseColor,second],traits,origin:'legacy-seed'};
+}
+function validGenes(g){return !!(g&&typeof g==='object'&&Number(g.version)>=1&&g.traits&&typeof g.traits==='object'&&Array.isArray(g.color))}
+function pickAllele(pair){const a=Array.isArray(pair)&&pair.length?pair:[50,50];return a[crypto.randomInt(0,Math.max(1,a.length))]??50}
+function maybeMutateNumber(value,label,mutations){
+  let v=Number(value)||50;
+  if(randomFloat()<.035){
+    const delta=(randomFloat()<.5?-1:1)*(3+Math.round(randomFloat()*9));
+    v+=delta;mutations.push({gene:label,delta});
+  }
+  return Math.round(clampGene(v,1,120)*100)/100;
+}
+function inheritGenes(fatherGenes,motherGenes){
+  const mutations=[],traits={};
+  const keys=[...new Set([...Object.keys(fatherGenes.traits||{}),...Object.keys(motherGenes.traits||{}),...Object.keys(GENE_TRAITS),'colorTone'])];
+  for(const key of keys){
+    const a=maybeMutateNumber(pickAllele(fatherGenes.traits?.[key]),key,mutations);
+    const b=maybeMutateNumber(pickAllele(motherGenes.traits?.[key]),key,mutations);
+    traits[key]=[a,b];
+  }
+  let ca=String(pickAllele(fatherGenes.color)||'sakura'),cb=String(pickAllele(motherGenes.color)||'sakura');
+  if(BUNCHO_COLORS.includes(ca)&&BUNCHO_COLORS.includes(cb)&&randomFloat()<.025){
+    ca=BUNCHO_COLORS[crypto.randomInt(0,BUNCHO_COLORS.length)];mutations.push({gene:'color',type:'mutation'});
+  }
+  return {version:1,color:[ca,cb],traits,mutations,origin:'bred'};
+}
+function expressed(g,key,fallback=50){
+  const pair=g?.traits?.[key];if(!Array.isArray(pair)||!pair.length)return fallback;
+  return pair.reduce((a,b)=>a+Number(b||0),0)/pair.length;
+}
+function resolveBunchoColor(pair){
+  const a=String(pair?.[0]||'sakura'),b=String(pair?.[1]||'sakura');
+  if(a===b&&BUNCHO_COLORS.includes(a))return a;
+  const s=new Set([a,b]);
+  if(s.has('pied'))return'pied';
+  if(s.has('black'))return'black';
+  if(s.has('cinnamon'))return'cinnamon';
+  if(s.has('silver'))return'silver';
+  if(s.has('white'))return s.has('sakura')?'sakura':'white';
+  return'sakura';
+}
+function phenotypeFor(genes,species){
+  const tone=expressed(genes,'colorTone',50),frame=expressed(genes,'frame',50),temper=expressed(genes,'temperament',50),cur=expressed(genes,'curiosity',50),social=expressed(genes,'sociability',50);
+  const colorKey=String(species).startsWith('buncho_')?resolveBunchoColor(genes.color):String(species);
+  const colorName={sakura:'桜',white:'白',cinnamon:'シナモン',silver:'シルバー',pied:'白黒',black:'黒'}[colorKey]||(tone<42?'淡色':tone>62?'濃色':'標準色');
+  const sizeClass=frame<43?'小柄':frame>67?'大柄':'標準';
+  const personality=social>68?'社交的':cur>68?'好奇心旺盛':temper>68?'おっとり':temper<38?'活発':'マイペース';
+  return {version:1,colorKey,colorName,tone:Math.round(tone),sizeClass,personality,mutations:Array.isArray(genes.mutations)?genes.mutations:[]};
+}
+async function stableGenes(supabase,row){
+  if(validGenes(row?.genetics))return row.genetics;
+  const genes=baselineGenetics(row);
+  const phenotype=phenotypeFor(genes,row.species);
+  const {error}=await supabase.from('mofumori_pets').update({genetics:genes,phenotype}).eq('id',row.id).eq('owner_key',row.owner_key);
+  if(error)throw error;row.genetics=genes;row.phenotype=phenotype;return genes;
+}
+function deriveChild(father,mother,fGenes,mGenes){
+  const genes=inheritGenes(fGenes,mGenes);
+  const buncho=String(father.species).startsWith('buncho_')&&String(mother.species).startsWith('buncho_');
+  const color=buncho?resolveBunchoColor(genes.color):null;
+  const species=buncho?(BUNCHO_COLOR_TO_SPECIES[color]||'buncho_sakura'):father.species;
+  const phenotype=phenotypeFor(genes,species);
+  const rankBase=Math.round((Number(father.rank||1)+Number(mother.rank||1))/2);
+  const rank=Math.max(1,Math.min(5,rankBase+(randomFloat()<.10?(randomFloat()<.5?-1:1):0)));
+  const rarity=['N','N','R','SR','SSR','UR'][rank]||'N';
+  const val=k=>Math.round(clampGene(expressed(genes,k,50),1,k==='appetite'||k==='frame'||k==='metabolism'||k==='temperament'||k==='curiosity'||k==='sociability'?100:120)*100)/100;
+  const avg=(a,b,fallback)=>(Number(a||fallback)+Number(b||fallback))/2;
+  const sizeFactor=.92+val('frame')/625;
+  const stats={
+    appetite:val('appetite'),frame:val('frame'),metabolism:val('metabolism'),temperament:val('temperament'),
+    curiosity:val('curiosity'),sociability:val('sociability'),endurance:val('endurance'),agility:val('agility'),
+    flightPower:val('flightPower'),focus:val('focus'),beakSpeed:val('beakSpeed'),balance:val('balance'),fitness:val('fitness'),
+    idealWeightG:Math.round(avg(father.ideal_weight_g,mother.ideal_weight_g,24.5)*sizeFactor*100)/100,
+    weightG:Math.round(avg(father.ideal_weight_g,mother.ideal_weight_g,24.5)*sizeFactor*(.96+randomFloat()*.08)*100)/100,
+    bodyLengthCm:Math.round(avg(father.body_length_cm,mother.body_length_cm,14)*sizeFactor*100)/100,
+    wingSpanCm:Math.round(avg(father.wing_span_cm,mother.wing_span_cm,22)*(.95+val('flightPower')/1000)*100)/100
+  };
+  return {genes,phenotype,species,rank,rarity,sex:randomFloat()<.5?'male':'female',name:SPECIES_META[species]?.[0]||'文鳥',stats};
+}
 function normalizeGachaConfig(raw){
   const cfg=raw&&typeof raw==='object'?raw:DEFAULT_GACHA_CONFIG;
   const banners=Array.isArray(cfg.banners)&&cfg.banners.length?cfg.banners:DEFAULT_GACHA_CONFIG.banners;
@@ -84,9 +192,12 @@ function petToClient(row) {
     rating:Number(row.arena_rating||1000), wins:Number(row.arena_wins||0), losses:Number(row.arena_losses||0), draws:Number(row.arena_draws||0)
   };
   return {
-    id: row.id, species: row.species, speciesName: meta[0], icon: meta[1],
+    id: row.id, species: row.species, speciesName: meta[0], icon: (row.life_stage==='egg'?'🥚':row.life_stage==='chick'?'🐣':meta[1]),
     name: row.name || meta[0], rarity: row.rarity || 'N', rank: Number(row.rank || 1),
     source: row.source || 'legacy', obtainedAt: row.obtained_at || null,
+    lifeStage:row.life_stage||'adult', fatherId:row.father_id||null, motherId:row.mother_id||null, generation:Number(row.generation||0),
+    genetics:row.genetics||{}, phenotype:row.phenotype||{}, laidAt:row.laid_at||null, hatchAt:row.hatch_at||null, hatchedAt:row.hatched_at||null,
+    adultEarliestAt:row.adult_earliest_at||null, adultLatestAt:row.adult_latest_at||null, adultAt:row.adult_at||null, growthPoints:Number(row.growth_points||0), bredAt:row.bred_at||null,
     customNamed: row.custom_named === true, fusionLevel: Number(row.fusion_level||0), fusionCount: Number(row.fusion_count||0), fusedAt: row.fused_at||null,
     sexKnown: row.sex_known === true, sex: row.sex_known === true ? row.sex : null,
     sexDeterminedAt: row.sex_determined_at || null, stats
@@ -174,12 +285,60 @@ async function ensureHiddenReward(supabase, user) {
   if (error) throw error;
   return true;
 }
+
+async function resolveBreedingAndLifecycle(supabase,user){
+  const now=new Date().toISOString();
+  const {data:jobs,error}=await supabase.from('mofumori_breeding_jobs')
+    .select('id,male_pet_id,female_pet_id,completes_at,status')
+    .eq('owner_key',user.id).eq('status','running').lte('completes_at',now).limit(20);
+  if(error)throw error;
+  for(const job of jobs||[]){
+    try{
+      const {data:parents,error:pe}=await supabase.from('mofumori_pets')
+        .select('id,owner_key,species,rarity,rank,name,genetics,phenotype,generation,ideal_weight_g,body_length_cm,wing_span_cm,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,fitness')
+        .in('id',[job.male_pet_id,job.female_pet_id]);
+      if(pe)throw pe;
+      const father=(parents||[]).find(x=>x.id===job.male_pet_id),mother=(parents||[]).find(x=>x.id===job.female_pet_id);
+      if(!father||!mother)continue;
+      const fg=await stableGenes(supabase,father),mg=await stableGenes(supabase,mother),child=deriveChild(father,mother,fg,mg);
+      const {error:finishError}=await supabase.rpc('mofumori_finish_breeding',{
+        p_owner:user.id,p_job:job.id,p_species:child.species,p_name:child.name,p_rarity:child.rarity,p_rank:child.rank,p_sex:child.sex,
+        p_genetics:child.genes,p_phenotype:child.phenotype,p_stats:child.stats
+      });
+      if(finishError&&!String(finishError.message||'').includes('job_not_ready'))console.warn('[mofumori] breeding finalize failed',finishError.message);
+    }catch(error){console.warn('[mofumori] breeding finalize exception',error?.message||error)}
+  }
+  const {error:lifeError}=await supabase.rpc('mofumori_advance_lifecycle',{p_owner:user.id});
+  if(lifeError)throw lifeError;
+}
+async function startBreeding(supabase,user,rawMale,rawFemale){
+  await takeLimit(supabase,user.id,'start_breeding',3600,20);
+  const male=uuid(rawMale),female=uuid(rawFemale);
+  if(!male||!female)throw Object.assign(new Error('オスとメスを選んでください。'),{status:400});
+  const {data,error}=await supabase.rpc('mofumori_start_breeding',{p_owner:user.id,p_male:male,p_female:female});
+  if(error){
+    const m=String(error.message||'');
+    if(m.includes('sex_mismatch'))throw Object.assign(new Error('性別判定済みのオスとメスを1羽ずつ選んでください。'),{status:400});
+    if(m.includes('not_adult'))throw Object.assign(new Error('卵・雛はまだ交配できません。成鳥まで育ててください。'),{status:409});
+    if(m.includes('species_incompatible'))throw Object.assign(new Error('この2羽は交配できない組み合わせです。文鳥系同士、または同じ種類同士を選んでください。'),{status:409});
+    if(m.includes('close_relation'))throw Object.assign(new Error('親子・きょうだいなど近い血縁の組み合わせは選べません。'),{status:409});
+    if(m.includes('breeding_busy')||m.includes('pet_busy'))throw Object.assign(new Error('どちらかの鳥は交配・訪問・対戦中です。'),{status:409});
+    throw error;
+  }
+  return data;
+}
+async function ackLifecycleEvent(supabase,user,rawEvent){
+  const eventId=uuid(rawEvent);if(!eventId)throw Object.assign(new Error('イベント情報が不正です。'),{status:400});
+  const {error}=await supabase.rpc('mofumori_ack_lifecycle_event',{p_owner:user.id,p_event:eventId});
+  if(error)throw error;return true;
+}
 async function loadDashboard(supabase, user) {
   await ensureLegacyPets(supabase, user);
   const hiddenUnlocked = await ensureHiddenReward(supabase, user);
+  await resolveBreedingAndLifecycle(supabase,user);
   const now = new Date().toISOString();
   const [{ data: pets, error: petError }, { data: links, error: linkError }, { data: requests, error: requestError }, { data: visits, error: visitError }] = await Promise.all([
-    supabase.from('mofumori_pets').select('id,owner_key,species,rarity,rank,name,source,obtained_at,custom_named,fusion_level,fusion_count,fused_at,sex,sex_known,sex_determined_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').eq('owner_key', user.id).order('obtained_at', { ascending: true }).limit(250),
+    supabase.from('mofumori_pets').select('id,owner_key,species,rarity,rank,name,source,obtained_at,custom_named,fusion_level,fusion_count,fused_at,sex,sex_known,sex_determined_at,father_id,mother_id,generation,life_stage,genetics,phenotype,laid_at,hatch_at,hatched_at,adult_earliest_at,adult_latest_at,adult_at,growth_points,bred_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').eq('owner_key', user.id).order('obtained_at', { ascending: true }).limit(250),
     supabase.from('mofumori_friendships').select('friend_key').eq('owner_key', user.id).limit(200),
     supabase.from('mofumori_friend_requests').select('id,sender_key,recipient_key,status,created_at').eq('status', 'pending')
       .or(`sender_key.eq.${user.id},recipient_key.eq.${user.id}`).order('created_at', { ascending: false }).limit(100),
@@ -208,12 +367,18 @@ async function loadDashboard(supabase, user) {
   let visitPets = [];
   if (visitPetIds.length) {
     const { data, error } = await supabase.from('mofumori_pets')
-      .select('id,owner_key,species,rarity,rank,name,source,obtained_at,custom_named,fusion_level,fusion_count,fused_at,sex,sex_known,sex_determined_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').in('id', visitPetIds);
+      .select('id,owner_key,species,rarity,rank,name,source,obtained_at,custom_named,fusion_level,fusion_count,fused_at,sex,sex_known,sex_determined_at,father_id,mother_id,generation,life_stage,genetics,phenotype,laid_at,hatch_at,hatched_at,adult_earliest_at,adult_latest_at,adult_at,growth_points,bred_at,appetite,frame,metabolism,temperament,curiosity,sociability,endurance,agility,flight_power,focus,beak_speed,balance,weight_g,ideal_weight_g,body_length_cm,wing_span_cm,fitness,care_counters,arena_rating,arena_wins,arena_losses,arena_draws').in('id', visitPetIds);
     if (error) throw error;
     visitPets = data || [];
   }
   const visitPetMap = new Map(visitPets.map(row => [row.id, row]));
   const ownProfile = profileMap.get(user.id) || await ensureProfile(supabase, user);
+
+  const [{data:breedingJobs,error:breedingError},{data:lifecycleEvents,error:eventError}]=await Promise.all([
+    supabase.from('mofumori_breeding_jobs').select('id,male_pet_id,female_pet_id,status,started_at,completes_at,egg_pet_id,completed_at').eq('owner_key',user.id).eq('status','running').order('started_at',{ascending:false}).limit(20),
+    supabase.from('mofumori_lifecycle_events').select('id,pet_id,event_type,payload,created_at').eq('owner_key',user.id).is('seen_at',null).order('created_at',{ascending:true}).limit(20)
+  ]);
+  if(breedingError)throw breedingError;if(eventError)throw eventError;
 
   const gachaConfig=await loadGachaConfig(supabase);
   return {
@@ -229,6 +394,10 @@ async function loadDashboard(supabase, user) {
       outgoing: (requests || []).filter(row => row.sender_key === user.id).map(row => ({
         id: row.id, player: profileToClient(profileMap.get(row.recipient_key) || {}, user.id), createdAt: row.created_at
       }))
+    },
+    breeding:{
+      jobs:(breedingJobs||[]).map(j=>({id:j.id,malePetId:j.male_pet_id,femalePetId:j.female_pet_id,status:j.status,startedAt:j.started_at,completesAt:j.completes_at,eggPetId:j.egg_pet_id||null,completedAt:j.completed_at||null})),
+      events:(lifecycleEvents||[]).map(e=>({id:e.id,petId:e.pet_id,type:e.event_type,payload:e.payload||{},createdAt:e.created_at}))
     },
     visits: {
       incoming: (visits || []).filter(row => row.host_key === user.id).map(row => ({
@@ -350,7 +519,10 @@ async function determinePetSex(supabase, user, rawPetId) {
   const petId = uuid(rawPetId);
   if (!petId) throw Object.assign(new Error('どうぶつIDが不正です。'), { status: 400 });
   const { data, error } = await supabase.rpc('mofumori_determine_pet_sex', { p_owner: user.id, p_pet: petId });
-  if (error) throw error;
+  if (error) {
+    if(String(error.message||'').includes('sex_requires_adult'))throw Object.assign(new Error('性別判定は成鳥になってからできます。'),{status:409});
+    throw error;
+  }
   return data;
 }
 async function startVisit(supabase, user, rawPlayerId, rawPetId) {
@@ -426,6 +598,8 @@ module.exports = async function handler(req, res) {
     else if (action === 'renamePet') extra.renamedPet = await renamePet(supabase, user, payload.petId, payload.name);
     else if (action === 'fusePets') extra.fusion = await fusePets(supabase,user,payload.targetPetId,payload.materialPetIds);
     else if (action === 'determinePetSex') extra.sexResult = await determinePetSex(supabase, user, payload.petId);
+    else if (action === 'startBreeding') extra.breedingJob = await startBreeding(supabase,user,payload.malePetId,payload.femalePetId);
+    else if (action === 'ackLifecycleEvent') extra.lifecycleAck = await ackLifecycleEvent(supabase,user,payload.eventId);
     else if (action === 'startVisit') extra.visit = await startVisit(supabase, user, payload.playerId, payload.petId);
     else if (action === 'endVisit') await endVisit(supabase, user, payload.visitId);
     else if (action === 'interactVisit') extra.interaction = await interactVisit(supabase, user, payload.visitId, payload.interaction);
