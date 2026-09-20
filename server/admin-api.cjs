@@ -49,7 +49,12 @@ module.exports=async function handler(req,res){
     const body=typeof req.body==='string'?JSON.parse(req.body):(req.body||{}),action=str(body.action,32);
     if(action==='status'){
       const config=await loadConfig(sb);
-      return json(res,200,{ok:true,data:{authorized:true,role:admin.role,permissions:admin.permissions,gacha:config?.value||null,updatedAt:config?.updated_at||null}});
+      return json(res,200,{ok:true,data:{authorized:true,role:admin.role,permissions:admin.permissions,adminBirdEnabled:admin.adminBirdEnabled===true,gacha:config?.value||null,updatedAt:config?.updated_at||null}});
+    }
+    if(action==='summonBird'){
+      const {error}=await sb.from('mofumori_admins').update({admin_bird_enabled:true,updated_at:new Date().toISOString()}).eq('user_key',user.id);if(error)throw error;
+      await audit(sb,user,'summon_admin_bird',null,{});
+      return json(res,200,{ok:true,data:{authorized:true,role:admin.role,permissions:admin.permissions,adminBirdEnabled:true}});
     }
     if(action==='setGachaConfig'){
       if(admin.permissions?.gacha!==true)throw Object.assign(new Error('ガチャ設定の権限がありません。'),{status:403});
