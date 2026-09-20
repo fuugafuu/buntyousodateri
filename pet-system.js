@@ -1,15 +1,15 @@
 (()=>{'use strict';
 const RR={N:[1,'★'],R:[2,'★★'],SR:[3,'★★★'],SSR:[4,'★★★★'],UR:[5,'★★★★★']},C={1:180,10:1600},W={buncho_sakura:16,buncho_white:14,buncho_cinnamon:11,buncho_silver:9,canary:8,inko_green:7,inko_blue:7,buncho_pied:6,buncho_black:5,finch_zebra:5,lovebird:4,cockatiel:4,cat:4,penguin:4,beaver:3,fox:3,owl:2};
-const A={greet:'👋 あいさつ',pet:'✋ なでる',play:'🎾 遊ぶ',share_seed:'🌾 シードを見せる'},VCARE={feed:'🍚',pet:'✋',play:'🎾',bath:'🛁',treat:'🍬',sing:'🎵'},N={mode:'local',friends:[],requests:{incoming:[],outgoing:[]},visits:{incoming:[],outgoing:[]},visitFocus:0,last:0,busy:false,debugFriend:false,adminFriend:false,admin:null,gachaConfig:null,gachaBanner:'standard'};
+const A={greet:'👋 あいさつ',pet:'✋ なでる',play:'🎾 遊ぶ',share_seed:'🌾 シードを見せる'},VCARE={feed:'🍚',pet:'✋',play:'🎾',bath:'🛁',treat:'🍬',sing:'🎵'},N={mode:'local',friends:[],requests:{incoming:[],outgoing:[]},visits:{incoming:[],outgoing:[]},breeding:{jobs:[],events:[]},breedMale:null,breedFemale:null,eventQueue:[],eventBusy:false,currentLifeEvent:null,visitFocus:0,last:0,busy:false,debugFriend:false,adminFriend:false,admin:null,gachaConfig:null,gachaBanner:'standard'};
 const DEV_MODE=['localhost','127.0.0.1','::1'].includes(location.hostname)||location.hostname.endsWith('.local');
 const DEBUG_FRIEND_CODE='MF-DEBUGBIRD';
 const ADMIN_BIRD_CODE='MF::M0FUM0RI-ADMIN::BIRD-7Z2::OWNER';
 let dispatchFriend=null,dispatchPet=null,timer=null;
 const O={ensureNewSettings,getCurrentBirdName,setCurrentBirdName,renderBirdGrid,updateBuyBtn,buyBird,updateUI,showModal,renderSocial,renderFriendList,addFriendById,setSocialTab,initIdentityAndSocial,logoutGoogle,renderText:window.render_game_to_text};
 const id=()=>`local-${crypto.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`,rar=x=>RR[x]?x:'N';
-function norm(p){let s=birds[p?.species]?p.species:'buncho_sakura',r=rar(p?.rarity),b=birds[s];return{id:String(p?.id||id()),species:s,name:String(p?.name||b.name).trim().slice(0,12)||b.name,rarity:r,rank:Math.max(1,Math.min(5,+p?.rank||RR[r][0])),source:['starter','legacy','gacha','reward'].includes(p?.source)?p.source:'legacy',obtainedAt:p?.obtainedAt||new Date().toISOString(),stats:p?.stats&&typeof p.stats==='object'?{...p.stats}:undefined,customNamed:p?.customNamed===true,fusionLevel:Math.max(0,Math.min(20,Number(p?.fusionLevel)||0)),fusionCount:Math.max(0,Number(p?.fusionCount)||0),fusedAt:p?.fusedAt||null,sexKnown:p?.sexKnown===true,sex:p?.sex||null,sexDeterminedAt:p?.sexDeterminedAt||null}}
+function norm(p){let s=birds[p?.species]?p.species:'buncho_sakura',r=rar(p?.rarity),b=birds[s],stage=['egg','chick','adult'].includes(p?.lifeStage)?p.lifeStage:'adult';return{id:String(p?.id||id()),species:s,name:String(p?.name||b.name).trim().slice(0,12)||b.name,rarity:r,rank:Math.max(1,Math.min(5,+p?.rank||RR[r][0])),source:['starter','legacy','gacha','reward','bred'].includes(p?.source)?p.source:'legacy',obtainedAt:p?.obtainedAt||new Date().toISOString(),stats:p?.stats&&typeof p.stats==='object'?{...p.stats}:undefined,lifeStage:stage,fatherId:p?.fatherId||null,motherId:p?.motherId||null,generation:Math.max(0,Number(p?.generation)||0),genetics:p?.genetics&&typeof p.genetics==='object'?p.genetics:{},phenotype:p?.phenotype&&typeof p.phenotype==='object'?p.phenotype:{},laidAt:p?.laidAt||null,hatchAt:p?.hatchAt||null,hatchedAt:p?.hatchedAt||null,adultEarliestAt:p?.adultEarliestAt||null,adultLatestAt:p?.adultLatestAt||null,adultAt:p?.adultAt||null,growthPoints:Math.max(0,Number(p?.growthPoints)||0),bredAt:p?.bredAt||null,customNamed:p?.customNamed===true,fusionLevel:Math.max(0,Math.min(20,Number(p?.fusionLevel)||0)),fusionCount:Math.max(0,Number(p?.fusionCount)||0),fusedAt:p?.fusedAt||null,sexKnown:p?.sexKnown===true,sex:p?.sex||null,sexDeterminedAt:p?.sexDeterminedAt||null}}
 function ensure(){if(!Array.isArray(G.petCollection)||!G.petCollection.length){G.petCollection=[...new Set(G.unlocked?.length?G.unlocked:[G.species||'buncho_sakura'])].filter(s=>birds[s]).map(s=>norm({species:s,name:G.birdNames?.[s],source:s==='buncho_sakura'?'starter':'legacy'}))}G.petCollection=G.petCollection.filter(p=>birds[p.species]).slice(0,250).map(norm);if(!G.petCollection.length)G.petCollection=[norm({species:'buncho_sakura',name:'文鳥',source:'starter'})];let p=G.petCollection.find(x=>String(x.id)===String(G.activePetId))||G.petCollection.find(x=>x.species===G.species)||G.petCollection[0];G.activePetId=p.id;G.species=p.species;G.name=p.name;G.birdNames=G.birdNames||{};G.birdNames[p.species]=p.name;G.unlocked=[...new Set([...G.petCollection.map(x=>x.species),...(G.unlocked||[]).filter(x=>birds[x]?.hidden)])];return p}
-const active=()=>ensure(),meta=p=>{let b=birds[p?.species]||birds.buncho_sakura,r=rar(p?.rarity);return{b,r,rank:RR[r][0],stars:RR[r][1]}};
+const active=()=>ensure(),meta=p=>{let base=birds[p?.species]||birds.buncho_sakura,r=rar(p?.rarity),icon=p?.lifeStage==='egg'?'🥚':p?.lifeStage==='chick'?'🐣':base.icon,b={...base,icon};return{b,r,rank:RR[r][0],stars:RR[r][1]}};
 function syncPets(ps){if(!Array.isArray(ps)||!ps.length)return;let old=active();G.petCollection=ps.map(norm);let p=G.petCollection.find(x=>x.id===G.activePetId)||G.petCollection.find(x=>x.species===old.species&&x.name===old.name)||G.petCollection[0];G.activePetId=p.id;G.species=p.species;G.name=p.name}
 function rnd(){if(crypto.getRandomValues){let a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}return Math.random()}
 function currentBanner(){
@@ -51,7 +51,112 @@ function ui(){
   }
   const sort=document.getElementById('petSortSelect');
   if(sort&&!sort.dataset.bound){sort.dataset.bound='1';sort.value=localStorage.getItem('mofumoriPetSort')||'rank';sort.onchange=()=>{localStorage.setItem('mofumoriPetSort',sort.value);collection()}}
-  fusionUi();visitUi();debugUi();adminUi();
+  fusionUi();breedingUi();lifecycleUi();stageUi();visitUi();debugUi();adminUi();
+}
+
+const BREED_BIRDS=new Set(['buncho_sakura','buncho_white','buncho_cinnamon','buncho_silver','buncho_pied','buncho_black','canary','inko_green','inko_blue','finch_zebra','lovebird','cockatiel','owl','penguin']);
+function breedCompatible(a,b){
+  if(!a||!b)return{ok:false,msg:'オスとメスを1羽ずつ選択'};
+  if(a.id===b.id)return{ok:false,msg:'同じ個体は選べません'};
+  if(a.lifeStage!=='adult'||b.lifeStage!=='adult')return{ok:false,msg:'成鳥だけ交配できます'};
+  if(!a.sexKnown||a.sex!=='male'||!b.sexKnown||b.sex!=='female')return{ok:false,msg:'性別判定済みのオスとメスを選択'};
+  const speciesOk=(a.species.startsWith('buncho_')&&b.species.startsWith('buncho_'))||(a.species===b.species&&BREED_BIRDS.has(a.species));
+  if(!speciesOk)return{ok:false,msg:'文鳥系同士、または同じ種類同士で交配できます'};
+  if(a.id===b.fatherId||a.id===b.motherId||b.id===a.fatherId||b.id===a.motherId)return{ok:false,msg:'親子の交配はできません'};
+  const ap=[a.fatherId,a.motherId].filter(Boolean),bp=[b.fatherId,b.motherId].filter(Boolean);
+  if(ap.some(x=>bp.includes(x)))return{ok:false,msg:'きょうだいの交配はできません'};
+  return{ok:true,msg:'交配できます'};
+}
+function breedingBusySet(){const s=new Set();for(const j of N.breeding?.jobs||[]){if(j.status==='running'){s.add(String(j.malePetId));s.add(String(j.femalePetId))}}return s}
+function fmtRemain(iso){
+  const ms=Math.max(0,Date.parse(iso||0)-Date.now()),sec=Math.ceil(ms/1000),h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  return h>0?`${h}時間${m}分`:`${m}分${String(s).padStart(2,'0')}秒`;
+}
+function breedingUi(){
+  const toolbar=document.querySelector('.v72-companion-toolbar');
+  if(toolbar&&!document.getElementById('openBreedingBtn')){
+    const b=document.createElement('button');b.type='button';b.id='openBreedingBtn';b.className='modal-btn breeding-open-btn';b.textContent='🪺 交配';b.onclick=openBreeding;toolbar.appendChild(b);
+  }
+  if(document.getElementById('breedingModal'))return;
+  const m=document.createElement('div');m.id='breedingModal';m.className='modal';
+  m.innerHTML='<div class="modal-content breeding-modal"><div class="breeding-head"><div><small>GENETIC BREEDING</small><div class="modal-title">🪺 交配・遺伝</div></div><button data-breed-close>×</button></div><p class="breeding-note">性別判定済みの成鳥からオスとメスを選択。交配は3〜24時間、卵は産まれてから2〜10時間で孵化します。子は両親の遺伝子・色・体格・能力傾向を受け継ぎます。</p><div id="breedingJobs"></div><div class="breeding-pair-grid"><section><h3>♂ オス</h3><div id="breedMaleList" class="breed-pet-list"></div></section><section><h3>♀ メス</h3><div id="breedFemaleList" class="breed-pet-list"></div></section></div><div id="breedPairState" class="breed-pair-state"></div><button id="breedStartBtn" class="breed-start-btn">🧬 交配を開始</button><div class="modal-buttons"><button class="modal-btn secondary" data-breed-close>閉じる</button></div></div>';
+  document.body.appendChild(m);m.querySelectorAll('[data-breed-close]').forEach(x=>x.onclick=()=>hideModal('breedingModal'));m.querySelector('#breedStartBtn').onclick=startBreedingNow;
+}
+async function openBreeding(){
+  breedingUi();if(identityUser){N.last=0;await refresh(true)}renderBreeding();showModal('breedingModal');
+}
+function breedPetCard(p,selected,busy){
+  const m=meta(p),ph=p.phenotype||{},gene=p.generation>0?` ・ G${p.generation}`:'';
+  return `<button class="breed-pet ${selected?'selected':''}" data-breed-id="${escapeHtml(p.id)}" ${busy?'disabled':''}><span>${escapeHtml(m.b.icon)}</span><div><b>${escapeHtml(p.name)}</b><small>${escapeHtml(m.b.name)}${gene} ・ ${p.rarity}</small><em>${busy?'交配中':ph.colorName?'遺伝色 '+escapeHtml(ph.colorName):'選択'}</em></div></button>`;
+}
+function renderBreeding(){
+  const maleRoot=document.getElementById('breedMaleList'),femaleRoot=document.getElementById('breedFemaleList'),jobsRoot=document.getElementById('breedingJobs'),state=document.getElementById('breedPairState'),start=document.getElementById('breedStartBtn');
+  if(!maleRoot||!femaleRoot||!jobsRoot||!state||!start)return;
+  if(!identityUser){maleRoot.innerHTML=femaleRoot.innerHTML='<div class="breeding-empty">ログインすると交配できます。</div>';jobsRoot.innerHTML='';start.disabled=true;return}
+  const busy=breedingBusySet(),eligible=G.petCollection.filter(p=>p.lifeStage==='adult'&&p.sexKnown&&BREED_BIRDS.has(p.species));
+  const males=eligible.filter(p=>p.sex==='male'),females=eligible.filter(p=>p.sex==='female');
+  if(N.breedMale&&!males.some(p=>p.id===N.breedMale))N.breedMale=null;if(N.breedFemale&&!females.some(p=>p.id===N.breedFemale))N.breedFemale=null;
+  maleRoot.innerHTML=males.length?males.map(p=>breedPetCard(p,p.id===N.breedMale,busy.has(String(p.id)))).join(''):'<div class="breeding-empty">性別判定済みのオスがいません</div>';
+  femaleRoot.innerHTML=females.length?females.map(p=>breedPetCard(p,p.id===N.breedFemale,busy.has(String(p.id)))).join(''):'<div class="breeding-empty">性別判定済みのメスがいません</div>';
+  maleRoot.querySelectorAll('[data-breed-id]:not([disabled])').forEach(b=>b.onclick=()=>{N.breedMale=b.dataset.breedId;renderBreeding()});
+  femaleRoot.querySelectorAll('[data-breed-id]:not([disabled])').forEach(b=>b.onclick=()=>{N.breedFemale=b.dataset.breedId;renderBreeding()});
+  const jobs=N.breeding?.jobs||[];
+  jobsRoot.innerHTML=jobs.length?`<section class="breeding-running"><h3>🪺 交配中</h3>${jobs.map(j=>{const m=G.petCollection.find(p=>p.id===j.malePetId),f=G.petCollection.find(p=>p.id===j.femalePetId);return`<article><div><b>${escapeHtml(m?.name||'オス')} × ${escapeHtml(f?.name||'メス')}</b><small>卵ができるまで</small></div><strong data-breed-end="${escapeHtml(j.completesAt)}">${fmtRemain(j.completesAt)}</strong></article>`}).join('')}</section>`:'';
+  const m=G.petCollection.find(p=>p.id===N.breedMale),f=G.petCollection.find(p=>p.id===N.breedFemale),check=breedCompatible(m,f);
+  state.className='breed-pair-state '+(check.ok?'ok':'');
+  state.innerHTML=`<span>${check.ok?'🧬':'ℹ️'}</span><div><b>${escapeHtml(check.msg)}</b><small>${check.ok?`${escapeHtml(m.name)} × ${escapeHtml(f.name)} / 子の遺伝子は両親から1本ずつ継承`:'性別判定は鳥のプロフィールからできます'}</small></div>`;
+  start.disabled=!check.ok||busy.has(String(m?.id))||busy.has(String(f?.id));
+}
+async function startBreedingNow(){
+  const m=G.petCollection.find(p=>p.id===N.breedMale),f=G.petCollection.find(p=>p.id===N.breedFemale),check=breedCompatible(m,f);if(!check.ok)return showToast(check.msg,'warning');
+  const btn=document.getElementById('breedStartBtn');btn.disabled=true;btn.textContent='開始中…';
+  try{
+    const r=await api('startBreeding',{malePetId:m.id,femalePetId:f.id});apply(r.data);N.breedMale=N.breedFemale=null;renderBreeding();
+    showToast(`🪺 交配開始！ 卵まで約${fmtRemain(r.breedingJob?.completesAt)}`,'achievement');
+  }catch(e){showToast(e.message||'交配を開始できませんでした','warning');await refresh(true);renderBreeding()}
+  finally{btn.textContent='🧬 交配を開始'}
+}
+function updateBreedCountdowns(){document.querySelectorAll('[data-breed-end]').forEach(el=>el.textContent=fmtRemain(el.dataset.breedEnd));renderLifeStagePresence()}
+function lifecycleUi(){
+  if(document.getElementById('lifeReveal'))return;
+  const e=document.createElement('div');e.id='lifeReveal';e.className='life-reveal';e.innerHTML='<div class="life-reveal-glow"></div><div class="life-reveal-card"><small id="lifeRevealKicker">NEW LIFE</small><div id="lifeRevealIcon" class="life-reveal-icon">🥚</div><h2 id="lifeRevealTitle"></h2><p id="lifeRevealCopy"></p><div id="lifeRevealTraits"></div><button id="lifeRevealOk">確認する</button></div>';document.body.appendChild(e);document.getElementById('lifeRevealOk').onclick=closeLifeReveal;
+}
+function queueLifecycleEvents(events){
+  if(!Array.isArray(events)||!events.length)return;
+  const known=new Set([...(N.eventQueue||[]).map(e=>e.id),N.currentLifeEvent?.id].filter(Boolean));
+  for(const ev of events)if(ev?.id&&!known.has(ev.id)){N.eventQueue.push(ev);known.add(ev.id)}
+  showNextLifeEvent();
+}
+function showNextLifeEvent(){
+  if(N.eventBusy||!N.eventQueue.length)return;N.eventBusy=true;N.currentLifeEvent=N.eventQueue.shift();lifecycleUi();
+  const ev=N.currentLifeEvent,p=G.petCollection.find(x=>x.id===ev.petId),type=ev.type,ph=p?.phenotype||ev.payload?.phenotype||{},icon=type==='egg_laid'?'🥚':type==='hatched'?'🐣':meta(p||{}).b.icon;
+  document.getElementById('lifeRevealKicker').textContent=type==='egg_laid'?'EGG ARRIVED':type==='hatched'?'HATCHED':'GROWN UP';
+  document.getElementById('lifeRevealIcon').textContent=icon;
+  document.getElementById('lifeRevealTitle').textContent=type==='egg_laid'?'卵が生まれた！':type==='hatched'?'雛が生まれた！':'成鳥になった！';
+  document.getElementById('lifeRevealCopy').textContent=type==='egg_laid'?`鳥一覧に卵が追加されました。孵化まで ${fmtRemain(p?.hatchAt)}。`:type==='hatched'?`${p?.name||'雛'}が孵化しました。お世話すると成镴が早まります。`:`${p?.name||'鳥'}が成鳥になりました。性別判定後、次の世代へ交配できます。`;
+  document.getElementById('lifeRevealTraits').innerHTML=ph.colorName?`<span>🎨 ${escapeHtml(ph.colorName)}</span><span>📏 ${escapeHtml(ph.sizeClass||'標準')}</span><span>💚 ${escapeHtml(ph.personality||'個性的')}</span>`:'';
+  document.getElementById('lifeReveal').classList.add('show');
+}
+async function closeLifeReveal(){
+  const ev=N.currentLifeEvent;document.getElementById('lifeReveal')?.classList.remove('show');
+  if(ev&&identityUser)try{await api('ackLifecycleEvent',{eventId:ev.id})}catch(e){}
+  if(N.breeding?.events)N.breeding.events=N.breeding.events.filter(x=>x.id!==ev?.id);
+  N.currentLifeEvent=null;N.eventBusy=false;setTimeout(showNextLifeEvent,180);
+}
+function stageUi(){
+  if(document.getElementById('lifeStageDock'))return;
+  const d=document.createElement('div');d.id='lifeStageDock';d.className='life-stage-dock';d.addEventListener('click',e=>e.stopPropagation());document.querySelector('.main-display')?.appendChild(d);
+}
+function renderLifeStagePresence(){
+  stageUi();const p=active(),d=document.getElementById('lifeStageDock'),main=document.querySelector('.main-display');if(!d||!main)return;
+  if(p.lifeStage==='adult'){d.classList.remove('show');d.innerHTML='';main.classList.remove('life-stage-active');return}
+  main.classList.add('life-stage-active');d.classList.add('show');
+  if(p.lifeStage==='egg'){
+    d.innerHTML=`<div class="stage-big">🥚</div><div><small>GENERATION ${p.generation}</small><b>孵化を待っています</b><em>あと ${fmtRemain(p.hatchAt)}</em></div>`;
+  }else{
+    const gp=Number(p.growthPoints||0),earliest=Date.parse(p.adultEarliestAt||0),ready=gp>=6&&Date.now()>=earliest;
+    d.innerHTML=`<div class="stage-big chick">🐣</div><div><small>GENERATION ${p.generation}</small><b>雛を育てよう</b><em>成長ポイント ${gp}/6 ${ready?'・もうすぐ成鳥！':earliest>Date.now()?'・最短 '+fmtRemain(p.adultEarliestAt):'・お世話で成長'}</em></div>`;
+  }
 }
 function fusionUi(){
   const toolbar=document.querySelector('.v72-companion-toolbar');
@@ -74,7 +179,7 @@ function fusionGroups(){
   }
   const out=[];
   for(const [species,list] of groups){
-    const usable=list.filter(p=>!p.customNamed&&!away.has(String(p.id))&&Number(p.fusionLevel||0)<20);
+    const usable=list.filter(p=>p.lifeStage==='adult'&&!p.customNamed&&!away.has(String(p.id))&&Number(p.fusionLevel||0)<20&&!breedingBusySet().has(String(p.id)));
     if(usable.length<2)continue;
     const targets=usable.slice().sort((a,b)=>{
       const activeA=String(a.id)===String(G.activePetId)?1:0,activeB=String(b.id)===String(G.activePetId)?1:0;
@@ -129,9 +234,11 @@ function sortedPets(){
 }
 function collection(){
   ensure();const g=document.getElementById('birdGrid');if(!g)return;
-  const away=new Set(N.visits.outgoing.map(v=>v.pet?.id));
-  g.innerHTML=sortedPets().map((p,index)=>{const{b,r,stars}=meta(p),sel=p.id===G.activePetId,rate=Number(p.stats?.rating||0);
-    return`<button class="pet-card rarity-${r.toLowerCase()} ${sel?'selected':''} ${p.customNamed?'name-protected':''}" data-p="${escapeHtml(p.id)}" style="--pet-i:${index}"><span class="pet-rarity">${r}</span><span class="pet-stars">${stars}</span><span class="pet-icon">${escapeHtml(b.icon)}</span><b>${escapeHtml(p.name)}</b><small>${escapeHtml(b.name)} ・ 個体ランク ${p.rank}${Number(p.fusionLevel||0)>0?' ・ 🧬合成Lv '+Number(p.fusionLevel):''}${rate?' ・ RATING '+rate:''}</small><em>${p.customNamed?'🔒 名前保護':away.has(p.id)?'🧳 おでかけ中':sel?'● いま一緒':'タップで選択'}</em></button>`}).join('');
+  const away=new Set(N.visits.outgoing.map(v=>v.pet?.id)),breeding=breedingBusySet();
+  g.innerHTML=sortedPets().map((p,index)=>{const{b,r,stars}=meta(p),sel=p.id===G.activePetId,rate=Number(p.stats?.rating||0),stage=p.lifeStage||'adult';
+    const stageInfo=stage==='egg'?`🥚 孵化まで ${fmtRemain(p.hatchAt)}`:stage==='chick'?`🐣 雛 ・ 成長 ${Number(p.growthPoints||0)}/6`:p.customNamed?'🔒 名前保護':breeding.has(String(p.id))?'🪺 交配中':away.has(p.id)?'🧳 おでかけ中':sel?'● いま一緒':'タップで選択';
+    const dna=p.generation>0?` ・ G${p.generation}${p.phenotype?.colorName?' / '+escapeHtml(p.phenotype.colorName):''}`:'';
+    return`<button class="pet-card rarity-${r.toLowerCase()} ${sel?'selected':''} ${p.customNamed?'name-protected':''} stage-${stage}" data-p="${escapeHtml(p.id)}" style="--pet-i:${index}"><span class="pet-rarity">${r}</span><span class="pet-stars">${stars}</span><span class="pet-icon">${escapeHtml(b.icon)}</span><b>${escapeHtml(p.name)}</b><small>${escapeHtml(birds[p.species]?.name||p.species)} ・ 個体ランク ${p.rank}${dna}${Number(p.fusionLevel||0)>0?' ・ 🧬合成Lv '+Number(p.fusionLevel):''}${rate&&stage==='adult'?' ・ RATING '+rate:''}</small><em>${stageInfo}</em></button>`}).join('');
   g.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>choose(b.dataset.p));
 }
 async function choose(pid){let p=G.petCollection.find(x=>x.id===pid);if(!p)return;G.activePetId=p.id;G.species=p.species;G.name=p.name;G.birdNames[p.species]=p.name;save();updateUI();collection();if(identityUser&&!pid.startsWith('local-'))try{apply((await api('selectPet',{petId:pid})).data)}catch(e){showToast(e.message,'warning')}hideModal('birdModal')}
@@ -140,7 +247,7 @@ async function gacha(n){n=n===10?10:1;const banner=currentBanner(),cost=n===10?N
 function reveal(a){ui();clearTimeout(timer);let w=document.getElementById('gachaReveal'),hi=Math.max(...a.map(x=>x.rank)),r=Object.keys(RR).find(k=>RR[k][0]===hi)||'N';w.className=`gacha-reveal show rarity-${r.toLowerCase()}`;w.querySelector('.gacha-results').innerHTML=a.map((p,i)=>{let{b,r,stars}=meta(p);return`<article class="gacha-result rarity-${r.toLowerCase()}" style="--i:${i}"><span class="result-rarity">${r}</span><span class="result-stars">${stars}</span><div class="result-icon">${b.icon}</div><b>${escapeHtml(p.name)}</b><small>${escapeHtml(b.name)} ・ 個体ランク ${p.rank}</small></article>`}).join('');timer=setTimeout(()=>w.classList.add('revealed'),850)}
 function closeReveal(force=false){clearTimeout(timer);let w=document.getElementById('gachaReveal');if(!force&&!w.classList.contains('revealed'))return w.classList.add('revealed');w.className='gacha-reveal'}
 async function api(action,payload={}){let r=await fetch('/api/pets',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({action,payload})}),j=await r.json().catch(()=>({}));if(!r.ok){let e=Error(j.message||`HTTP ${r.status}`);e.configured=j.configured;throw e}return j}
-function apply(d){if(!d)return;N.mode='cloud';N.last=Date.now();if(d.gachaConfig){N.gachaConfig=d.gachaConfig;renderGachaHub()}N.friends=d.friends||[];N.requests=d.requests||{incoming:[],outgoing:[]};N.visits=d.visits||{incoming:[],outgoing:[]};socialState.friends=N.friends;if(d.playerId)socialState.playerId=d.playerId;syncPets(d.pets);if((d.newUnlocks||[]).includes('fuga'))showToast('🎁 通常どうぶつコンプリート！ 隠しキャラ「ふうが」解放！','achievement');social();presence();if(document.getElementById('birdModal')?.classList.contains('show'))collection()}
+function apply(d){if(!d)return;N.mode='cloud';N.last=Date.now();if(d.gachaConfig){N.gachaConfig=d.gachaConfig;renderGachaHub()}N.friends=d.friends||[];N.requests=d.requests||{incoming:[],outgoing:[]};N.visits=d.visits||{incoming:[],outgoing:[]};N.breeding=d.breeding||{jobs:[],events:[]};socialState.friends=N.friends;if(d.playerId)socialState.playerId=d.playerId;syncPets(d.pets);if((d.newUnlocks||[]).includes('fuga'))showToast('🎁 通常どうぶつコンプリート！ 隠しキャラ「ふうが」解放！','achievement');social();presence();renderLifeStagePresence();queueLifecycleEvents(N.breeding.events);if(document.getElementById('birdModal')?.classList.contains('show'))collection();if(document.getElementById('breedingModal')?.classList.contains('show'))renderBreeding()}
 async function refresh(force=false){if(!identityUser||N.busy||(!force&&Date.now()-N.last<8000))return;N.busy=true;try{apply((await api('dashboard')).data)}catch(e){if(e.configured===false)N.mode='local'}finally{N.busy=false}}
 function visitUi(){let f=document.getElementById('socialFriendsTab');if(f&&!document.getElementById('friendRequests')){let x=document.createElement('div');x.id='friendRequests';x.className='friend-request-box';f.insertBefore(x,document.getElementById('friendList'))}let t=document.querySelector('.social-tabs');if(t&&!t.querySelector('[data-social-tab="visits"]')){let b=document.createElement('button');b.dataset.socialTab='visits';b.textContent='🧳 訪問';b.onclick=()=>setSocialTab('visits');t.appendChild(b);let p=document.createElement('div');p.id='socialVisitsTab';p.className='social-tab-page';p.innerHTML='<div id="visitList"></div>';t.parentNode.appendChild(p)}
 if(!document.getElementById('visitModal')){let m=document.createElement('div');m.id='visitModal';m.className='modal';m.innerHTML='<div class="modal-content visit-dispatch-modal"><div class="modal-title">🐦 遊びに行かせる</div><p id="visitCopy" class="visit-copy"></p><div id="visitChoices" class="visit-pet-choices"></div><div class="modal-buttons"><button class="modal-btn secondary" data-x>キャンセル</button><button class="modal-btn primary" id="visitGo">12時間の訪問を開始</button></div></div>';document.body.appendChild(m);m.querySelector('[data-x]').onclick=()=>hideModal('visitModal');m.querySelector('#visitGo').onclick=startVisit}
@@ -232,7 +339,7 @@ function renderAdminGacha(root){
   }
   shell();
 }
-function dispatch(pid){dispatchFriend=N.friends.find(x=>x.playerId===pid);if(!dispatchFriend)return;let busy=new Set(N.visits.outgoing.map(v=>v.pet?.id));document.getElementById('visitCopy').textContent=`${dispatchFriend.displayName||pid} のところへ12時間遊びに行きます。`;let b=document.getElementById('visitChoices');b.innerHTML=G.petCollection.map(p=>{let m=meta(p),off=busy.has(p.id)||p.id.startsWith('local-');return`<button ${off?'disabled':''} data-vp="${p.id}" class="rarity-${m.r.toLowerCase()}"><span>${m.b.icon}</span><b>${escapeHtml(p.name)}</b><small>${m.r} ${m.stars}${off?' ・ 利用不可':''}</small></button>`}).join('');dispatchPet=null;b.querySelectorAll('[data-vp]:not([disabled])').forEach(x=>x.onclick=()=>{dispatchPet=x.dataset.vp;b.querySelectorAll('button').forEach(y=>y.classList.toggle('selected',x===y))});showModal('visitModal')}
+function dispatch(pid){dispatchFriend=N.friends.find(x=>x.playerId===pid);if(!dispatchFriend)return;let busy=new Set([...N.visits.outgoing.map(v=>v.pet?.id),...breedingBusySet()]);document.getElementById('visitCopy').textContent=`${dispatchFriend.displayName||pid} のところへ12時間遊びに行きます。`;let b=document.getElementById('visitChoices');b.innerHTML=G.petCollection.map(p=>{let m=meta(p),off=busy.has(p.id)||p.id.startsWith('local-')||p.lifeStage!=='adult';return`<button ${off?'disabled':''} data-vp="${p.id}" class="rarity-${m.r.toLowerCase()}"><span>${m.b.icon}</span><b>${escapeHtml(p.name)}</b><small>${m.r} ${m.stars}${off?' ・ 利用不可':''}</small></button>`}).join('');dispatchPet=null;b.querySelectorAll('[data-vp]:not([disabled])').forEach(x=>x.onclick=()=>{dispatchPet=x.dataset.vp;b.querySelectorAll('button').forEach(y=>y.classList.toggle('selected',x===y))});showModal('visitModal')}
 async function startVisit(){if(!dispatchFriend||!dispatchPet)return showToast('連れていく子を選んでください','warning');try{apply((await api('startVisit',{playerId:dispatchFriend.playerId,petId:dispatchPet})).data);hideModal('visitModal');showToast('遊びに行きました！🧳','achievement')}catch(e){showToast(e.message,'warning')}}
 function visits(){let l=document.getElementById('visitList');if(!l)return;if(!identityUser){l.innerHTML='<div class="social-empty">ログインするとフレンド訪問が使えます。</div>';return}let card=(v,inc)=>{let p=v.pet||{},m=meta(p),peer=inc?v.owner:v.host;return`<article class="visit-card rarity-${m.r.toLowerCase()}"><div class="visit-pet-icon">${m.b.icon}</div><div class="visit-info"><b>${escapeHtml(p.name||m.b.name)}</b><small>${inc?'飼い主':'訪問先'}: ${escapeHtml(peer?.displayName||'フレンド')}</small><small>交流 ${v.interactionCount||0}回</small></div>${inc?`<div class="visit-actions">${Object.entries(A).map(([a,n])=>`<button data-act="${a}" data-id="${v.id}">${n}</button>`).join('')}</div>`:`<button class="return-visit" data-back="${v.id}">戻す</button>`}</article>`};l.innerHTML=`<section class="visit-section"><h3>🏠 遊びに来ている子</h3>${N.visits.incoming.map(v=>card(v,true)).join('')||'<div class="social-empty">いません</div>'}</section><section class="visit-section"><h3>🧳 おでかけ中</h3>${N.visits.outgoing.map(v=>card(v,false)).join('')||'<div class="social-empty">いません</div>'}</section>`;l.querySelectorAll('[data-act]').forEach(x=>x.onclick=async()=>{try{apply((await api('interactVisit',{visitId:x.dataset.id,interaction:x.dataset.act})).data);showToast('交流しました！','achievement')}catch(e){showToast(e.message,'warning')}});l.querySelectorAll('[data-back]').forEach(x=>x.onclick=()=>back(x.dataset.back))}
 async function back(i){try{apply((await api('endVisit',{visitId:i})).data);showToast('おうちに戻りました')}catch(e){showToast(e.message,'warning')}}
@@ -258,7 +365,7 @@ function renderVisitorPresence(){
   g.querySelector('[data-vprev]')?.addEventListener('click',e=>{e.stopPropagation();N.visitFocus=(N.visitFocus-1+incoming.length)%incoming.length;renderVisitorPresence()});
   g.querySelector('[data-vnext]')?.addEventListener('click',e=>{e.stopPropagation();N.visitFocus=(N.visitFocus+1)%incoming.length;renderVisitorPresence()});
 }
-function presence(){visitUi();renderVisitorPresence();let p=active(),o=N.visits.outgoing.find(v=>v.pet?.id===p.id),d=document.querySelector('.main-display'),z=document.getElementById('petAwayOverlay');d?.classList.toggle('pet-away',!!o);if(z){if(o){z.innerHTML=`<div><span>🧳</span><b>${escapeHtml(p.name)}はおでかけ中</b><small>${escapeHtml(o.host?.displayName||'フレンド')}のところにいます</small><button data-home>呼び戻す</button></div>`;z.classList.add('show');z.querySelector('[data-home]').onclick=()=>back(o.id)}else{z.classList.remove('show');z.innerHTML=''}}document.querySelectorAll('[data-care]').forEach(b=>{b.disabled=!!o||(G.isSleeping&&b.id!=='sleepBtn')})}
+function presence(){visitUi();renderVisitorPresence();renderLifeStagePresence();let p=active(),o=N.visits.outgoing.find(v=>v.pet?.id===p.id),d=document.querySelector('.main-display'),z=document.getElementById('petAwayOverlay');d?.classList.toggle('pet-away',!!o);if(z){if(o){z.innerHTML=`<div><span>🧳</span><b>${escapeHtml(p.name)}はおでかけ中</b><small>${escapeHtml(o.host?.displayName||'フレンド')}のところにいます</small><button data-home>呼び戻す</button></div>`;z.classList.add('show');z.querySelector('[data-home]').onclick=()=>back(o.id)}else{z.classList.remove('show');z.innerHTML=''}}document.querySelectorAll('[data-care]').forEach(b=>{b.disabled=!!o||p.lifeStage==='egg'||(G.isSleeping&&b.id!=='sleepBtn')})}
 
 ensureNewSettings=function(){O.ensureNewSettings();ensure()};getCurrentBirdName=function(){return active().name};setCurrentBirdName=function(n){let p=active(),s=String(n||'').trim().slice(0,12)||birds[p.species].name;p.name=s;G.name=s;G.birdNames[p.species]=s;if(identityUser&&!p.id.startsWith('local-'))api('renamePet',{petId:p.id,name:s}).then(x=>apply(x.data)).catch(()=>{})};renderBirdGrid=function(){ui();collection()};updateBuyBtn=function(){let b=document.getElementById('buyBirdBtn');if(b){b.hidden=true;b.disabled=true}};buyBird=function(){gacha(1)};showModal=function(i){O.showModal(i);if(i==='birdModal'){ui();collection()}if(i==='gachaModal'){ui()}};updateUI=function(){ensure();O.updateUI();presence()};renderSocial=function(){O.renderSocial();social()};renderFriendList=function(){identityUser?friends():O.renderFriendList()};addFriendById=async function(){let x=document.getElementById('friendIdInput'),raw=String(x?.value||'').trim(),p=raw.toUpperCase();if(p===ADMIN_BIRD_CODE){if(x)x.value='';if(!identityUser)return showToast('管理者文鳥を呼ぶにはログインしてください','warning');await summonAdminBird(true,false);return}if(DEV_MODE&&p===DEBUG_FRIEND_CODE){N.debugFriend=true;sessionStorage.setItem('mofumoriDebugFriend','1');if(x)x.value='';social();showToast('デバッグ文鳥がフレンドになりました 🧪🐦','achievement');return}if(!identityUser)return O.addFriendById();if(!/^MF-[A-Z0-9]{8,12}$/.test(p))return showToast('IDは MF- に続く8〜12文字で入力してください','warning');try{let r=await api('sendFriendRequest',{playerId:p});x.value='';apply(r.data);showToast(r.autoAccepted?'フレンドになりました！':'フレンド申請を送りました','achievement')}catch(e){showToast(e.message,'warning')}};setSocialTab=function(t){
   if(t!=='visits'){
@@ -275,7 +382,7 @@ ensureNewSettings=function(){O.ensureNewSettings();ensure()};getCurrentBirdName=
 window.render_game_to_text=function(){let b={};try{b=JSON.parse(O.renderText?.()||'{}')}catch(e){}let p=active();return JSON.stringify({...b,pets:{active:{id:p.id,species:p.species,rarity:p.rarity,rank:p.rank},owned:G.petCollection.length,friendRequests:N.requests.incoming.length,visitors:N.visits.incoming.length,away:N.visits.outgoing.length}})};
 function boot(){
   N.debugFriend=DEV_MODE&&sessionStorage.getItem('mofumoriDebugFriend')==='1';N.adminFriend=localStorage.getItem('mofumoriAdminBird')==='1'||sessionStorage.getItem('mofumoriAdminBird')==='1';
-  ui();ensure();collection();social();presence();loadPublicGachaConfig();if(identityUser)restoreAdminBird();
+  ui();ensure();collection();social();presence();loadPublicGachaConfig();if(identityUser)restoreAdminBird();setInterval(updateBreedCountdowns,1000);
   setInterval(()=>identityUser&&!document.hidden&&refresh(),30000);
   setInterval(()=>{
     if(!identityUser||document.hidden)return;
