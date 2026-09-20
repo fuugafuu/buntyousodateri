@@ -219,9 +219,10 @@
       <label class="gift-label" for="giftItemSelect">この子の飼い主へ仕送り</label>
       <div class="gift-row">
         <select id="giftItemSelect" class="gift-select"></select>
-        <button class="modal-btn primary" id="giftSendBtn" onclick="sendGiftToSelectedFriend()">🎁 送る</button>
+        <label class="gift-qty-wrap">個数<input id="giftQtyInput" type="number" inputmode="numeric" min="1" max="9999" value="1"></label>
+        <button class="modal-btn primary" id="giftSendBtn" onclick="sendGiftToSelectedFriend()">🎁 まとめて送る</button>
       </div>
-      <small class="social-hint">送ったアイテムは自分の持ち物から1個減ります。</small>
+      <small class="social-hint" id="giftQtyHint">持っている数まで一度に送れます。</small>
     </div>
   </div>
   <main class="game-shell">
