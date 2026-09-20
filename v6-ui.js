@@ -192,7 +192,7 @@ async function openArena(friendId=null){
 function gameCards(){return Object.entries(GAME).map(([id,g])=>`<button class="v6-game-card ${A.game===id?'active':''}" data-game="${id}"><span>${g.icon}</span><div><b>${g.name}</b><small>${g.desc}</small><em>${g.stat}</em></div></button>`).join('')}
 function petOptions(){
   const all=eligiblePets();if(!all.length)return '<p class="v6-empty">対戦できる文鳥がいません。</p>';
-  return all.map(p=>`<button class="v6-pet-choice ${String(p.id)===String(A.petId)?'active':''}" data-pet="${p.id}"><span>${petIcon(p)}</span><b>${esc(p.name)}</b><small>${esc(sexLabel(p))} ・ RATING ${p.stats?.rating||1000}</small></button>`).join('');
+  return all.map(p=>`<button class="v6-pet-choice ${String(p.id)===String(A.petId)?'active':''}" data-pet="${p.id}"><span>${petIcon(p)}</span><b>${esc(p.name)}</b><small>${esc(sexLabel(p))} ・ RATING ${p.stats?.rating||1000}${Number(p.fusionLevel||0)>0?' ・ 🧬Lv '+Number(p.fusionLevel):''}</small></button>`).join('');
 }
 function challengeRows(){
   const incoming=A.dash?.challenges?.incoming||[],out=A.dash?.challenges?.outgoing||[];
@@ -496,10 +496,12 @@ function showResult(m){
     root.innerHTML='<div class="result-burst draw"><small>CANCELLED</small><h2>対戦を終了しました</h2><p>接続切れ、時間切れ、または両者未完了のため中止されました。</p><div class="v71-result-actions"><button id="v6ResultAgain">もう一戦</button><button id="v6ResultClose" class="subtle">閉じる</button></div></div>';
     clearInterval(A.matchPoll);arenaVoice('対戦は中止されました。');$('#v6ResultAgain').onclick=()=>{closeBattle();openArena()};$('#v6ResultClose').onclick=()=>{closeBattle();refreshArena(true)};return;
   }
-  const me=m.me?.profile?.playerId,w=m.winnerPlayerId,draw=!w,win=w===me;
+  const me=m.me?.profile?.playerId,w=m.winnerPlayerId,draw=!w,win=w===me,reward=win?m.reward:null;
+  if(reward&&Number.isFinite(Number(reward.currentCoins))&&typeof G!=='undefined'){G.coins=Number(reward.currentCoins);try{updateUI?.()}catch(e){}}
+  const rewardHtml=reward&&Number(reward.coins||0)>0?`<div class="v724-win-reward"><small>WIN REWARD</small><b>🪙 +${Number(reward.coins).toLocaleString()}　✨ +${Number(reward.xp||0)} XP</b><span>サーバーに受取済み</span></div>`:'';
   $('#v6MatchStatus').textContent='FINISHED';$('#v6GameStage').innerHTML='';
-  root.innerHTML=`<div class="result-burst ${draw?'draw':win?'win':'lose'}"><small>${draw?'DRAW':win?'WIN':'LOSE'}</small><h2>${draw?'引き分け':win?'勝利！':'惜敗'}</h2><div><span><b>${Number(m.me.score||0).toLocaleString()}</b><small>YOU</small></span><strong>:</strong><span><b>${Number(m.opponent.score||0).toLocaleString()}</b><small>RIVAL</small></span></div><p>RATING ${m.me.pet?.stats?.rating||1000}</p><div class="v71-result-actions"><button id="v6ResultAgain">もう一戦</button><button id="v6ResultClose" class="subtle">閉じる</button></div></div>`;
-  clearInterval(A.matchPoll);arenaSfx(win?'go':draw?'match':'hit');arenaVoice(draw?'引き分けです。おつかれさまでした。':win?'勝利です！ おめでとうございます。':'対戦終了です。次は取り返しましょう。');window.v7RefreshProgress?.(true);
+  root.innerHTML=`<div class="result-burst ${draw?'draw':win?'win':'lose'}"><small>${draw?'DRAW':win?'WIN':'LOSE'}</small><h2>${draw?'引き分け':win?'勝利！':'惜敗'}</h2><div><span><b>${Number(m.me.score||0).toLocaleString()}</b><small>YOU</small></span><strong>:</strong><span><b>${Number(m.opponent.score||0).toLocaleString()}</b><small>RIVAL</small></span></div><p>RATING ${m.me.pet?.stats?.rating||1000}${Number(m.me.pet?.fusionLevel||0)>0?' ・ 🧬 合成Lv '+Number(m.me.pet.fusionLevel):''}</p>${rewardHtml}<div class="v71-result-actions"><button id="v6ResultAgain">もう一戦</button><button id="v6ResultClose" class="subtle">閉じる</button></div></div>`;
+  clearInterval(A.matchPoll);arenaSfx(win?'go':draw?'match':'hit');arenaVoice(draw?'引き分けです。おつかれさまでした。':win?'勝利です！ 報酬を獲得しました。':'対戦終了です。次は取り返しましょう。');if(reward)showToast?.(`🏆 勝利報酬！ +${Number(reward.coins||0)}コイン / +${Number(reward.xp||0)}XP`,'achievement');window.v7RefreshProgress?.(true);
   $('#v6ResultAgain').onclick=()=>{closeBattle();openArena()};
   $('#v6ResultClose').onclick=()=>{closeBattle();refreshArena(true)}
 }
