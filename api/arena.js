@@ -128,7 +128,7 @@ async function dashboard(sb,user){
   await sb.from('mofumori_arena_challenges').update({status:'expired',updated_at:now}).eq('status','pending').lt('created_at',new Date(Date.now()-5*60*1000).toISOString());
   await sb.from('mofumori_arena_queue').delete().eq('user_key',user.id).lt('expires_at',now);
   const [{data:pets,error:petErr},{data:q,error:qErr},{data:ch,error:chErr},{data:matches,error:mErr}]=await Promise.all([
-    sb.from('mofumori_pets').select(PET_SELECT).eq('owner_key',user.id).order('obtained_at',{ascending:true}).limit(250),
+    sb.from('mofumori_pets').select(PET_SELECT).eq('owner_key',user.id).order('obtained_at',{ascending:true}).limit(1000),
     sb.from('mofumori_arena_queue').select('game_type,pet_id,joined_at,expires_at').eq('user_key',user.id).maybeSingle(),
     sb.from('mofumori_arena_challenges').select('*').eq('status','pending').or(`sender_key.eq.${user.id},recipient_key.eq.${user.id}`).order('created_at',{ascending:false}).limit(50),
     sb.from('mofumori_arena_matches').select('id,status,created_at,expires_at').or(`player1_key.eq.${user.id},player2_key.eq.${user.id}`).in('status',['ready','running']).gt('expires_at',now).order('created_at',{ascending:false}).limit(1)
