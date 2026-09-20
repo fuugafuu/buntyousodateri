@@ -25,6 +25,7 @@ const DEFAULT_GACHA_CONFIG={
   banners:[{id:'standard',name:'森の仲間ガチャ',enabled:true,price1:180,price10:1600,rates:{N:55,R:27,SR:13,SSR:4,UR:1},speciesWeights:{...SPECIES_WEIGHTS}}]
 };
 const VISIT_ACTIONS = new Set(['greet','pet','play','share_seed']);
+const VISIT_CARE_ACTIONS = new Set(['feed','treat','play','sing','bath','pet']);
 
 function playerIdFor(userKey) {
   return `MF-${crypto.createHash('sha256').update(String(userKey)).digest('hex').slice(0, 10).toUpperCase()}`;
@@ -387,6 +388,20 @@ async function interactVisit(supabase, user, rawVisitId, rawAction) {
   return data;
 }
 
+async function careVisit(supabase,user,rawVisitId,rawAction){
+  await takeLimit(supabase,user.id,'visit_care',60,36);
+  const visitId=uuid(rawVisitId),action=text(rawAction,20);
+  if(!visitId||!VISIT_CARE_ACTIONS.has(action))throw Object.assign(new Error('お世話内容が不正です。'),{status:400});
+  const {data,error}=await supabase.rpc('mofumori_visit_care',{p_user:user.id,p_visit:visitId,p_action:action});
+  if(error){
+    const m=String(error.message||'');
+    if(m.includes('visit_care_forbidden'))throw Object.assign(new Error('この訪問中の子はお世話できません。'),{status:403});
+    throw error;
+  }
+  await bestEffortRpc(supabase,'mofumori_progress_event',{p_user:user.id,p_event:'visit'});
+  return data;
+}
+
 module.exports = async function handler(req, res) {
   const route=String(req.query?.__route||new URL(req.url||'/','http://local').searchParams.get('__route')||'');
   if(route==='admin')return adminApiHandler(req,res);
@@ -414,6 +429,7 @@ module.exports = async function handler(req, res) {
     else if (action === 'startVisit') extra.visit = await startVisit(supabase, user, payload.playerId, payload.petId);
     else if (action === 'endVisit') await endVisit(supabase, user, payload.visitId);
     else if (action === 'interactVisit') extra.interaction = await interactVisit(supabase, user, payload.visitId, payload.interaction);
+    else if (action === 'careVisit') extra.visitCare = await careVisit(supabase,user,payload.visitId,payload.care);
     else if (action !== 'dashboard') throw Object.assign(new Error('未対応の操作です。'), { status: 400 });
     return json(res, 200, { ok: true, configured: true, data: await loadDashboard(supabase, user), ...extra });
   } catch (error) {
