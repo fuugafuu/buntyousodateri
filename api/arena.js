@@ -5,7 +5,7 @@ const { calculate, validateSubmission: validateArenaSubmission } = require('../s
 
 const GAMES = new Set(['flight','kale','perch','seedrace','ring']);
 const PET_SELECT = [
-  'id','owner_key','species','rarity','rank','name','source','obtained_at',
+  'id','owner_key','species','rarity','rank','name','source','obtained_at','custom_named','fusion_level','fusion_count','fused_at',
   'appetite','frame','metabolism','temperament','curiosity','sociability',
   'endurance','agility','flight_power','focus','beak_speed','balance',
   'weight_g','ideal_weight_g','body_length_cm','wing_span_cm','fitness',
@@ -39,7 +39,7 @@ function stats(row){
 }
 function pet(row){return row?{
   id:row.id,species:row.species,name:row.name,rarity:row.rarity,rank:Number(row.rank||1),
-  source:row.source,obtainedAt:row.obtained_at,eligible:isBuncho(row.species),sexKnown:row.sex_known===true,sex:row.sex_known===true?row.sex:null,sexDeterminedAt:row.sex_determined_at||null,stats:stats(row)
+  source:row.source,obtainedAt:row.obtained_at,customNamed:row.custom_named===true,fusionLevel:Number(row.fusion_level||0),fusionCount:Number(row.fusion_count||0),fusedAt:row.fused_at||null,eligible:isBuncho(row.species),sexKnown:row.sex_known===true,sex:row.sex_known===true?row.sex:null,sexDeterminedAt:row.sex_determined_at||null,stats:stats(row)
 }:null}
 function profile(row){return row?{playerId:row.player_id,displayName:row.display_name,character:row.character||{},isBot:String(row.user_key||'').startsWith('bot:arena:')}:null}
 async function takeLimit(sb,userKey,action,windowSeconds,limit){
@@ -95,10 +95,17 @@ async function loadMatch(sb,userKey,matchId){
   if(oppProfile?.isBot&&!((side===1?m.p2_score:m.p1_score)!=null))oppProgress={...oppProgress,...syntheticBotProgress(m.game_type,m.seed,m.starts_at,m.status)};
   const meSeen=side===1?m.p1_last_seen_at:m.p2_last_seen_at,oppSeen=side===1?m.p2_last_seen_at:m.p1_last_seen_at;
   const opponentFresh=oppProfile?.isBot===true||(oppSeen&&Date.now()-Date.parse(oppSeen)<2500);
+  let reward=null;
+  if(m.status==='finished'&&m.winner_key===userKey&&m.reward_awarded_at){
+    let currentCoins=null;
+    const {data:save}=await sb.from('mofumori_saves').select('state').eq('user_key',userKey).maybeSingle();
+    if(save?.state?.data&&Number.isFinite(Number(save.state.data.coins)))currentCoins=Number(save.state.data.coins);
+    reward={coins:Number(m.reward_coins||0),xp:Number(m.reward_xp||0),awardedAt:m.reward_awarded_at,currentCoins};
+  }
   return {
     id:m.id,gameType:m.game_type,status:m.status,seed:Number(m.seed||0),side,
     startsAt:m.starts_at,expiresAt:m.expires_at,finishedAt:m.finished_at||null,
-    winnerPlayerId:m.winner_key?pm.get(m.winner_key)?.player_id||null:null,
+    winnerPlayerId:m.winner_key?pm.get(m.winner_key)?.player_id||null:null,reward,
     connection:{
       meReady:side===1?!!m.p1_ready_at:!!m.p2_ready_at,
       opponentReady:side===1?!!m.p2_ready_at:!!m.p1_ready_at,
