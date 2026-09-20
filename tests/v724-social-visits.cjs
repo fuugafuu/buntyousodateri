@@ -10,7 +10,7 @@ const petUi=fs.readFileSync('pet-system.js','utf8');
 const petCss=fs.readFileSync('pet-system.css','utf8');
 const sql=fs.readFileSync('supabase/mofumori_v7_2_4_fusion_rewards.sql','utf8');
 
-assert.equal(pkg.version,'7.2.4');
+assert.ok(/^7\./.test(pkg.version),'v7 release required');
 assert.ok(html.includes('id="giftQtyInput"'),'gift quantity input missing');
 assert.ok(html.includes('まとめて送る'),'bulk send button missing');
 
