@@ -1,5 +1,5 @@
-const {allowMethods,json}=require('../server/auth.cjs');
-const {configured,getSupabase}=require('../server/supabase.cjs');
+const {allowMethods,json}=require('./auth.cjs');
+const {configured,getSupabase}=require('./supabase.cjs');
 
 const FALLBACK={
   activeBanner:'standard',

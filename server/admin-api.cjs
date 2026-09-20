@@ -1,6 +1,6 @@
-const {allowMethods,json,requireUser,requireSameOrigin}=require('../server/auth.cjs');
-const {configured,getSupabase}=require('../server/supabase.cjs');
-const {requireAdmin}=require('../server/admin.cjs');
+const {allowMethods,json,requireUser,requireSameOrigin}=require('./auth.cjs');
+const {configured,getSupabase}=require('./supabase.cjs');
+const {requireAdmin}=require('./admin.cjs');
 
 const SPECIES=new Set(['buncho_sakura','buncho_white','buncho_cinnamon','buncho_silver','canary','inko_green','inko_blue','buncho_pied','buncho_black','finch_zebra','lovebird','cockatiel','owl','cat','fox','penguin','beaver']);
 const RARITIES=['N','R','SR','SSR','UR'];

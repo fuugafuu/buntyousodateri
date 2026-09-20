@@ -2,6 +2,8 @@ const crypto = require('node:crypto');
 async function bestEffortRpc(sb,name,args){try{const {error}=await sb.rpc(name,args);if(error)console.warn('[mofumori] best-effort RPC failed',name,error.message)}catch(error){console.warn('[mofumori] best-effort RPC exception',name,error?.message||error)}}
 const { allowMethods, json, requireUser, requireSameOrigin } = require('../server/auth.cjs');
 const { configured, getSupabase } = require('../server/supabase.cjs');
+const adminApiHandler=require('../server/admin-api.cjs');
+const configApiHandler=require('../server/config-api.cjs');
 
 const SPECIES_META = {
   buncho_sakura:['桜文鳥','🐦'], buncho_white:['白文鳥','🕊️'], buncho_cinnamon:['シナモン文鳥','🐤'],
@@ -369,6 +371,9 @@ async function interactVisit(supabase, user, rawVisitId, rawAction) {
 }
 
 module.exports = async function handler(req, res) {
+  const route=String(req.query?.__route||new URL(req.url||'/','http://local').searchParams.get('__route')||'');
+  if(route==='admin')return adminApiHandler(req,res);
+  if(route==='config')return configApiHandler(req,res);
   if (!allowMethods(req, res, ['POST'])) return;
   try {
     requireSameOrigin(req);
