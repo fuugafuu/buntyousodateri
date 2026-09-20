@@ -4,6 +4,7 @@ const { allowMethods, json, requireUser, requireSameOrigin } = require('../serve
 const { configured, getSupabase } = require('../server/supabase.cjs');
 const adminApiHandler=require('../server/admin-api.cjs');
 const configApiHandler=require('../server/config-api.cjs');
+const dailyEventApiHandler=require('../server/daily-event-api.cjs');
 
 const SPECIES_META = {
   buncho_sakura:['桜文鳥','🐦'], buncho_white:['白文鳥','🕊️'], buncho_cinnamon:['シナモン文鳥','🐤'],
@@ -374,6 +375,7 @@ module.exports = async function handler(req, res) {
   const route=String(req.query?.__route||new URL(req.url||'/','http://local').searchParams.get('__route')||'');
   if(route==='admin')return adminApiHandler(req,res);
   if(route==='config')return configApiHandler(req,res);
+  if(route==='daily-event')return dailyEventApiHandler(req,res);
   if (!allowMethods(req, res, ['POST'])) return;
   try {
     requireSameOrigin(req);
