@@ -117,7 +117,7 @@ function applyDebugState(){
 const adminApi=async(action,payload={})=>{const r=await fetch('/api/admin',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...payload})}),j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.message||'管理操作に失敗しました');return j.data};
 function adminFriend(){return {playerId:'MF-ADMIN',displayName:'Mofumori Administration',character:{icon:'🐦',name:'管理者文鳥',species:'buncho_sakura'},admin:true}}
 async function summonAdminBird(){
-  try{const data=await adminApi('status');N.admin=data;N.adminFriend=true;sessionStorage.setItem('mofumoriAdminBird','1');friends();showToast('管理者文鳥が現れました 🔐🐦','achievement')}catch(e){N.adminFriend=false;sessionStorage.removeItem('mofumoriAdminBird');showToast('そのプレイヤーには管理者権限がありません','warning')}
+  try{const data=await adminApi('status');N.admin=data;N.adminFriend=true;localStorage.setItem('mofumoriAdminBird','1');sessionStorage.setItem('mofumoriAdminBird','1');friends();showToast('管理者文鳥が現れました 🔐🐦','achievement')}catch(e){N.adminFriend=false;localStorage.removeItem('mofumoriAdminBird');sessionStorage.removeItem('mofumoriAdminBird');showToast('そのプレイヤーには管理者権限がありません','warning')}
 }
 function adminUi(){
   if(document.getElementById('adminModeModal'))return;
@@ -175,7 +175,7 @@ ensureNewSettings=function(){O.ensureNewSettings();ensure()};getCurrentBirdName=
 };initIdentityAndSocial=async function(f=false){await O.initIdentityAndSocial(f);ensure();ui();identityUser?await refresh(true):social()};logoutGoogle=async function(){await O.logoutGoogle();N.mode='local';N.friends=[];N.requests={incoming:[],outgoing:[]};N.visits={incoming:[],outgoing:[]};social();presence()};
 window.render_game_to_text=function(){let b={};try{b=JSON.parse(O.renderText?.()||'{}')}catch(e){}let p=active();return JSON.stringify({...b,pets:{active:{id:p.id,species:p.species,rarity:p.rarity,rank:p.rank},owned:G.petCollection.length,friendRequests:N.requests.incoming.length,visitors:N.visits.incoming.length,away:N.visits.outgoing.length}})};
 function boot(){
-  N.debugFriend=DEV_MODE&&sessionStorage.getItem('mofumoriDebugFriend')==='1';N.adminFriend=sessionStorage.getItem('mofumoriAdminBird')==='1';
+  N.debugFriend=DEV_MODE&&sessionStorage.getItem('mofumoriDebugFriend')==='1';N.adminFriend=localStorage.getItem('mofumoriAdminBird')==='1'||sessionStorage.getItem('mofumoriAdminBird')==='1';
   ui();ensure();collection();social();presence();loadPublicGachaConfig();if(N.adminFriend&&identityUser)summonAdminBird();
   setInterval(()=>identityUser&&!document.hidden&&refresh(),30000);
   setInterval(()=>{
