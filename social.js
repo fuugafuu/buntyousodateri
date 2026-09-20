@@ -260,8 +260,10 @@ function renderRanking(){
 }
 function renderGiftInbox(){
   const list=document.getElementById('giftInbox');if(!list)return;const gifts=socialState.gifts.filter(g=>!g.claimedAt);
-  list.innerHTML=gifts.length?gifts.map(g=>`<div class="gift-card"><div class="friend-avatar">${itemInfo[g.itemCode]?.icon||'🎁'}</div><div><b>${escapeHtml(g.senderName||'フレンド')}から ${escapeHtml(itemInfo[g.itemCode]?.name||g.itemCode)} ×${g.quantity||1}</b><small>${g.createdAt?new Date(g.createdAt).toLocaleString('ja-JP'):'仕送りが届いています'}</small></div><button data-gift-id="${escapeHtml(g.id)}">受け取る</button></div>`).join(''):'<div class="social-empty">届いている仕送りはありません。</div>';
+  const totalItems=gifts.reduce((n,g)=>n+Math.max(1,Number(g.quantity)||1),0);
+  list.innerHTML=gifts.length?`<div class="gift-bulk-bar"><div><b>🎁 ${gifts.length}件</b><small>合計 ${totalItems}個届いています</small></div><button id="claimAllGiftsBtn">まとめて受け取る</button></div>`+gifts.map(g=>`<div class="gift-card"><div class="friend-avatar">${itemInfo[g.itemCode]?.icon||'🎁'}</div><div><b>${escapeHtml(g.senderName||'フレンド')}から ${escapeHtml(itemInfo[g.itemCode]?.name||g.itemCode)} ×${g.quantity||1}</b><small>${g.createdAt?new Date(g.createdAt).toLocaleString('ja-JP'):'仕送りが届いています'}</small></div><button data-gift-id="${escapeHtml(g.id)}">受け取る</button></div>`).join(''):'<div class="social-empty">届いている仕送りはありません。</div>';
   list.querySelectorAll('[data-gift-id]').forEach(button=>button.addEventListener('click',()=>claimGift(button.dataset.giftId)));
+  document.getElementById('claimAllGiftsBtn')?.addEventListener('click',claimAllGifts);
 }
 async function copyPlayerId(){
   if(!socialState.playerId)return;await navigator.clipboard?.writeText(socialState.playerId);showToast('プレイヤーIDをコピーしました','achievement');
@@ -280,20 +282,28 @@ async function addFriendById(){
     input.value='';renderSocial();showToast('フレンドになりました！','achievement');
   }catch(error){showToast(error.message||'フレンド追加に失敗しました','warning');}
 }
+function updateGiftQuantityLimit(){
+  const code=document.getElementById('giftItemSelect')?.value,qty=document.getElementById('giftQtyInput'),owned=Math.max(0,Number(G.inv?.[code]||0));
+  if(!qty)return;qty.max=String(Math.max(1,owned));qty.value=String(Math.max(1,Math.min(owned,Number(qty.value)||1)));qty.disabled=!owned;
+  const hint=document.getElementById('giftQtyHint');if(hint)hint.textContent=owned?`1〜${owned}個まで一度に送れます`:'送れるアイテムがありません';
+}
 function openFriendPet(playerId){
   selectedFriend=socialState.friends.find(f=>f.playerId===playerId)||DEMO_PROFILES[playerId];if(!selectedFriend)return;
   const pet=selectedFriend.character||{};document.getElementById('friendPetName').textContent=pet.name||'どうぶつ';
   document.getElementById('friendPetStage').innerHTML=`<div class="friend-pet-character" aria-label="${escapeHtml(pet.speciesName||'どうぶつ')}">${escapeHtml(pet.icon||'🐦')}</div>`;
   document.getElementById('friendPetStats').innerHTML=`<b>${escapeHtml(pet.speciesName||'どうぶつ')}</b> ・ Lv.${Number(pet.level)||1}<br>育成スコア <strong>${Number(selectedFriend.score||0).toLocaleString()}</strong>`;
-  const options=Object.entries(G.inv).filter(([,count])=>count>0).map(([code,count])=>`<option value="${escapeHtml(code)}">${itemInfo[code]?.icon||'🎁'} ${escapeHtml(itemInfo[code]?.name||code)}（${count}個）</option>`).join('');
-  const select=document.getElementById('giftItemSelect');select.innerHTML=options||'<option value="">送れるアイテムがありません</option>';document.getElementById('giftSendBtn').disabled=!options;showModal('friendPetModal');
+  const options=Object.entries(G.inv).filter(([,count])=>Number(count)>0).map(([code,count])=>`<option value="${escapeHtml(code)}">${itemInfo[code]?.icon||'🎁'} ${escapeHtml(itemInfo[code]?.name||code)}（${count}個）</option>`).join('');
+  const select=document.getElementById('giftItemSelect');select.innerHTML=options||'<option value="">送れるアイテムがありません</option>';select.onchange=updateGiftQuantityLimit;
+  const qty=document.getElementById('giftQtyInput');if(qty)qty.value='1';
+  document.getElementById('giftSendBtn').disabled=!options;updateGiftQuantityLimit();showModal('friendPetModal');
 }
 async function sendGiftToSelectedFriend(){
-  const code=document.getElementById('giftItemSelect').value;if(!selectedFriend||!code||!G.inv[code])return;
+  const code=document.getElementById('giftItemSelect').value,owned=Math.max(0,Number(G.inv?.[code]||0)),quantity=Math.max(1,Math.min(owned,Math.trunc(Number(document.getElementById('giftQtyInput')?.value)||1)));
+  if(!selectedFriend||!code||!owned||quantity<1)return;
   try{
-    if(identityUser){const result=await remoteSocialAction('sendGift',{playerId:selectedFriend.playerId,itemCode:code,quantity:1});if(result.gameState)applyGameState(result.gameState);applyRemoteDashboard(result.data);}
-    else{G.inv[code]--;await persistLocalSocial();save();renderInv();}
-    hideModal('friendPetModal');renderSocial();showToast('仕送りを送りました！','achievement');
+    if(identityUser){const result=await remoteSocialAction('sendGift',{playerId:selectedFriend.playerId,itemCode:code,quantity});if(result.gameState)applyGameState(result.gameState);applyRemoteDashboard(result.data);}
+    else{G.inv[code]-=quantity;await persistLocalSocial();save();renderInv();}
+    hideModal('friendPetModal');renderSocial();showToast(`仕送りを${quantity}個送りました！`,'achievement');
   }catch(error){showToast(error.message||'仕送りに失敗しました','warning');}
 }
 async function claimGift(id){
@@ -304,3 +314,21 @@ async function claimGift(id){
     renderSocial();showToast('仕送りを受け取りました！','achievement');
   }catch(error){showToast(error.message||'受け取りに失敗しました','warning');}
 }
+async function claimAllGifts(){
+  const pending=socialState.gifts.filter(g=>!g.claimedAt);if(!pending.length)return;
+  const btn=document.getElementById('claimAllGiftsBtn');if(btn){btn.disabled=true;btn.textContent='受取中…'}
+  try{
+    if(identityUser){
+      const result=await remoteSocialAction('claimAllGifts',{});
+      if(result.gameState)applyGameState(result.gameState);applyRemoteDashboard(result.data);
+      const count=Number(result.claimSummary?.itemCount||0);showToast(`🎁 ${count}個まとめて受け取りました！`,'achievement');
+    }else{
+      let count=0;
+      for(const gift of pending){const q=Math.max(1,Number(gift.quantity)||1);G.inv[gift.itemCode]=(G.inv[gift.itemCode]||0)+q;gift.claimedAt=new Date().toISOString();count+=q}
+      await persistLocalSocial();save();renderInv();showToast(`🎁 ${count}個まとめて受け取りました！`,'achievement');
+    }
+    renderSocial();
+  }catch(error){showToast(error.message||'まとめて受け取れませんでした','warning')}
+  finally{if(btn){btn.disabled=false;btn.textContent='まとめて受け取る'}}
+}
+
