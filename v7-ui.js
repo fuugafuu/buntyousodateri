@@ -2,6 +2,20 @@
 const $=(q,r=document)=>r.querySelector(q),$$=(q,r=document)=>[...r.querySelectorAll(q)];
 const V={mode:'login',progress:null,loading:false};
 
+async function dailyEventCard(){
+  try{
+    const r=await fetch('/api/daily-event',{cache:'no-store'});if(!r.ok)return;const d=await r.json(),e=d.event;if(!e)return;
+    let card=$('#v7DailyEvent');
+    if(!card){card=document.createElement('section');card.id='v7DailyEvent';card.className='v7-daily-event';const anchor=$('.v7-journey')||$('.game-container')||document.body.firstElementChild;anchor?.insertAdjacentElement('afterend',card)}
+    const boss=e.type==='boss';
+    card.classList.toggle('boss',boss);
+    card.innerHTML=`<div class="v7-event-icon">${e.icon}</div><div class="v7-event-copy"><small>DAILY EVENT · ${d.slot+1}/100</small><h2>${escEvent(e.title)}</h2><p>${escEvent(e.summary)}</p><div class="v7-event-reward">🪙 ${e.reward?.coins||0}　✨ XP ${e.reward?.xp||0}</div></div>${boss?`<div class="v7-boss-panel"><b>BOSS Lv.${e.boss?.level||1}</b><span>${Number(e.boss?.hp||0).toLocaleString()} HP</span><button data-event-boss>⚔️ ボス戦へ</button></div>`:`<div class="v7-event-day">DAY<b>${d.slot+1}</b></div>`}`;
+    card.querySelector('[data-event-boss]')?.addEventListener('click',()=>{document.getElementById('onlineBtn')?.click();showToast?.('⚔️ 今日のボスイベント開催中！','achievement')});
+  }catch(e){console.warn('[daily-event-ui]',e)}
+}
+function escEvent(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+
 function accountCard(){
   const card=$('.identity-card');if(!card||$('#v7LocalAuth'))return;
   const box=document.createElement('div');box.id='v7LocalAuth';box.className='v7-local-auth';
@@ -114,4 +128,6 @@ window.v7EnhanceCollection=enhanceCollection;
 
 function boot(){accountCard();renderAuth();progressShell();enhanceCollection();refreshProgress();setInterval(()=>{refreshProgress();enhanceCollection();renderCollectionSummary()},10000)}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,120),{once:true}):setTimeout(boot,120);
+
+setTimeout(dailyEventCard,900);
 })();
