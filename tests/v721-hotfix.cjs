@@ -46,6 +46,8 @@ assert.equal(vercel.git.deploymentEnabled['*'],false);
 assert.ok(timeoutSql.indexOf("now_ts>deadline")<timeoutSql.indexOf("m.status='ready'"),'hard timeout must be evaluated before ready-state handling');
 assert.ok(timeoutSql.includes("interval '2 seconds'"),'ready presence freshness must be strict');
 assert.ok(auditSql.includes('mofumori_admin_audit'),'admin audit migration missing');
+assert.ok(auditSql.includes('mofumori_admin_log'),'admin audit RPC must be committed with the schema');
+assert.ok(auditSql.includes('grant execute on function public.mofumori_admin_log'),'admin audit RPC must be service-role only');
 assert.ok(admin.includes("await audit(sb,user,'set_gacha_config'"));
 assert.ok(admin.includes("await audit(sb,user,'adjust_currency'"));
 
