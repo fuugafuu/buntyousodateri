@@ -101,7 +101,7 @@ async function addFriend(supabase, user, playerId) {
   if (insertError) throw insertError;
 }
 async function sendGift(supabase, user, payload) {
-  const playerId = text(payload.playerId, 16).toUpperCase(), itemCode = text(payload.itemCode, 40), quantity = integer(payload.quantity, 1, 5, 1);
+  const playerId = text(payload.playerId, 16).toUpperCase(), itemCode = text(payload.itemCode, 40), quantity = integer(payload.quantity, 1, 9999, 1);
   if (!ITEM_CODES.has(itemCode)) throw Object.assign(new Error('送れないアイテムです。'), { status: 400 });
   const { data: target, error } = await supabase.from('mofumori_profiles').select('user_key').eq('player_id', playerId).maybeSingle();
   if (error) throw error; if (!target) throw Object.assign(new Error('フレンドが見つかりません。'), { status: 404 });
@@ -116,6 +116,12 @@ async function claimGift(supabase, user, giftId) {
   return data;
 }
 
+async function claimAllGifts(supabase,user){
+  const {data,error}=await supabase.rpc('mofumori_claim_all_gifts',{p_recipient:user.id});
+  if(error)throw Object.assign(new Error('仕送りをまとめて受け取れませんでした。'),{status:400});
+  return data;
+}
+
 module.exports = async function handler(req, res) {
   if (!allowMethods(req, res, ['POST'])) return;
   try {
@@ -125,11 +131,12 @@ module.exports = async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const action = text(body.action, 30, 'dashboard'), payload = body.payload && typeof body.payload === 'object' ? body.payload : {};
     const supabase = getSupabase(), ownProfile = await syncProfile(supabase, user, body.snapshot);
-    let gameState = null;
+    let gameState = null, extraClaim = null;
     if (action === 'addFriend') throw Object.assign(new Error('フレンド追加は申請→承認方式に更新されました。'), { status: 409 });
     else if (action === 'sendGift') { const record = await sendGift(supabase, user, payload); gameState = record?.data || null; }
     else if (action === 'claimGift') { const record = await claimGift(supabase, user, payload.giftId); gameState = record?.data || null; }
+    else if (action === 'claimAllGifts') { const record=await claimAllGifts(supabase,user); gameState=record?.state?.data||null; extraClaim={claimedCount:Number(record?.claimedCount||0),itemCount:Number(record?.itemCount||0)}; }
     else if (action !== 'dashboard') throw Object.assign(new Error('未対応の操作です。'), { status: 400 });
-    json(res, 200, { ok: true, data: await dashboard(supabase, user, ownProfile), gameState });
+    json(res, 200, { ok: true, data: await dashboard(supabase, user, ownProfile), gameState, claimSummary:extraClaim });
   } catch (error) { json(res, error.status || 400, { ok: false, message: error.message || 'オンライン機能の処理に失敗しました。' }); }
 };
