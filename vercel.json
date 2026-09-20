@@ -85,6 +85,10 @@
     {
       "source": "/api/config",
       "destination": "/api/pets?__route=config"
+    },
+    {
+      "source": "/api/daily-event",
+      "destination": "/api/pets?__route=daily-event"
     }
   ]
 }
