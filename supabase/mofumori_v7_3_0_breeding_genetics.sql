@@ -59,6 +59,7 @@ alter table public.mofumori_breeding_jobs enable row level security;
 revoke all on table public.mofumori_breeding_jobs from public,anon,authenticated;
 grant all on table public.mofumori_breeding_jobs to service_role;
 create index if not exists mofumori_breeding_owner_status_idx on public.mofumori_breeding_jobs(owner_key,status,completes_at);
+create index if not exists mofumori_breeding_egg_idx on public.mofumori_breeding_jobs(egg_pet_id) where egg_pet_id is not null;
 create unique index if not exists mofumori_breeding_male_running_uidx on public.mofumori_breeding_jobs(male_pet_id) where status='running';
 create unique index if not exists mofumori_breeding_female_running_uidx on public.mofumori_breeding_jobs(female_pet_id) where status='running';
 
