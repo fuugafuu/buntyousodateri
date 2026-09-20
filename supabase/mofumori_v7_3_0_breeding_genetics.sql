@@ -174,6 +174,8 @@ declare
   hatch_mins integer;
   adult_min_hours integer;
   adult_max_hours integer;
+  laid_time timestamptz;
+  hatch_time timestamptz;
 begin
   select * into j from public.mofumori_breeding_jobs where id=p_job and owner_key=p_owner for update;
   if j.id is null then raise exception 'job_missing'; end if;
@@ -191,6 +193,8 @@ begin
   hatch_mins:=120+floor(random()*481)::integer;
   adult_min_hours:=6+floor(random()*7)::integer;
   adult_max_hours:=18+floor(random()*7)::integer;
+  laid_time:=j.completes_at;
+  hatch_time:=laid_time+make_interval(mins=>hatch_mins);
 
   insert into public.mofumori_pets(
     owner_key,species,rarity,rank,name,source,
@@ -203,9 +207,9 @@ begin
   ) values(
     p_owner,p_species,p_rarity,greatest(1,least(5,p_rank::smallint)),left(p_name,12),'bred',
     m.id,f.id,greatest(m.generation,f.generation)+1,'egg',coalesce(p_genetics,'{}'::jsonb),coalesce(p_phenotype,'{}'::jsonb),
-    now(),now()+make_interval(mins=>hatch_mins),
-    now()+make_interval(mins=>hatch_mins)+make_interval(hours=>adult_min_hours),
-    now()+make_interval(mins=>hatch_mins)+make_interval(hours=>adult_max_hours),now(),
+    laid_time,hatch_time,
+    hatch_time+make_interval(hours=>adult_min_hours),
+    hatch_time+make_interval(hours=>adult_max_hours),laid_time,
     case when p_sex='female' then 'female' else 'male' end,false,null,
     greatest(1,least(100,coalesce((p_stats->>'appetite')::numeric,50))),
     greatest(1,least(100,coalesce((p_stats->>'frame')::numeric,50))),
@@ -232,7 +236,7 @@ begin
 
   insert into public.mofumori_lifecycle_events(owner_key,pet_id,event_type,payload)
   values(p_owner,child.id,'egg_laid',jsonb_build_object(
-    'jobId',j.id,'fatherId',m.id,'motherId',f.id,'hatchAt',child.hatch_at,
+    'jobId',j.id,'fatherId',m.id,'motherId',f.id,'laidAt',child.laid_at,'hatchAt',child.hatch_at,
     'generation',child.generation,'phenotype',child.phenotype
   ))
   on conflict(pet_id,event_type) do nothing;
