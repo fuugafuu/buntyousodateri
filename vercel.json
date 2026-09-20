@@ -76,5 +76,15 @@
       "*": false,
       "main": true
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/admin",
+      "destination": "/api/pets?__route=admin"
+    },
+    {
+      "source": "/api/config",
+      "destination": "/api/pets?__route=config"
+    }
+  ]
 }
