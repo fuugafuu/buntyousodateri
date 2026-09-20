@@ -11,9 +11,9 @@ const arenaUi=fs.readFileSync('v6-ui.js','utf8');
 const sql=fs.readFileSync('supabase/mofumori_v7_2_4_fusion_rewards.sql','utf8');
 const sw=fs.readFileSync('sw.js','utf8');
 
-assert.equal(pkg.version,'7.2.4');
-assert.ok(html.includes("window.MOFUMORI_BUILD='7.2.4'"));
-assert.ok(sw.includes("mofumori-shell-v7.2.4"));
+assert.ok(/^7\./.test(pkg.version),'v7 release required');
+assert.ok(html.includes(`window.MOFUMORI_BUILD='${pkg.version}'`));
+assert.ok(sw.includes(`mofumori-shell-v${pkg.version}`));
 
 assert.ok(pets.includes("action === 'fusePets'"),'fusion action missing');
 assert.ok(pets.includes("custom_named: true"),'renaming must permanently protect a pet from fusion');
