@@ -851,7 +851,18 @@ function renderMissions(){
   }).join('');
 }
 function renderBird(){
-  const b=birds[G.species],c=b.colors,svg=document.getElementById('birdSvg');
+  const activeLifecycle=Array.isArray(G.petCollection)?(G.petCollection.find(p=>String(p.id)===String(G.activePetId))||null):null;
+  const svg=document.getElementById('birdSvg');
+  if(activeLifecycle?.lifeStage==='egg'){
+    svg.innerHTML='<defs><radialGradient id="eggShell" cx="40%" cy="28%"><stop offset="0%" stop-color="#fffdf7"/><stop offset="68%" stop-color="#f2e9d7"/><stop offset="100%" stop-color="#d9c9ad"/></radialGradient><filter id="eggShadow"><feDropShadow dx="0" dy="8" stdDeviation="7" flood-opacity=".18"/></filter></defs><ellipse cx="100" cy="146" rx="46" ry="62" fill="url(#eggShell)" filter="url(#eggShadow)"/><path d="M76 121 Q100 104 124 121" stroke="#fff" stroke-width="6" opacity=".55" fill="none" stroke-linecap="round"/><ellipse cx="100" cy="203" rx="48" ry="9" fill="#6f5c46" opacity=".14"/>';
+    svg.classList.add('lifecycle-egg');svg.classList.remove('lifecycle-chick');return;
+  }
+  if(activeLifecycle?.lifeStage==='chick'){
+    svg.innerHTML='<defs><radialGradient id="chickBody" cx="40%" cy="30%"><stop offset="0%" stop-color="#fff4a8"/><stop offset="100%" stop-color="#e8c76d"/></radialGradient><filter id="chickShadow"><feDropShadow dx="0" dy="7" stdDeviation="6" flood-opacity=".16"/></filter></defs><ellipse cx="100" cy="147" rx="46" ry="41" fill="url(#chickBody)" filter="url(#chickShadow)"/><circle cx="100" cy="99" r="39" fill="#f4d878"/><circle cx="85" cy="94" r="5" fill="#202020"/><circle cx="115" cy="94" r="5" fill="#202020"/><circle cx="83.5" cy="92.5" r="1.6" fill="#fff"/><circle cx="113.5" cy="92.5" r="1.6" fill="#fff"/><path d="M91 111 L109 111 100 122Z" fill="#f39a55"/><path d="M61 145 Q45 133 48 158" stroke="#e1bc59" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M139 145 Q155 133 152 158" stroke="#e1bc59" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M88 181 Q84 192 78 195M112 181 Q116 192 122 195" stroke="#e3a26c" stroke-width="4" fill="none" stroke-linecap="round"/>';
+    svg.classList.add('lifecycle-chick');svg.classList.remove('lifecycle-egg');return;
+  }
+  svg.classList.remove('lifecycle-egg','lifecycle-chick');
+  const b=birds[G.species],c=b.colors;
   const speed=G.animationMode==='ultra'?1.05:G.animationMode==='fine'?0.95:G.animationMode==='simple'?0.6:0.8;
   const amp=G.animationMode==='ultra'?1.2:G.animationMode==='fine'?1.05:G.animationMode==='simple'?0.7:0.9;
   const quality=G.resolutionScale>=1.6?1:0;
