@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const RR={N:[1,'★'],R:[2,'★★'],SR:[3,'★★★'],SSR:[4,'★★★★'],UR:[5,'★★★★★']},C={1:180,10:1600},W={buncho_sakura:16,buncho_white:14,buncho_cinnamon:11,buncho_silver:9,canary:8,inko_green:7,inko_blue:7,buncho_pied:6,buncho_black:5,finch_zebra:5,lovebird:4,cockatiel:4,cat:4,penguin:4,beaver:3,fox:3,owl:2};
-const A={greet:'👋 あいさつ',pet:'✋ なでる',play:'🎾 遊ぶ',share_seed:'🌾 シードを見せる'},VCARE={feed:'🍚',pet:'✋',play:'🎾',bath:'🛁',treat:'🍬',sing:'🎵'},N={mode:'local',friends:[],requests:{incoming:[],outgoing:[]},visits:{incoming:[],outgoing:[]},breeding:{jobs:[],events:[]},breedMale:null,breedFemale:null,eventQueue:[],eventBusy:false,currentLifeEvent:null,lifecycleDueRefreshAt:0,visitFocus:0,last:0,busy:false,debugFriend:false,adminFriend:false,admin:null,gachaConfig:null,gachaBanner:'standard'};
+const A={greet:'👋 あいさつ',pet:'✋ なでる',play:'🎾 遊ぶ',share_seed:'🌾 シードを見せる'},VCARE={feed:'🍚',pet:'✋',play:'🎾',bath:'🛁',treat:'🍬',sing:'🎵'},N={mode:'local',friends:[],requests:{incoming:[],outgoing:[]},visits:{incoming:[],outgoing:[]},breeding:{jobs:[],events:[]},breedMale:null,breedFemale:null,fusionTarget:null,fusionMaterials:new Set(),eventQueue:[],eventBusy:false,currentLifeEvent:null,lifecycleDueRefreshAt:0,visitFocus:0,last:0,busy:false,debugFriend:false,adminFriend:false,admin:null,gachaConfig:null,gachaBanner:'standard'};
 const DEV_MODE=['localhost','127.0.0.1','::1'].includes(location.hostname)||location.hostname.endsWith('.local');
 const DEBUG_FRIEND_CODE='MF-DEBUGBIRD';
 const ADMIN_BIRD_CODE='MF::M0FUM0RI-ADMIN::BIRD-7Z2::OWNER';
