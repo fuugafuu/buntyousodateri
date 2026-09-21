@@ -7,9 +7,9 @@ const ADMIN_BIRD_CODE='MF::M0FUM0RI-ADMIN::BIRD-7Z2::OWNER';
 let dispatchFriend=null,dispatchPet=null,timer=null;
 const O={ensureNewSettings,getCurrentBirdName,setCurrentBirdName,renderBirdGrid,updateBuyBtn,buyBird,updateUI,showModal,renderSocial,renderFriendList,addFriendById,setSocialTab,initIdentityAndSocial,logoutGoogle,renderText:window.render_game_to_text};
 const id=()=>`local-${crypto.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2)}`,rar=x=>RR[x]?x:'N';
-function norm(p){let s=birds[p?.species]?p.species:'buncho_sakura',r=rar(p?.rarity),b=birds[s],stage=['egg','chick','adult'].includes(p?.lifeStage)?p.lifeStage:'adult';return{id:String(p?.id||id()),species:s,name:String(p?.name||b.name).trim().slice(0,12)||b.name,rarity:r,rank:Math.max(1,Math.min(5,+p?.rank||RR[r][0])),source:['starter','legacy','gacha','reward','bred'].includes(p?.source)?p.source:'legacy',obtainedAt:p?.obtainedAt||new Date().toISOString(),stats:p?.stats&&typeof p.stats==='object'?{...p.stats}:undefined,lifeStage:stage,fatherId:p?.fatherId||null,motherId:p?.motherId||null,generation:Math.max(0,Number(p?.generation)||0),genetics:p?.genetics&&typeof p.genetics==='object'?p.genetics:{},phenotype:p?.phenotype&&typeof p.phenotype==='object'?p.phenotype:{},laidAt:p?.laidAt||null,hatchAt:p?.hatchAt||null,hatchedAt:p?.hatchedAt||null,adultEarliestAt:p?.adultEarliestAt||null,adultLatestAt:p?.adultLatestAt||null,adultAt:p?.adultAt||null,growthPoints:Math.max(0,Number(p?.growthPoints)||0),bredAt:p?.bredAt||null,customNamed:p?.customNamed===true,fusionLevel:Math.max(0,Math.min(20,Number(p?.fusionLevel)||0)),fusionCount:Math.max(0,Number(p?.fusionCount)||0),fusedAt:p?.fusedAt||null,sexKnown:p?.sexKnown===true,sex:p?.sex||null,sexDeterminedAt:p?.sexDeterminedAt||null}}
+function norm(p){let s=birds[p?.species]?p.species:'buncho_sakura',r=rar(p?.rarity),b=birds[s],stage=['egg','chick','adult'].includes(p?.lifeStage)?p.lifeStage:'adult';return{id:String(p?.id||id()),species:s,speciesName:String(p?.speciesName||b.name),icon:String(p?.icon||b.icon),name:String(p?.name||p?.speciesName||b.name).trim().slice(0,12)||b.name,rarity:r,rank:Math.max(1,Math.min(5,+p?.rank||RR[r][0])),source:['starter','legacy','gacha','reward','bred'].includes(p?.source)?p.source:'legacy',obtainedAt:p?.obtainedAt||new Date().toISOString(),stats:p?.stats&&typeof p.stats==='object'?{...p.stats}:undefined,lifeStage:stage,fatherId:p?.fatherId||null,motherId:p?.motherId||null,generation:Math.max(0,Number(p?.generation)||0),genetics:p?.genetics&&typeof p.genetics==='object'?p.genetics:{},phenotype:p?.phenotype&&typeof p.phenotype==='object'?p.phenotype:{},laidAt:p?.laidAt||null,hatchAt:p?.hatchAt||null,hatchedAt:p?.hatchedAt||null,adultEarliestAt:p?.adultEarliestAt||null,adultLatestAt:p?.adultLatestAt||null,adultAt:p?.adultAt||null,growthPoints:Math.max(0,Number(p?.growthPoints)||0),bredAt:p?.bredAt||null,customNamed:p?.customNamed===true,fusionLevel:Math.max(0,Math.min(20,Number(p?.fusionLevel)||0)),fusionCount:Math.max(0,Number(p?.fusionCount)||0),fusedAt:p?.fusedAt||null,sexKnown:p?.sexKnown===true,sex:p?.sex||null,sexDeterminedAt:p?.sexDeterminedAt||null}}
 function ensure(){if(!Array.isArray(G.petCollection)||!G.petCollection.length){G.petCollection=[...new Set(G.unlocked?.length?G.unlocked:[G.species||'buncho_sakura'])].filter(s=>birds[s]).map(s=>norm({species:s,name:G.birdNames?.[s],source:s==='buncho_sakura'?'starter':'legacy'}))}G.petCollection=G.petCollection.filter(p=>birds[p.species]).slice(0,1000).map(norm);if(!G.petCollection.length)G.petCollection=[norm({species:'buncho_sakura',name:'文鳥',source:'starter'})];let p=G.petCollection.find(x=>String(x.id)===String(G.activePetId))||G.petCollection.find(x=>x.species===G.species)||G.petCollection[0];G.activePetId=p.id;G.species=p.species;G.name=p.name;G.birdNames=G.birdNames||{};G.birdNames[p.species]=p.name;G.unlocked=[...new Set([...G.petCollection.map(x=>x.species),...(G.unlocked||[]).filter(x=>birds[x]?.hidden)])];return p}
-const active=()=>ensure(),meta=p=>{let base=birds[p?.species]||birds.buncho_sakura,r=rar(p?.rarity),icon=p?.lifeStage==='egg'?'🥚':p?.lifeStage==='chick'?'🐣':base.icon,b={...base,icon};return{b,r,rank:RR[r][0],stars:RR[r][1]}};
+const active=()=>ensure(),meta=p=>{let base=birds[p?.species]||birds.buncho_sakura,r=rar(p?.rarity),icon=p?.lifeStage==='egg'?'🥚':p?.lifeStage==='chick'?'🐣':(p?.icon||base.icon),name=p?.speciesName||base.name,b={...base,icon,name};return{b,r,rank:RR[r][0],stars:RR[r][1]}};
 function syncPets(ps){if(!Array.isArray(ps)||!ps.length)return;let old=active();G.petCollection=ps.map(norm);let p=G.petCollection.find(x=>x.id===G.activePetId)||G.petCollection.find(x=>x.species===old.species&&x.name===old.name)||G.petCollection[0];G.activePetId=p.id;G.species=p.species;G.name=p.name}
 function rnd(){if(crypto.getRandomValues){let a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}return Math.random()}
 function currentBanner(){
@@ -166,59 +166,64 @@ function renderLifeStagePresence(){
 function fusionUi(){
   const toolbar=document.querySelector('.v72-companion-toolbar');
   if(toolbar&&!document.getElementById('openFusionBtn')){
-    const b=document.createElement('button');b.type='button';b.id='openFusionBtn';b.className='modal-btn fusion-open-btn';b.textContent='🧬 被りを合成';b.onclick=openFusion;toolbar.appendChild(b);
+    const b=document.createElement('button');b.type='button';b.id='openFusionBtn';b.className='modal-btn fusion-open-btn';b.textContent='🧬 手動合成';b.onclick=openFusion;toolbar.appendChild(b);
   }
   if(document.getElementById('fusionModal'))return;
   const m=document.createElement('div');m.id='fusionModal';m.className='modal';
-  m.innerHTML='<div class="modal-content fusion-modal"><div class="fusion-head"><div><small>DUPLICATE FUSION</small><div class="modal-title">🧬 同じ鳥を合成</div></div><button data-fusion-close>×</button></div><p class="fusion-note">同じ種類の鳥を素材にして強化できます。名前を変えた鳥・強化済み素材・装備中・訪問中の鳥は自動で保護されます。</p><div id="fusionGroups"></div><div class="modal-buttons"><button class="modal-btn secondary" data-fusion-close>閉じる</button></div></div>';
+  m.innerHTML='<div class="modal-content fusion-modal"><div class="fusion-head"><div><small>MANUAL FUSION</small><div class="modal-title">🧬 文鳥を手動合成</div></div><button data-fusion-close>×</button></div><p class="fusion-note">①強化するメインの鳥を選択 → ②同じ種類の素材を好きな数だけ選択。名前変更済み・卵・雛・交配中・訪問中・家系図の親個体・装備中の素材は保護されます。</p><div id="fusionGroups"></div><div class="modal-buttons"><button class="modal-btn secondary" data-fusion-close>閉じる</button></div></div>';
   document.body.appendChild(m);m.querySelectorAll('[data-fusion-close]').forEach(b=>b.onclick=()=>hideModal('fusionModal'));
 }
-function fusionGroups(){
-  ensure();
-  const away=new Set(N.visits.outgoing.map(v=>String(v.pet?.id||'')));
-  const groups=new Map();
-  for(const p of G.petCollection){
-    if(!p?.species||String(p.id).startsWith('local-'))continue;
-    if(!groups.has(p.species))groups.set(p.species,[]);
-    groups.get(p.species).push(p);
-  }
-  const out=[];
-  for(const [species,list] of groups){
-    const usable=list.filter(p=>p.lifeStage==='adult'&&!p.customNamed&&!away.has(String(p.id))&&Number(p.fusionLevel||0)<20&&!breedingBusySet().has(String(p.id)));
-    if(usable.length<2)continue;
-    const targets=usable.slice().sort((a,b)=>{
-      const activeA=String(a.id)===String(G.activePetId)?1:0,activeB=String(b.id)===String(G.activePetId)?1:0;
-      return activeB-activeA||Number(b.fusionLevel||0)-Number(a.fusionLevel||0)||Number(b.rank||0)-Number(a.rank||0)||(Date.parse(a.obtainedAt||0)-Date.parse(b.obtainedAt||0));
-    });
-    const target=targets[0];
-    const capacity=Math.max(0,20-Number(target.fusionLevel||0)),parentIds=new Set(G.petCollection.flatMap(x=>[x.fatherId,x.motherId]).filter(Boolean).map(String));
-    const materials=usable.filter(p=>String(p.id)!==String(target.id)&&Number(p.fusionLevel||0)===0&&String(p.id)!==String(G.activePetId)&&!parentIds.has(String(p.id))).slice(0,capacity);
-    if(!materials.length)continue;
-    out.push({species,target,materials,protectedCount:list.filter(p=>p.customNamed).length});
-  }
-  return out;
+function fusionProtectedSets(){
+  const away=new Set(N.visits.outgoing.map(v=>String(v.pet?.id||''))),busy=breedingBusySet(),parents=new Set(G.petCollection.flatMap(x=>[x.fatherId,x.motherId]).filter(Boolean).map(String));
+  return{away,busy,parents};
+}
+function fusionTargets(){
+  ensure();const {away,busy}=fusionProtectedSets();
+  return G.petCollection.filter(p=>p.lifeStage==='adult'&&!p.customNamed&&!String(p.id).startsWith('local-')&&!away.has(String(p.id))&&!busy.has(String(p.id))&&Number(p.fusionLevel||0)<20);
+}
+function fusionMaterialsFor(target){
+  if(!target)return[];const{away,busy,parents}=fusionProtectedSets(),capacity=Math.max(0,20-Number(target.fusionLevel||0));
+  return G.petCollection.filter(p=>
+    String(p.id)!==String(target.id)&&p.species===target.species&&p.lifeStage==='adult'&&!p.customNamed&&!String(p.id).startsWith('local-')&&
+    !away.has(String(p.id))&&!busy.has(String(p.id))&&Number(p.fusionLevel||0)===0&&String(p.id)!==String(G.activePetId)&&!parents.has(String(p.id))
+  ).slice(0,Math.max(40,capacity));
+}
+function renderFusionPet(p,mode,selected=false){
+  const m=meta(p),dna=p.generation>0?' ・ G'+p.generation:'',lv=Number(p.fusionLevel||0);
+  return `<button class="fusion-pick ${selected?'selected':''}" data-fusion-${mode}="${escapeHtml(p.id)}"><span>${escapeHtml(m.b.icon)}</span><div><b>${escapeHtml(p.name)}</b><small>${escapeHtml(m.b.name)} ・ ${p.rarity} / Rank ${p.rank}${dna}</small><em>${lv?'🧬 合成Lv '+lv:'未強化'}</em></div>${selected?'<i>✓</i>':''}</button>`;
 }
 function renderFusion(){
   const root=document.getElementById('fusionGroups');if(!root)return;
-  if(!identityUser){root.innerHTML='<div class="fusion-empty"><span>☁️</span><b>ログインすると合成できます</b><small>合成は消費する鳥を安全に確認するためサーバーで処理します。</small></div>';return}
-  const groups=fusionGroups();
-  if(!groups.length){root.innerHTML='<div class="fusion-empty"><span>🐦</span><b>合成できる被りはありません</b><small>名前変更済みの鳥は保護され、候補には出ません。</small></div>';return}
-  root.innerHTML=groups.map((g,i)=>{const b=birds[g.species]||birds.buncho_sakura,t=g.target,n=Math.min(g.materials.length,20-Number(t.fusionLevel||0));return `<article class="fusion-group" data-fusion-group="${i}"><div class="fusion-target"><span>${escapeHtml(b.icon)}</span><div><small>強化する鳥</small><b>${escapeHtml(t.name)}</b><em>${escapeHtml(b.name)} ・ 個体ランク ${t.rank} ・ 合成Lv ${Number(t.fusionLevel||0)}/20</em></div></div><div class="fusion-arrow">＋ ${n}羽 → <b>Lv ${Number(t.fusionLevel||0)+n}</b></div><div class="fusion-materials">${g.materials.slice(0,n).map(p=>`<span title="${escapeHtml(p.name)}">${escapeHtml(b.icon)} <small>${p.rarity}</small></span>`).join('')}</div>${g.protectedCount?`<div class="fusion-protected">🔒 名前変更済み ${g.protectedCount}羽は除外</div>`:''}<button data-fuse="${i}">🧬 ${n}羽を合成する</button></article>`}).join('');
-  root.querySelectorAll('[data-fuse]').forEach(btn=>btn.onclick=()=>fuseGroup(groups[Number(btn.dataset.fuse)]));
+  if(!identityUser){root.innerHTML='<div class="fusion-empty"><span>☁️</span><b>ログインすると合成できます</b><small>合成はサーバー上で安全に処理します。</small></div>';return}
+  const targets=fusionTargets();
+  if(N.fusionTarget&&!targets.some(p=>String(p.id)===String(N.fusionTarget))){N.fusionTarget=null;N.fusionMaterials.clear()}
+  const target=targets.find(p=>String(p.id)===String(N.fusionTarget))||null;
+  if(!target){
+    root.innerHTML='<section class="fusion-step"><header><span>1</span><div><b>強化するメイン文鳥を選ぶ</b><small>この鳥は消えず、能力と合成Lvが上がります。</small></div></header><div class="fusion-pick-list">'+(targets.length?targets.map(p=>renderFusionPet(p,'target')).join(''):'<div class="fusion-empty"><span>🐦</span><b>メインにできる鳥がいません</b><small>名前変更済み・卵・雛・交配中などは対象外です。</small></div>')+'</div></section>';
+    root.querySelectorAll('[data-fusion-target]').forEach(b=>b.onclick=()=>{N.fusionTarget=b.dataset.fusionTarget;N.fusionMaterials.clear();renderFusion()});
+    return;
+  }
+  const mats=fusionMaterialsFor(target),capacity=Math.max(0,20-Number(target.fusionLevel||0));
+  for(const id of [...N.fusionMaterials])if(!mats.some(p=>String(p.id)===String(id)))N.fusionMaterials.delete(id);
+  const selected=mats.filter(p=>N.fusionMaterials.has(String(p.id))).slice(0,capacity),m=meta(target);
+  root.innerHTML=`<section class="fusion-step target-set"><header><span>1</span><div><b>メイン文鳥</b><small>変更する場合は「選び直す」</small></div><button id="fusionResetTarget">選び直す</button></header>${renderFusionPet(target,'locked',true)}</section>
+  <section class="fusion-step"><header><span>2</span><div><b>素材にする鳥を選ぶ</b><small>同じ種類のみ。最大 ${capacity}羽 / 選択 ${selected.length}羽</small></div></header><div class="fusion-pick-list materials">${mats.length?mats.map(p=>renderFusionPet(p,'material',N.fusionMaterials.has(String(p.id)))).join(''):'<div class="fusion-empty"><span>🔒</span><b>使える素材がありません</b><small>名前変更済みや家系図の親個体などは保護されています。</small></div>'}</div></section>
+  <section class="fusion-confirm"><div><span>${escapeHtml(m.b.icon)}</span><div><small>合成結果</small><b>${escapeHtml(target.name)}　Lv ${Number(target.fusionLevel||0)} → ${Number(target.fusionLevel||0)+selected.length}</b><em>能力 +${(selected.length*2.5).toFixed(1)} / 各主要能力</em></div></div><button id="fusionExecute" ${selected.length?'':'disabled'}>🧬 選択した ${selected.length}羽を合成</button></section>`;
+  document.getElementById('fusionResetTarget').onclick=()=>{N.fusionTarget=null;N.fusionMaterials.clear();renderFusion()};
+  root.querySelectorAll('[data-fusion-material]').forEach(b=>b.onclick=()=>{const id=b.dataset.fusionMaterial;if(N.fusionMaterials.has(id))N.fusionMaterials.delete(id);else if(N.fusionMaterials.size<capacity)N.fusionMaterials.add(id);else showToast('これ以上選べません','warning');renderFusion()});
+  document.getElementById('fusionExecute').onclick=()=>fuseManual(target,selected);
 }
-function openFusion(){fusionUi();renderFusion();showModal('fusionModal')}
-async function fuseGroup(group){
-  if(!group||!identityUser)return;
-  const target=group.target,materials=group.materials.slice(0,Math.max(0,20-Number(target.fusionLevel||0)));
-  if(!materials.length)return;
-  const b=birds[target.species]||birds.buncho_sakura;
-  if(!confirm(`${b.name}「${target.name}」を強化します。\n素材 ${materials.length}羽は合成後に消えます。\n名前変更済みの鳥は素材に含まれていません。\n\n合成Lv ${Number(target.fusionLevel||0)} → ${Number(target.fusionLevel||0)+materials.length}`))return;
-  const root=document.getElementById('fusionGroups');if(root)root.classList.add('busy');
+function openFusion(){fusionUi();N.fusionTarget=null;N.fusionMaterials.clear();renderFusion();showModal('fusionModal')}
+async function fuseManual(target,materials){
+  if(!target||!materials?.length||!identityUser)return;
+  if(!confirm(`${target.name}をメインに、選択した${materials.length}羽を合成します。\n素材の鳥は消えます。\n\n合成Lv ${Number(target.fusionLevel||0)} → ${Number(target.fusionLevel||0)+materials.length}`))return;
+  const root=document.getElementById('fusionGroups');root?.classList.add('busy');
   try{
     const z=await api('fusePets',{targetPetId:target.id,materialPetIds:materials.map(p=>p.id)});
-    apply(z.data);renderFusion();collection();showToast(`🧬 合成成功！ 合成Lv ${z.fusion?.fusionLevel||Number(target.fusionLevel||0)+materials.length} / 能力 +${z.fusion?.statGain||materials.length*2.5}`,'achievement');
+    apply(z.data);N.fusionTarget=z.fusion?.targetId||target.id;N.fusionMaterials.clear();renderFusion();collection();
+    showToast(`🧬 合成成功！ ${target.name}が合成Lv ${z.fusion?.fusionLevel||Number(target.fusionLevel||0)+materials.length}になりました`,'achievement');
   }catch(e){showToast(e.message||'合成に失敗しました','warning');await refresh(true);renderFusion()}
-  finally{if(root)root.classList.remove('busy')}
+  finally{root?.classList.remove('busy')}
 }
 function fusionHint(){
   if(!identityUser)return;
@@ -240,16 +245,22 @@ function sortedPets(){
 function collection(){
   ensure();const g=document.getElementById('birdGrid');if(!g)return;
   const away=new Set(N.visits.outgoing.map(v=>v.pet?.id)),breeding=breedingBusySet();
-  g.innerHTML=sortedPets().map((p,index)=>{const{b,r,stars}=meta(p),sel=p.id===G.activePetId,rate=Number(p.stats?.rating||0),stage=p.lifeStage||'adult';
-    const stageInfo=stage==='egg'?`🥚 孵化まで ${fmtRemain(p.hatchAt)}`:stage==='chick'?`🐣 雛 ・ 成長 ${Number(p.growthPoints||0)}/6`:p.customNamed?'🔒 名前保護':breeding.has(String(p.id))?'🪺 交配中':away.has(p.id)?'🧳 おでかけ中':sel?'● いま一緒':'タップで選択';
+  g.innerHTML=sortedPets().map((p,index)=>{
+    const stage=p.lifeStage||'adult',sel=p.id===G.activePetId;
+    if(stage==='egg'){
+      return `<button class="pet-card stage-egg mystery-egg ${sel?'selected':''}" data-p="${escapeHtml(p.id)}" style="--pet-i:${index}"><span class="pet-rarity hidden-rarity">?</span><span class="pet-stars">•••</span><span class="pet-icon">🥚</span><b>なぞの卵</b><small>種類・ランク・見た目は孵化するまで不明</small><em>🥚 孵化まで ${fmtRemain(p.hatchAt)}</em></button>`;
+    }
+    const{b,r,stars}=meta(p),rate=Number(p.stats?.rating||0);
+    const stageInfo=stage==='chick'? `🐣 雛 ・ 成長 ${Number(p.growthPoints||0)}/6`:p.customNamed?'🔒 名前保護':breeding.has(String(p.id))?'🪺 交配中':away.has(p.id)?'🧳 おでかけ中':sel?'● いま一緒':'タップで選択';
     const dna=p.generation>0?` ・ G${p.generation}${p.phenotype?.colorName?' / '+escapeHtml(p.phenotype.colorName):''}`:'';
-    return`<button class="pet-card rarity-${r.toLowerCase()} ${sel?'selected':''} ${p.customNamed?'name-protected':''} stage-${stage}" data-p="${escapeHtml(p.id)}" style="--pet-i:${index}"><span class="pet-rarity">${r}</span><span class="pet-stars">${stars}</span><span class="pet-icon">${escapeHtml(b.icon)}</span><b>${escapeHtml(p.name)}</b><small>${escapeHtml(birds[p.species]?.name||p.species)} ・ 個体ランク ${p.rank}${dna}${Number(p.fusionLevel||0)>0?' ・ 🧬合成Lv '+Number(p.fusionLevel):''}${rate&&stage==='adult'?' ・ RATING '+rate:''}</small><em>${stageInfo}</em></button>`}).join('');
+    return`<button class="pet-card rarity-${r.toLowerCase()} ${sel?'selected':''} ${p.customNamed?'name-protected':''} stage-${stage}" data-p="${escapeHtml(p.id)}" style="--pet-i:${index}"><span class="pet-rarity">${r}</span><span class="pet-stars">${stars}</span><span class="pet-icon">${escapeHtml(b.icon)}</span><b>${escapeHtml(p.name)}</b><small>${escapeHtml(b.name)} ・ 個体ランク ${p.rank}${dna}${Number(p.fusionLevel||0)>0?' ・ 🧬合成Lv '+Number(p.fusionLevel):''}${rate&&stage==='adult'?' ・ RATING '+rate:''}</small><em>${stageInfo}</em></button>`;
+  }).join('');
   g.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>choose(b.dataset.p));
 }
 async function choose(pid){let p=G.petCollection.find(x=>x.id===pid);if(!p)return;G.activePetId=p.id;G.species=p.species;G.name=p.name;G.birdNames[p.species]=p.name;save();updateUI();collection();if(identityUser&&!pid.startsWith('local-'))try{apply((await api('selectPet',{petId:pid})).data)}catch(e){showToast(e.message,'warning')}hideModal('birdModal')}
 function localGacha(n){const b=currentBanner(),cost=n===10?Number(b.price10||0):Number(b.price1||0);G.coins-=cost;let a=Array.from({length:n},(_,i)=>{let s=draw(b.speciesWeights),r=drawR(n===10&&i===9?'R':'N',b.rates);return norm({species:s,name:birds[s].name,rarity:r,rank:RR[r][0],source:'gacha'})});G.petCollection.push(...a);return a}
 async function gacha(n){n=n===10?10:1;const banner=currentBanner(),cost=n===10?Number(banner.price10||0):Number(banner.price1||0);if(G.coins<cost)return showToast('💰が足りません','warning');document.querySelectorAll('[data-g]').forEach(b=>b.disabled=true);try{let a;if(identityUser){let rec={version:'7.2.1',savedAt:new Date().toISOString(),data:stateForStorage()},r=await fetch('/api/cloud-save',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(rec)}),j=await r.json().catch(()=>({}));if(r.ok){let z=await api('gacha',{count:n,bannerId:banner.id});if(z.gameState)G=normalizeGameState({...G,...z.gameState});apply(z.data);a=(z.results||[]).map(norm)}else if(j.configured===false){showToast('クラウド未接続: この端末だけのガチャ','warning');a=localGacha(n)}else throw Error(j.message||'同期に失敗しました')}else a=localGacha(n);if(a?.length){reveal(a);save();updateUI();collection();fusionHint()}}catch(e){showToast(e.message||'ガチャに失敗しました','warning')}finally{document.querySelectorAll('[data-g]').forEach(b=>b.disabled=false)}}
-function reveal(a){ui();clearTimeout(timer);let w=document.getElementById('gachaReveal'),hi=Math.max(...a.map(x=>x.rank)),r=Object.keys(RR).find(k=>RR[k][0]===hi)||'N';w.className=`gacha-reveal show rarity-${r.toLowerCase()}`;w.querySelector('.gacha-results').innerHTML=a.map((p,i)=>{let{b,r,stars}=meta(p);return`<article class="gacha-result rarity-${r.toLowerCase()}" style="--i:${i}"><span class="result-rarity">${r}</span><span class="result-stars">${stars}</span><div class="result-icon">${b.icon}</div><b>${escapeHtml(p.name)}</b><small>${escapeHtml(b.name)} ・ 個体ランク ${p.rank}</small></article>`}).join('');timer=setTimeout(()=>w.classList.add('revealed'),850)}
+function reveal(a){ui();clearTimeout(timer);let w=document.getElementById('gachaReveal'),hi=Math.max(...a.map(x=>x.rank)),top=Object.keys(RR).find(k=>RR[k][0]===hi)||'N';w.className=`gacha-reveal show rarity-${top.toLowerCase()}`;w.querySelector('.gacha-results').innerHTML=a.map((p,i)=>{const m=meta(p),r=rar(p.rarity),stars=RR[r]?.[1]||'★',speciesName=p.speciesName||m.b.name,icon=p.icon||m.b.icon;return`<article class="gacha-result rarity-${r.toLowerCase()}" data-pet-id="${escapeHtml(p.id)}" style="--i:${i}"><span class="result-rarity">${r}</span><span class="result-stars">${stars}</span><div class="result-icon">${escapeHtml(icon)}</div><b>${escapeHtml(p.name)}</b><small>${escapeHtml(speciesName)} ・ 個体ランク ${p.rank}</small></article>`}).join('');timer=setTimeout(()=>w.classList.add('revealed'),850)}
 function closeReveal(force=false){clearTimeout(timer);let w=document.getElementById('gachaReveal');if(!force&&!w.classList.contains('revealed'))return w.classList.add('revealed');w.className='gacha-reveal'}
 async function api(action,payload={}){let r=await fetch('/api/pets',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({action,payload})}),j=await r.json().catch(()=>({}));if(!r.ok){let e=Error(j.message||`HTTP ${r.status}`);e.configured=j.configured;throw e}return j}
 function apply(d){if(!d)return;N.mode='cloud';N.last=Date.now();if(d.gachaConfig){N.gachaConfig=d.gachaConfig;renderGachaHub()}N.friends=d.friends||[];N.requests=d.requests||{incoming:[],outgoing:[]};N.visits=d.visits||{incoming:[],outgoing:[]};N.breeding=d.breeding||{jobs:[],events:[]};socialState.friends=N.friends;if(d.playerId)socialState.playerId=d.playerId;syncPets(d.pets);if((d.newUnlocks||[]).includes('fuga'))showToast('🎁 通常どうぶつコンプリート！ 隠しキャラ「ふうが」解放！','achievement');social();presence();renderLifeStagePresence();queueLifecycleEvents(N.breeding.events);if(document.getElementById('birdModal')?.classList.contains('show'))collection();if(document.getElementById('breedingModal')?.classList.contains('show'))renderBreeding()}
@@ -357,18 +368,21 @@ async function careVisitor(visitId,care){
   }catch(e){showToast(e.message||'お世話できませんでした','warning')}
   finally{g?.classList.remove('busy')}
 }
+function visitorBirdSvg(p){
+  const b=birds[p?.species]||birds.buncho_sakura,c=b.colors||birds.buncho_sakura.colors,cheek=b.hasCheek!==false;
+  if(b.isCat)return `<svg viewBox="0 0 200 220" aria-hidden="true"><ellipse cx="100" cy="145" rx="51" ry="38" fill="${c.body}"/><circle cx="100" cy="94" r="40" fill="${c.head}"/><path d="M68 68 76 34 92 67M108 67 125 34 132 69" fill="${c.head}"/><ellipse cx="82" cy="96" rx="5" ry="7" fill="#161616"/><ellipse cx="118" cy="96" rx="5" ry="7" fill="#161616"/><path d="M96 110 Q100 114 104 110" stroke="${c.beak}" stroke-width="4" fill="none"/><path d="M146 150 Q178 138 163 174" stroke="${c.tail}" stroke-width="12" fill="none" stroke-linecap="round"/></svg>`;
+  if(b.isFox)return `<svg viewBox="0 0 200 220" aria-hidden="true"><ellipse cx="100" cy="146" rx="53" ry="37" fill="${c.body}"/><circle cx="100" cy="92" r="39" fill="${c.head}"/><path d="M66 66 76 28 92 67M108 67 126 28 134 68" fill="${c.head}"/><ellipse cx="100" cy="111" rx="20" ry="15" fill="${c.cheek}"/><circle cx="84" cy="94" r="5" fill="#161616"/><circle cx="116" cy="94" r="5" fill="#161616"/><circle cx="100" cy="108" r="5" fill="#33251f"/><path d="M150 150 Q180 132 174 180 Q157 190 143 170" fill="${c.tail}"/></svg>`;
+  if(b.isPenguin)return `<svg viewBox="0 0 200 220" aria-hidden="true"><ellipse cx="100" cy="140" rx="46" ry="53" fill="${c.body}"/><ellipse cx="100" cy="148" rx="29" ry="38" fill="${c.belly}"/><circle cx="100" cy="87" r="36" fill="${c.head}"/><ellipse cx="87" cy="88" rx="5" ry="6" fill="#111"/><ellipse cx="113" cy="88" rx="5" ry="6" fill="#111"/><path d="M92 101 L108 101 100 113Z" fill="${c.beak}"/><ellipse cx="50" cy="137" rx="11" ry="29" fill="${c.wing}"/><ellipse cx="150" cy="137" rx="11" ry="29" fill="${c.wing}"/></svg>`;
+  return `<svg viewBox="0 0 200 220" aria-hidden="true"><path d="M83 172 Q70 205 93 190M117 172 Q130 205 107 190" stroke="${c.tail}" stroke-width="12" stroke-linecap="round" fill="none"/><ellipse cx="100" cy="142" rx="48" ry="43" fill="${c.body}"/><ellipse cx="100" cy="153" rx="34" ry="31" fill="${c.belly}"/><ellipse cx="55" cy="137" rx="14" ry="35" fill="${c.wing}" transform="rotate(10 55 137)"/><ellipse cx="145" cy="137" rx="14" ry="35" fill="${c.wing}" transform="rotate(-10 145 137)"/><circle cx="100" cy="86" r="42" fill="${c.head}"/>${cheek?`<circle cx="70" cy="97" r="16" fill="${c.cheek}"/><circle cx="130" cy="97" r="16" fill="${c.cheek}"/>`:''}<circle cx="82" cy="83" r="5" fill="#111"/><circle cx="118" cy="83" r="5" fill="#111"/><circle cx="80.5" cy="81.5" r="1.7" fill="#fff"/><circle cx="116.5" cy="81.5" r="1.7" fill="#fff"/><path d="M88 104 L112 104 100 119Z" fill="${c.beak}"/><path d="M82 181 Q78 191 72 194M118 181 Q122 191 128 194" stroke="${c.feet}" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
+}
 function renderVisitorPresence(){
   const g=document.getElementById('visitGuestLive');if(!g)return;
-  const incoming=N.visits.incoming||[];
-  if(!incoming.length){g.classList.remove('show');g.innerHTML='';N.visitFocus=0;return}
-  N.visitFocus=Math.max(0,Math.min(Number(N.visitFocus)||0,incoming.length-1));
-  const v=incoming[N.visitFocus],p=v?.pet||{},m=meta(p),owner=v?.owner?.displayName||'フレンド';
-  const nav=incoming.length>1?`<div class="visit-live-nav"><button data-vprev>‹</button><span>${N.visitFocus+1}/${incoming.length}</span><button data-vnext>›</button></div>`:'';
-  g.innerHTML=`<div class="visit-live-bird" aria-label="${escapeHtml(p.name||m.b.name)}"><span>${escapeHtml(m.b.icon)}</span><i>VISITING</i></div><div class="visit-live-card"><small>${escapeHtml(owner)}の子</small><b>${escapeHtml(p.name||m.b.name)}</b><em>いっしょにお世話できます</em>${nav}<div class="visit-live-care">${Object.entries(VCARE).map(([a,icon])=>`<button data-vcare="${a}" title="${a}">${icon}</button>`).join('')}</div></div>`;
+  const incoming=(N.visits.incoming||[]).filter(v=>v?.pet);
+  if(!incoming.length){g.classList.remove('show');g.innerHTML='';return}
+  const shown=incoming.slice(0,3);
+  g.innerHTML=`<div class="visit-birds-row">${shown.map((v,i)=>{const p=v.pet,m=meta(p),owner=v?.owner?.displayName||'フレンド';return `<div class="visit-bird-unit" data-visit-unit="${escapeHtml(v.id)}" style="--visitor-i:${i}"><div class="visit-bird-render">${visitorBirdSvg(p)}</div><div class="visit-bird-tag"><small>${escapeHtml(owner)}の子</small><b>${escapeHtml(p.name||m.b.name)}</b><span>VISITING</span></div><div class="visit-inline-care">${Object.entries(VCARE).map(([a,icon])=>`<button data-vcare="${a}" data-vid="${escapeHtml(v.id)}" title="${a}">${icon}</button>`).join('')}</div></div>`}).join('')}</div>${incoming.length>3?`<div class="visit-more">＋${incoming.length-3}羽 訪問中</div>`:''}`;
   g.classList.add('show');
-  g.querySelectorAll('[data-vcare]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();careVisitor(v.id,btn.dataset.vcare)});
-  g.querySelector('[data-vprev]')?.addEventListener('click',e=>{e.stopPropagation();N.visitFocus=(N.visitFocus-1+incoming.length)%incoming.length;renderVisitorPresence()});
-  g.querySelector('[data-vnext]')?.addEventListener('click',e=>{e.stopPropagation();N.visitFocus=(N.visitFocus+1)%incoming.length;renderVisitorPresence()});
+  g.querySelectorAll('[data-vcare]').forEach(btn=>btn.onclick=e=>{e.stopPropagation();careVisitor(btn.dataset.vid,btn.dataset.vcare)});
 }
 function presence(){visitUi();renderVisitorPresence();renderLifeStagePresence();let p=active(),o=N.visits.outgoing.find(v=>v.pet?.id===p.id),d=document.querySelector('.main-display'),z=document.getElementById('petAwayOverlay');d?.classList.toggle('pet-away',!!o);if(z){if(o){z.innerHTML=`<div><span>🧳</span><b>${escapeHtml(p.name)}はおでかけ中</b><small>${escapeHtml(o.host?.displayName||'フレンド')}のところにいます</small><button data-home>呼び戻す</button></div>`;z.classList.add('show');z.querySelector('[data-home]').onclick=()=>back(o.id)}else{z.classList.remove('show');z.innerHTML=''}}document.querySelectorAll('[data-care]').forEach(b=>{b.disabled=!!o||p.lifeStage==='egg'||(G.isSleeping&&b.id!=='sleepBtn')})}
 
