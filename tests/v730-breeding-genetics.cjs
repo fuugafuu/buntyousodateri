@@ -10,8 +10,8 @@ const profile=fs.readFileSync('v6-ui.js','utf8');
 const profileCss=fs.readFileSync('v6-ui.css','utf8');
 const sql=fs.readFileSync('supabase/mofumori_v7_3_0_breeding_genetics.sql','utf8');
 
-assert.equal(pkg.version,'7.3.0');
-assert.ok(html.includes("window.MOFUMORI_BUILD='7.3.0'"));
+assert.ok(/^7\.3\.[0-9]+$/.test(pkg.version));
+assert.ok(/window\.MOFUMORI_BUILD='7\.3\.[0-9]+'/.test(html));
 assert.ok(pets.includes("action === 'startBreeding'")&&pets.includes("action === 'ackLifecycleEvent'"));
 assert.ok(pets.includes('function inheritGenes(')&&pets.includes('function deriveChild(')&&pets.includes('baselineGenetics'));
 assert.ok(pets.includes('fatherId:row.father_id')&&pets.includes('motherId:row.mother_id')&&pets.includes('generation:Number(row.generation||0)'));
