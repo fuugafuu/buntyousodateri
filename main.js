@@ -1878,11 +1878,37 @@ function gameTick(){
   }else{G.energy=Math.min(100,G.energy+0.12);if(G.energy>=100){G.isSleeping=false;G.sleepStart=null;setMsg('ぐっすり眠れた！🌅')}}
   G.age++;if(G.age%30===0)save();updateUI();
 }
-function animLoop(){
-  const step=G.animationMode==='ultra'?0.85:G.animationMode==='fine'?0.7:G.animationMode==='simple'?0.45:0.6;
+let birdAnimLast=0,birdAnimVisible=true,birdAnimObserver=null;
+function birdAnimationActive(){
+  if(document.hidden||!birdAnimVisible)return false;
+  const modal=document.querySelector('.modal.show:not(#nameModal)');
+  if(modal)return false;
+  return true;
+}
+function animLoop(ts=performance.now()){
+  requestAnimationFrame(animLoop);
+  if(!birdAnimationActive())return;
+  const activeMotion=!!action||G.beta3d||G.isSleeping;
+  const targetFps=activeMotion?60:30;
+  const minFrame=1000/targetFps;
+  if(ts-birdAnimLast<minFrame)return;
+  const elapsed=birdAnimLast?Math.min(50,ts-birdAnimLast):minFrame;
+  birdAnimLast=ts;
+  const baseStep=G.animationMode==='ultra'?0.85:G.animationMode==='fine'?0.7:G.animationMode==='simple'?0.45:0.6;
+  const step=baseStep*(elapsed/(1000/60));
   animF+=step;
-  if(G.beta3d){G.threeDRotY+=(Math.sin(animF*0.02)*0.08);const svg=document.getElementById('birdSvg');if(svg)svg.style.setProperty('--ry',`${G.threeDRotY}deg`);}
-  renderBird();requestAnimationFrame(animLoop);
+  if(G.beta3d){G.threeDRotY+=(Math.sin(animF*0.02)*0.08)*(elapsed/(1000/60));const svg=document.getElementById('birdSvg');if(svg)svg.style.setProperty('--ry',`${G.threeDRotY}deg`);}
+  renderBird();
+}
+function initBirdAnimationVisibility(){
+  const area=document.querySelector('.main-display');
+  if(!area||!('IntersectionObserver'in window)){birdAnimVisible=true;return}
+  birdAnimObserver?.disconnect?.();
+  birdAnimObserver=new IntersectionObserver(entries=>{
+    birdAnimVisible=entries.some(e=>e.isIntersecting&&e.intersectionRatio>.08);
+    if(birdAnimVisible){birdAnimLast=0;renderBird()}
+  },{threshold:[0,.08,.25]});
+  birdAnimObserver.observe(area);
 }
 function blinkLoop(){if(!G.isSleeping&&Math.random()<0.3){blink=true;setTimeout(()=>blink=false,150)}}
 async function resetGame(){if(!confirm('本当にリセットしますか？'))return;await saveDbDelete(SAVE_RECORD).catch(()=>{});clearLegacySave();location.reload()}
@@ -1914,7 +1940,7 @@ async function init(){
   await load();initMissions();renderStars();renderShop();renderInv();renderCustomize();renderMissions();updateUI();
   void initLocalAi();
   void initIdentityAndSocial();
-  setInterval(gameTick,1000);setInterval(blinkLoop,2500);animLoop();
+  setInterval(()=>{if(!document.hidden)gameTick()},1000);setInterval(()=>{if(!document.hidden&&birdAnimVisible)blinkLoop()},2500);initBirdAnimationVisibility();animLoop();
   document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)hideModal(m.id)}));
   document.getElementById('nameInput').addEventListener('keypress',e=>{if(e.key==='Enter')saveName()});
   const chatInput=document.getElementById('chatInput');
@@ -1924,9 +1950,9 @@ async function init(){
   window.addEventListener('beforeunload',save);
   window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='f'&&!/INPUT|TEXTAREA/.test(document.activeElement?.tagName||'')){e.preventDefault();toggleFullscreen();}});
   document.addEventListener('fullscreenchange',()=>{document.body.classList.toggle('is-fullscreen',Boolean(document.fullscreenElement));window.dispatchEvent(new Event('resize'));});
-  setInterval(save,5000);
+  setInterval(()=>{if(!document.hidden)save()},12000);
   setInterval(()=>{if(aiStatus==='ready'&&!document.hidden&&!aiBusy)generateLocalAi(null,true);},90000);
-  setInterval(runErrorScan,20000);
+  setInterval(()=>{if(!document.hidden)runErrorScan()},60000);
   init3dControl();renderChangeLog();renderErrorLogs();renderChat();runErrorScan();
   if(G.autoTheme)applyAutoTheme();
   if(G.autoWeather&&(!G.lastWeatherFetch||Date.now()-G.lastWeatherFetch>30*60*1000))getGeoAndWeather();
@@ -1943,7 +1969,7 @@ async function init(){
   });
   const overlay=document.getElementById('loadingOverlay');
   if(overlay){setTimeout(()=>overlay.classList.add('hide'),950);}
-  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js?v=7.2.1',{updateViaCache:'none'}).catch(error=>console.warn('Offline cache registration skipped',error));
+  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js?v=7.3.2',{updateViaCache:'none'}).catch(error=>console.warn('Offline cache registration skipped',error));
 }
 function saveName(){const n=document.getElementById('nameInput').value.trim();if(n){setCurrentBirdName(n);playBirdSound('feed');setMsg(`名前が「${n}」になった！`);save();updateUI()}hideModal('nameModal')}
 init();
