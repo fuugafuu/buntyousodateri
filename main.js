@@ -678,9 +678,20 @@ function updateUI(){
   const customizePanel=document.getElementById('customizePanel');
   if(customizePanel&&customizePanel.classList.contains('show'))renderCustomize();
 }
+let lastStatsSignature='';
 function renderStats(){
-  const s=[{l:'空腹',v:G.hunger,c:'#ef6c00',i:'🍚'},{l:'幸福',v:G.happiness,c:'#e91e63',i:'💖'},{l:'健康',v:G.health,c:'#4caf50',i:'💪'},{l:'元気',v:G.energy,c:'#2196f3',i:'⚡'},{l:'清潔',v:G.cleanliness,c:'#00bcd4',i:'✨'}];
-  document.getElementById('statsGrid').innerHTML=s.map(x=>`<div class="stat-card"><div class="stat-icon">${x.i}</div><div class="stat-label">${x.l}</div><div class="stat-bar"><div class="stat-fill" style="width:${x.v}%;background:${x.c}"></div></div><div class="stat-value">${Math.round(x.v)}%</div></div>`).join('');
+  const rounded=[Math.round(G.hunger),Math.round(G.happiness),Math.round(G.health),Math.round(G.energy),Math.round(G.cleanliness)];
+  const signature=rounded.join('|');
+  if(signature===lastStatsSignature)return;
+  lastStatsSignature=signature;
+  const s=[
+    {l:'空腹',v:G.hunger,r:rounded[0],c:'#ef6c00',i:'🍚'},
+    {l:'幸福',v:G.happiness,r:rounded[1],c:'#e91e63',i:'💖'},
+    {l:'健康',v:G.health,r:rounded[2],c:'#4caf50',i:'💪'},
+    {l:'元気',v:G.energy,r:rounded[3],c:'#2196f3',i:'⚡'},
+    {l:'清潔',v:G.cleanliness,r:rounded[4],c:'#00bcd4',i:'✨'}
+  ];
+  document.getElementById('statsGrid').innerHTML=s.map(x=>`<div class="stat-card"><div class="stat-icon">${x.i}</div><div class="stat-label">${x.l}</div><div class="stat-bar"><div class="stat-fill" style="width:${x.r}%;background:${x.c}"></div></div><div class="stat-value">${x.r}%</div></div>`).join('');
 }
 function renderBirdGrid(){
   selBird=G.species;
