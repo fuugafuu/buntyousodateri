@@ -112,7 +112,7 @@ function enhanceCollection(){
 }
 window.v7EnhanceCollection=enhanceCollection;
 
-function boot(){accountCard();renderAuth();progressShell();enhanceCollection();refreshProgress();setInterval(()=>{refreshProgress();enhanceCollection();renderCollectionSummary()},10000)}
+function boot(){accountCard();renderAuth();progressShell();enhanceCollection();refreshProgress();setInterval(()=>{if(document.hidden)return;refreshProgress();enhanceCollection();renderCollectionSummary()},20000)}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,120),{once:true}):setTimeout(boot,120);
 
 })();
