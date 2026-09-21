@@ -8,10 +8,15 @@ const profile=fs.readFileSync('v6-ui.js','utf8');
 const main=fs.readFileSync('main.js','utf8');
 const css=fs.readFileSync('pet-system.css','utf8');
 
-assert.equal(pkg.version,'7.3.1');
-assert.ok(html.includes("window.MOFUMORI_BUILD='7.3.1'"));
+assert.equal(pkg.version,'7.3.2');
+assert.ok(html.includes("window.MOFUMORI_BUILD='7.3.2'"));
 
-assert.ok(ui.includes("b.textContent='🧬 手動合成'"),'manual fusion button missing');
+assert.ok(ui.includes("manual.textContent='🧬 手動合成'"),'manual fusion button missing');
+assert.ok(ui.includes("auto.textContent='✨ 自動合成'"),'auto fusion button missing');
+assert.ok(ui.includes('まとめて自動合成'),'bulk auto fusion button missing');
+assert.ok(ui.includes('function autoFusionGroups()')&&ui.includes('function fuseAutoAll('),'auto fusion flow missing');
+assert.ok(ui.includes('function manualFusionTargets()'),'manual fusion targets missing');
+assert.ok(!ui.slice(ui.indexOf('function manualFusionTargets()'),ui.indexOf('function autoFusionTargets()')).includes('!p.customNamed'),'renamed pets must be allowed as manual fusion targets');
 assert.ok(ui.includes('fusionTarget:null')&&ui.includes('fusionMaterials:new Set()'),'manual fusion state missing');
 assert.ok(ui.includes('data-fusion-target')&&ui.includes('data-fusion-material'),'manual target/material selection missing');
 assert.ok(ui.includes("api('fusePets',{targetPetId:target.id,materialPetIds:materials.map(p=>p.id)})"),'manual fusion must send exact selected IDs');
@@ -30,4 +35,4 @@ assert.ok(ui.includes('visit-birds-row')&&ui.includes('visit-bird-render'),'side
 assert.ok(ui.includes('incoming.slice(0,3)'),'multiple visitors should render together');
 assert.ok(css.includes('.visit-birds-row')&&css.includes('.visit-bird-unit')&&css.includes('.visit-bird-render svg'),'visitor layout CSS missing');
 
-console.log('v7.3.1 guards: manual fusion, egg secrecy, exact gacha identity, rendered visitors OK');
+console.log('v7.3.2 guards: manual+auto fusion, renamed targets, egg secrecy, exact gacha identity, rendered visitors OK');
