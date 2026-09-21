@@ -470,13 +470,13 @@ window.mofumoriRefreshPets=()=>{N.last=0;return refresh(true)};
 window.render_game_to_text=function(){let b={};try{b=JSON.parse(O.renderText?.()||'{}')}catch(e){}let p=active();return JSON.stringify({...b,pets:{active:{id:p.id,species:p.species,rarity:p.rarity,rank:p.rank},owned:G.petCollection.length,friendRequests:N.requests.incoming.length,visitors:N.visits.incoming.length,away:N.visits.outgoing.length}})};
 function boot(){
   N.debugFriend=DEV_MODE&&sessionStorage.getItem('mofumoriDebugFriend')==='1';N.adminFriend=localStorage.getItem('mofumoriAdminBird')==='1'||sessionStorage.getItem('mofumoriAdminBird')==='1';
-  ui();ensure();collection();social();presence();loadPublicGachaConfig();if(identityUser)restoreAdminBird();setInterval(updateBreedCountdowns,1000);
-  setInterval(()=>identityUser&&!document.hidden&&refresh(),30000);
+  ui();ensure();collection();social();presence();loadPublicGachaConfig();if(identityUser)restoreAdminBird();setInterval(()=>{if(!document.hidden&&(document.getElementById('breedingModal')?.classList.contains('show')||document.getElementById('birdModal')?.classList.contains('show')))updateBreedCountdowns()},1000);
+  setInterval(()=>identityUser&&!document.hidden&&refresh(),45000);
   setInterval(()=>{
     if(!identityUser||document.hidden)return;
     const panel=document.getElementById('socialPanel'),friendsTab=document.getElementById('socialFriendsTab');
     if(panel?.classList.contains('show')&&friendsTab?.classList.contains('active'))refresh(true);
-  },4000);
+  },8000);
   window.addEventListener('focus',()=>{if(identityUser){N.last=0;refresh(true)}});
   document.addEventListener('visibilitychange',()=>{if(identityUser&&!document.hidden){N.last=0;refresh(true)}});
 }
