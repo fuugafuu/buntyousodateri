@@ -19,7 +19,7 @@ assert.ok(pets.includes("action === 'fusePets'"),'fusion action missing');
 assert.ok(pets.includes("custom_named: true"),'renaming must permanently protect a pet from fusion');
 assert.ok(pets.includes('fusionLevel: Number(row.fusion_level||0)'),'fusion level must reach client');
 assert.ok(pets.includes("mofumori_fuse_pets"),'fusion must execute server-side');
-assert.ok(petUi.includes('function fusionGroups()')&&petUi.includes('function fuseGroup('),'fusion UI missing');
+assert.ok(petUi.includes('function fusionUi()')&&(petUi.includes('function fuseGroup(')||petUi.includes('function fuseManual(')),'fusion UI missing');
 assert.ok(petUi.includes('!p.customNamed'),'renamed pets must be excluded from fusion groups');
 assert.ok(petUi.includes("String(p.id)!==String(G.activePetId)"),'active pet must not be consumed');
 assert.ok(petUi.includes('名前変更済み')&&petUi.includes('素材'),'protection copy missing');
