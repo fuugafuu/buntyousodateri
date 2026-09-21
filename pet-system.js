@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const RR={N:[1,'★'],R:[2,'★★'],SR:[3,'★★★'],SSR:[4,'★★★★'],UR:[5,'★★★★★']},C={1:180,10:1600},W={buncho_sakura:16,buncho_white:14,buncho_cinnamon:11,buncho_silver:9,canary:8,inko_green:7,inko_blue:7,buncho_pied:6,buncho_black:5,finch_zebra:5,lovebird:4,cockatiel:4,cat:4,penguin:4,beaver:3,fox:3,owl:2};
-const A={greet:'👋 あいさつ',pet:'✋ なでる',play:'🎾 遊ぶ',share_seed:'🌾 シードを見せる'},VCARE={feed:'🍚',pet:'✋',play:'🎾',bath:'🛁',treat:'🍬',sing:'🎵'},N={mode:'local',friends:[],requests:{incoming:[],outgoing:[]},visits:{incoming:[],outgoing:[]},breeding:{jobs:[],events:[]},breedMale:null,breedFemale:null,fusionTarget:null,fusionMaterials:new Set(),eventQueue:[],eventBusy:false,currentLifeEvent:null,lifecycleDueRefreshAt:0,visitFocus:0,last:0,busy:false,debugFriend:false,adminFriend:false,admin:null,gachaConfig:null,gachaBanner:'standard'};
+const A={greet:'👋 あいさつ',pet:'✋ なでる',play:'🎾 遊ぶ',share_seed:'🌾 シードを見せる'},VCARE={feed:'🍚',pet:'✋',play:'🎾',bath:'🛁',treat:'🍬',sing:'🎵'},N={mode:'local',friends:[],requests:{incoming:[],outgoing:[]},visits:{incoming:[],outgoing:[]},breeding:{jobs:[],events:[]},breedMale:null,breedFemale:null,fusionTarget:null,fusionMaterials:new Set(),fusionMode:'manual',eventQueue:[],eventBusy:false,currentLifeEvent:null,lifecycleDueRefreshAt:0,visitFocus:0,last:0,busy:false,debugFriend:false,adminFriend:false,admin:null,gachaConfig:null,gachaBanner:'standard'};
 const DEV_MODE=['localhost','127.0.0.1','::1'].includes(location.hostname)||location.hostname.endsWith('.local');
 const DEBUG_FRIEND_CODE='MF-DEBUGBIRD';
 const ADMIN_BIRD_CODE='MF::M0FUM0RI-ADMIN::BIRD-7Z2::OWNER';
@@ -166,20 +166,33 @@ function renderLifeStagePresence(){
 function fusionUi(){
   const toolbar=document.querySelector('.v72-companion-toolbar');
   if(toolbar&&!document.getElementById('openFusionBtn')){
-    const b=document.createElement('button');b.type='button';b.id='openFusionBtn';b.className='modal-btn fusion-open-btn';b.textContent='🧬 手動合成';b.onclick=openFusion;toolbar.appendChild(b);
+    const manual=document.createElement('button');manual.type='button';manual.id='openFusionBtn';manual.className='modal-btn fusion-open-btn';manual.textContent='🧬 手動合成';manual.onclick=()=>openFusion('manual');toolbar.appendChild(manual);
+  }
+  if(toolbar&&!document.getElementById('openAutoFusionBtn')){
+    const auto=document.createElement('button');auto.type='button';auto.id='openAutoFusionBtn';auto.className='modal-btn fusion-auto-open-btn';auto.textContent='✨ 自動合成';auto.onclick=()=>openFusion('auto');toolbar.appendChild(auto);
   }
   if(document.getElementById('fusionModal'))return;
   const m=document.createElement('div');m.id='fusionModal';m.className='modal';
-  m.innerHTML='<div class="modal-content fusion-modal"><div class="fusion-head"><div><small>MANUAL FUSION</small><div class="modal-title">🧬 文鳥を手動合成</div></div><button data-fusion-close>×</button></div><p class="fusion-note">①強化するメインの鳥を選択 → ②同じ種類の素材を好きな数だけ選択。名前変更済み・卵・雛・交配中・訪問中・家系図の親個体・装備中の素材は保護されます。</p><div id="fusionGroups"></div><div class="modal-buttons"><button class="modal-btn secondary" data-fusion-close>閉じる</button></div></div>';
-  document.body.appendChild(m);m.querySelectorAll('[data-fusion-close]').forEach(b=>b.onclick=()=>hideModal('fusionModal'));
+  m.innerHTML='<div class="modal-content fusion-modal"><div class="fusion-head"><div><small>FUSION LAB</small><div class="modal-title" id="fusionTitle">🧬 文鳥合成</div></div><button data-fusion-close>×</button></div><div class="fusion-mode-bar"><button data-fusion-mode="manual">🧬 手動合成</button><button data-fusion-mode="auto">✨ 自動合成</button></div><p class="fusion-note" id="fusionNote"></p><div id="fusionGroups"></div><div class="modal-buttons"><button class="modal-btn secondary" data-fusion-close>閉じる</button></div></div>';
+  document.body.appendChild(m);
+  m.querySelectorAll('[data-fusion-close]').forEach(b=>b.onclick=()=>hideModal('fusionModal'));
+  m.querySelectorAll('[data-fusion-mode]').forEach(b=>b.onclick=()=>{N.fusionMode=b.dataset.fusionMode;N.fusionTarget=null;N.fusionMaterials.clear();renderFusion()});
 }
 function fusionProtectedSets(){
   const away=new Set(N.visits.outgoing.map(v=>String(v.pet?.id||''))),busy=breedingBusySet(),parents=new Set(G.petCollection.flatMap(x=>[x.fatherId,x.motherId]).filter(Boolean).map(String));
   return{away,busy,parents};
 }
-function fusionTargets(){
+function manualFusionTargets(){
   ensure();const {away,busy}=fusionProtectedSets();
-  return G.petCollection.filter(p=>p.lifeStage==='adult'&&!p.customNamed&&!String(p.id).startsWith('local-')&&!away.has(String(p.id))&&!busy.has(String(p.id))&&Number(p.fusionLevel||0)<20);
+  return G.petCollection.filter(p=>
+    p.lifeStage==='adult'&&!String(p.id).startsWith('local-')&&!away.has(String(p.id))&&!busy.has(String(p.id))&&Number(p.fusionLevel||0)<20
+  );
+}
+function autoFusionTargets(){
+  ensure();const {away,busy}=fusionProtectedSets();
+  return G.petCollection.filter(p=>
+    p.lifeStage==='adult'&&!p.customNamed&&!String(p.id).startsWith('local-')&&!away.has(String(p.id))&&!busy.has(String(p.id))&&Number(p.fusionLevel||0)<20
+  );
 }
 function fusionMaterialsFor(target){
   if(!target)return[];const{away,busy,parents}=fusionProtectedSets(),capacity=Math.max(0,20-Number(target.fusionLevel||0));
@@ -188,35 +201,69 @@ function fusionMaterialsFor(target){
     !away.has(String(p.id))&&!busy.has(String(p.id))&&Number(p.fusionLevel||0)===0&&String(p.id)!==String(G.activePetId)&&!parents.has(String(p.id))
   ).slice(0,Math.max(40,capacity));
 }
+function autoFusionGroups(){
+  const groups=[];
+  const bySpecies=new Map();
+  for(const p of autoFusionTargets()){
+    if(!bySpecies.has(p.species))bySpecies.set(p.species,[]);
+    bySpecies.get(p.species).push(p);
+  }
+  for(const [species,list] of bySpecies){
+    const sorted=list.slice().sort((a,b)=>{
+      const activeA=String(a.id)===String(G.activePetId)?1:0,activeB=String(b.id)===String(G.activePetId)?1:0;
+      return activeB-activeA||Number(b.fusionLevel||0)-Number(a.fusionLevel||0)||Number(b.rank||0)-Number(a.rank||0)||(Date.parse(a.obtainedAt||0)-Date.parse(b.obtainedAt||0));
+    });
+    const target=sorted[0],materials=fusionMaterialsFor(target).slice(0,Math.max(0,20-Number(target?.fusionLevel||0)));
+    if(target&&materials.length)groups.push({species,target,materials});
+  }
+  return groups;
+}
 function renderFusionPet(p,mode,selected=false){
   const m=meta(p),dna=p.generation>0?' ・ G'+p.generation:'',lv=Number(p.fusionLevel||0);
-  return `<button class="fusion-pick ${selected?'selected':''}" data-fusion-${mode}="${escapeHtml(p.id)}"><span>${escapeHtml(m.b.icon)}</span><div><b>${escapeHtml(p.name)}</b><small>${escapeHtml(m.b.name)} ・ ${p.rarity} / Rank ${p.rank}${dna}</small><em>${lv?'🧬 合成Lv '+lv:'未強化'}</em></div>${selected?'<i>✓</i>':''}</button>`;
+  return `<button class="fusion-pick ${selected?'selected':''}" data-fusion-${mode}="${escapeHtml(p.id)}"><span>${escapeHtml(m.b.icon)}</span><div><b>${escapeHtml(p.name)}</b><small>${escapeHtml(m.b.name)} ・ ${p.rarity} / Rank ${p.rank}${dna}</small><em>${p.customNamed?'🔒 名前保護 ・ ':''}${lv?'🧬 合成Lv '+lv:'未強化'}</em></div>${selected?'<i>✓</i>':''}</button>`;
 }
 function renderFusion(){
-  const root=document.getElementById('fusionGroups');if(!root)return;
+  const root=document.getElementById('fusionGroups'),title=document.getElementById('fusionTitle'),note=document.getElementById('fusionNote');if(!root)return;
+  document.querySelectorAll('[data-fusion-mode]').forEach(b=>b.classList.toggle('active',b.dataset.fusionMode===N.fusionMode));
   if(!identityUser){root.innerHTML='<div class="fusion-empty"><span>☁️</span><b>ログインすると合成できます</b><small>合成はサーバー上で安全に処理します。</small></div>';return}
-  const targets=fusionTargets();
+
+  if(N.fusionMode==='auto'){
+    title.textContent='✨ 自動合成';
+    note.textContent='同じ種類の被りから自動でメイン個体と素材を選びます。名前変更済み・卵・雛・交配中・訪問中・家系図の親個体・装備中素材は自動で保護されます。';
+    const groups=autoFusionGroups();
+    if(!groups.length){root.innerHTML='<div class="fusion-empty"><span>🐦</span><b>自動合成できる被りはありません</b><small>保護対象を除いて、同じ種類が2羽以上必要です。</small></div>';return}
+    const total=groups.reduce((n,g)=>n+g.materials.length,0);
+    root.innerHTML=`<div class="fusion-auto-summary"><div><small>AUTO FUSION</small><b>${groups.length}種類 / 素材 ${total}羽</b><em>各種類ごとに最適なメイン1羽へまとめます。</em></div><button id="fusionAutoAll">✨ まとめて自動合成</button></div>`+
+      groups.map((g,i)=>{const m=meta(g.target),lv=Number(g.target.fusionLevel||0),n=g.materials.length;return `<article class="fusion-auto-group"><div class="fusion-target"><span>${escapeHtml(m.b.icon)}</span><div><small>自動選択メイン</small><b>${escapeHtml(g.target.name)}</b><em>${escapeHtml(m.b.name)} ・ Lv ${lv} → ${lv+n}</em></div></div><div class="fusion-materials">${g.materials.map(p=>`<span title="${escapeHtml(p.name)}">${escapeHtml(meta(p).b.icon)} <small>${p.rarity}</small></span>`).join('')}</div><button data-auto-one="${i}">✨ この種類だけ自動合成</button></article>`}).join('');
+    document.getElementById('fusionAutoAll').onclick=()=>fuseAutoAll(groups);
+    root.querySelectorAll('[data-auto-one]').forEach(b=>b.onclick=()=>fuseAutoOne(groups[Number(b.dataset.autoOne)]));
+    return;
+  }
+
+  title.textContent='🧬 手動合成';
+  note.textContent='①強化するメインの鳥を選択 → ②同じ種類の素材を好きな数だけ選択。名前変更済みの鳥もメインには選べますが、素材には出ないので消費されません。';
+  const targets=manualFusionTargets();
   if(N.fusionTarget&&!targets.some(p=>String(p.id)===String(N.fusionTarget))){N.fusionTarget=null;N.fusionMaterials.clear()}
   const target=targets.find(p=>String(p.id)===String(N.fusionTarget))||null;
   if(!target){
-    root.innerHTML='<section class="fusion-step"><header><span>1</span><div><b>強化するメイン文鳥を選ぶ</b><small>この鳥は消えず、能力と合成Lvが上がります。</small></div></header><div class="fusion-pick-list">'+(targets.length?targets.map(p=>renderFusionPet(p,'target')).join(''):'<div class="fusion-empty"><span>🐦</span><b>メインにできる鳥がいません</b><small>名前変更済み・卵・雛・交配中などは対象外です。</small></div>')+'</div></section>';
+    root.innerHTML='<section class="fusion-step"><header><span>1</span><div><b>強化するメイン文鳥を選ぶ</b><small>名前変更済みの鳥も選択できます。</small></div></header><div class="fusion-pick-list">'+(targets.length?targets.map(p=>renderFusionPet(p,'target')).join(''):'<div class="fusion-empty"><span>🐦</span><b>メインにできる鳥がいません</b><small>卵・雛・交配中などは対象外です。</small></div>')+'</div></section>';
     root.querySelectorAll('[data-fusion-target]').forEach(b=>b.onclick=()=>{N.fusionTarget=b.dataset.fusionTarget;N.fusionMaterials.clear();renderFusion()});
     return;
   }
   const mats=fusionMaterialsFor(target),capacity=Math.max(0,20-Number(target.fusionLevel||0));
   for(const id of [...N.fusionMaterials])if(!mats.some(p=>String(p.id)===String(id)))N.fusionMaterials.delete(id);
   const selected=mats.filter(p=>N.fusionMaterials.has(String(p.id))).slice(0,capacity),m=meta(target);
-  root.innerHTML=`<section class="fusion-step target-set"><header><span>1</span><div><b>メイン文鳥</b><small>変更する場合は「選び直す」</small></div><button id="fusionResetTarget">選び直す</button></header>${renderFusionPet(target,'locked',true)}</section>
-  <section class="fusion-step"><header><span>2</span><div><b>素材にする鳥を選ぶ</b><small>同じ種類のみ。最大 ${capacity}羽 / 選択 ${selected.length}羽</small></div></header><div class="fusion-pick-list materials">${mats.length?mats.map(p=>renderFusionPet(p,'material',N.fusionMaterials.has(String(p.id)))).join(''):'<div class="fusion-empty"><span>🔒</span><b>使える素材がありません</b><small>名前変更済みや家系図の親個体などは保護されています。</small></div>'}</div></section>
+  root.innerHTML=`<section class="fusion-step target-set"><header><span>1</span><div><b>メイン文鳥</b><small>${target.customNamed?'🔒 名前変更済みでも強化可能':'変更する場合は「選び直す」'}</small></div><button id="fusionResetTarget">選び直す</button></header>${renderFusionPet(target,'locked',true)}</section>
+  <section class="fusion-step"><header><span>2</span><div><b>素材にする鳥を選ぶ</b><small>同じ種類のみ。最大 ${capacity}羽 / 選択 ${selected.length}羽。名前変更済みは素材候補から除外。</small></div></header><div class="fusion-pick-list materials">${mats.length?mats.map(p=>renderFusionPet(p,'material',N.fusionMaterials.has(String(p.id)))).join(''):'<div class="fusion-empty"><span>🔒</span><b>使える素材がありません</b><small>名前変更済みや家系図の親個体などは保護されています。</small></div>'}</div></section>
   <section class="fusion-confirm"><div><span>${escapeHtml(m.b.icon)}</span><div><small>合成結果</small><b>${escapeHtml(target.name)}　Lv ${Number(target.fusionLevel||0)} → ${Number(target.fusionLevel||0)+selected.length}</b><em>能力 +${(selected.length*2.5).toFixed(1)} / 各主要能力</em></div></div><button id="fusionExecute" ${selected.length?'':'disabled'}>🧬 選択した ${selected.length}羽を合成</button></section>`;
   document.getElementById('fusionResetTarget').onclick=()=>{N.fusionTarget=null;N.fusionMaterials.clear();renderFusion()};
   root.querySelectorAll('[data-fusion-material]').forEach(b=>b.onclick=()=>{const id=b.dataset.fusionMaterial;if(N.fusionMaterials.has(id))N.fusionMaterials.delete(id);else if(N.fusionMaterials.size<capacity)N.fusionMaterials.add(id);else showToast('これ以上選べません','warning');renderFusion()});
   document.getElementById('fusionExecute').onclick=()=>fuseManual(target,selected);
 }
-function openFusion(){fusionUi();N.fusionTarget=null;N.fusionMaterials.clear();renderFusion();showModal('fusionModal')}
+function openFusion(mode='manual'){fusionUi();N.fusionMode=mode;N.fusionTarget=null;N.fusionMaterials.clear();renderFusion();showModal('fusionModal')}
 async function fuseManual(target,materials){
   if(!target||!materials?.length||!identityUser)return;
-  if(!confirm(`${target.name}をメインに、選択した${materials.length}羽を合成します。\n素材の鳥は消えます。\n\n合成Lv ${Number(target.fusionLevel||0)} → ${Number(target.fusionLevel||0)+materials.length}`))return;
+  if(!confirm(`${target.name}をメインに、選択した${materials.length}羽を合成します。\n素材の鳥は消えます。\n名前変更済みのメイン鳥は消えません。\n\n合成Lv ${Number(target.fusionLevel||0)} → ${Number(target.fusionLevel||0)+materials.length}`))return;
   const root=document.getElementById('fusionGroups');root?.classList.add('busy');
   try{
     const z=await api('fusePets',{targetPetId:target.id,materialPetIds:materials.map(p=>p.id)});
@@ -224,6 +271,27 @@ async function fuseManual(target,materials){
     showToast(`🧬 合成成功！ ${target.name}が合成Lv ${z.fusion?.fusionLevel||Number(target.fusionLevel||0)+materials.length}になりました`,'achievement');
   }catch(e){showToast(e.message||'合成に失敗しました','warning');await refresh(true);renderFusion()}
   finally{root?.classList.remove('busy')}
+}
+async function fuseAutoOne(group,silent=false){
+  if(!group?.target||!group.materials?.length||!identityUser)return false;
+  try{
+    const z=await api('fusePets',{targetPetId:group.target.id,materialPetIds:group.materials.map(p=>p.id)});
+    apply(z.data);
+    if(!silent)showToast(`✨ ${group.target.name}を自動合成しました`,'achievement');
+    return true;
+  }catch(e){if(!silent)showToast(e.message||'自動合成に失敗しました','warning');return false}
+}
+async function fuseAutoAll(groups){
+  if(!groups?.length)return;
+  const total=groups.reduce((n,g)=>n+g.materials.length,0);
+  if(!confirm(`${groups.length}種類、合計${total}羽の素材をまとめて自動合成します。\n名前変更済み・保護対象は消費されません。`))return;
+  const root=document.getElementById('fusionGroups');root?.classList.add('busy');
+  let ok=0,fail=0;
+  try{
+    for(const group of groups){const done=await fuseAutoOne(group,true);done?ok++:fail++}
+    await refresh(true);renderFusion();collection();
+    showToast(fail?`✨ 自動合成 ${ok}種類成功 / ${fail}種類失敗`:`✨ ${ok}種類をまとめて自動合成しました！`,'achievement');
+  }finally{root?.classList.remove('busy')}
 }
 function fusionHint(){
   if(!identityUser)return;
