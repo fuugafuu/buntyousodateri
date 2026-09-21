@@ -209,8 +209,8 @@ async function claimReward(){
   finally{S.busy=false}
 }
 function boot(){
-  load(true);setInterval(()=>load(false),30000);
-  setInterval(()=>{let id='guest';try{id=loggedIn()?String(identityUser?.id||identityUser?.email||'user'):'guest'}catch(e){}if(id!==S.lastIdentity){S.lastIdentity=id;load(true)}},1500);
+  load(true);setInterval(()=>{if(!document.hidden)load(false)},60000);
+  setInterval(()=>{let id='guest';try{id=loggedIn()?String(identityUser?.id||identityUser?.email||'user'):'guest'}catch(e){}if(id!==S.lastIdentity){S.lastIdentity=id;load(true)}},5000);
   addEventListener('focus',()=>load(true));document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(true)});
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,500),{once:true}):setTimeout(boot,500);
