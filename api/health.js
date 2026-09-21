@@ -16,5 +16,5 @@ module.exports = async function handler(req, res) {
       breedingReady=!breedError;schemaReady=!baseError&&breedingReady;
     } catch (error) { schemaReady = false; }
   }
-  json(res, 200, { ok: true, version: '7.3.1', cloudConfigured, schemaReady, breedingReady, localModeAvailable: true });
+  json(res, 200, { ok: true, version: '7.3.2', cloudConfigured, schemaReady, breedingReady, localModeAvailable: true });
 };
