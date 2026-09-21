@@ -267,7 +267,6 @@ begin
   select * into t from public.mofumori_pets where id=p_target and owner_key=p_owner for update;
   if t.id is null then raise exception 'target_missing'; end if;
   if t.life_stage<>'adult' then raise exception 'target_not_adult'; end if;
-  if t.custom_named then raise exception 'target_protected'; end if;
   if t.fusion_level+material_count>20 then raise exception 'fusion_level_max'; end if;
 
   if exists(select 1 from public.mofumori_breeding_jobs b where b.status='running' and (b.male_pet_id=p_target or b.female_pet_id=p_target))
@@ -297,7 +296,7 @@ begin
   where id=p_target and owner_key=p_owner;
   delete from public.mofumori_pets where owner_key=p_owner and id=any(p_materials);
   select * into t from public.mofumori_pets where id=p_target;
-  return jsonb_build_object('targetId',t.id,'species',t.species,'fusionLevel',t.fusion_level,'fusionCount',t.fusion_count,'consumed',material_count,'statGain',2.5*material_count);
+  return jsonb_build_object('targetId',t.id,'species',t.species,'fusionLevel',t.fusion_level,'fusionCount',t.fusion_count,'consumed',material_count,'statGain',2.5*material_count,'customNamed',t.custom_named);
 end
 $function$;
 revoke execute on function public.mofumori_fuse_pets(text,uuid,uuid[]) from public,anon,authenticated;
