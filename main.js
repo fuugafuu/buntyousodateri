@@ -431,6 +431,7 @@ function recordForCloudStorage(record){
   delete cloud.data.activePetId;
   return cloud;
 }
+let cloudSaveInFlight=false,cloudSavePendingRecord=null;
 function cancelQueuedCloudSave(){
   if(cloudSaveTimer)clearTimeout(cloudSaveTimer);
   cloudSaveTimer=null;
@@ -447,16 +448,27 @@ async function putCloudSave(record){
 function queueCloudSave(record){
   const userId=activeSaveUserId;
   if(!identityUser||!userId||String(identityUser.id)!==userId||cloudSyncSuspended||cloudSaveEnabled===false)return;
+  cloudSavePendingRecord=record;
   cancelQueuedCloudSave();
-  cloudSaveTimer=setTimeout(async()=>{
-    cloudSaveTimer=null;
-    if(cloudSyncSuspended||!identityUser||String(identityUser.id)!==userId)return;
-    try{
-      const payload=await putCloudSave(record);
-      const key=accountSaveRecordKey(userId),latest=await saveDbGet(key).catch(()=>null);
-      if(payload.savedAt&&latest?.savedAt===record.savedAt)await saveDbSet(key,{...record,savedAt:payload.savedAt});
-    }catch(error){document.body.dataset.sync='local';console.warn('Cloud save skipped',error);renderIdentity();}
-  },1200);
+  cloudSaveTimer=setTimeout(()=>flushCloudSave(userId),7000);
+}
+async function flushCloudSave(userId=activeSaveUserId){
+  if(cloudSaveInFlight)return;
+  if(cloudSyncSuspended||!identityUser||!userId||String(identityUser.id)!==userId)return;
+  const record=cloudSavePendingRecord;if(!record)return;
+  cloudSavePendingRecord=null;cloudSaveInFlight=true;cloudSaveTimer=null;
+  try{
+    const payload=await putCloudSave(record);
+    const key=accountSaveRecordKey(userId),latest=await saveDbGet(key).catch(()=>null);
+    if(payload.savedAt&&latest?.savedAt===record.savedAt)await saveDbSet(key,{...record,savedAt:payload.savedAt});
+  }catch(error){
+    document.body.dataset.sync='local';console.warn('Cloud save skipped',error);renderIdentity();
+  }finally{
+    cloudSaveInFlight=false;
+    if(cloudSavePendingRecord&&!cloudSyncSuspended&&identityUser&&String(identityUser.id)===userId){
+      cloudSaveTimer=setTimeout(()=>flushCloudSave(userId),2500);
+    }
+  }
 }
 function clearLegacySave(){
   delCookie('birdG3');
