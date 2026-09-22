@@ -90,5 +90,8 @@
       "source": "/api/daily-event",
       "destination": "/api/pets?__route=daily-event"
     }
+  ],
+  "regions": [
+    "hnd1"
   ]
 }
