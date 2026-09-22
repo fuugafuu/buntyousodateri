@@ -89,6 +89,10 @@
     {
       "source": "/api/daily-event",
       "destination": "/api/pets?__route=daily-event"
+    },
+    {
+      "source": "/api/push",
+      "destination": "/api/pets?__route=push"
     }
   ],
   "regions": [
