@@ -11,7 +11,7 @@ end $$;
 
 select cron.schedule(
   'mofumori-push-dispatch',
-  '*/2 * * * *',
+  '* * * * *',
   $cron$
     select net.http_post(
       url := 'https://buntyousodateri.vercel.app/api/push',
