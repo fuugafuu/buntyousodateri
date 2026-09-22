@@ -18,7 +18,7 @@ assert.ok(pets.includes('gachaConfigCacheAt<30000'),'gacha config warm cache mis
 assert.ok(pets.includes('loadDashboard(supabase, user, ensuredProfile=null)'),'dashboard should reuse ensured profile');
 assert.ok(pets.includes('ensureHiddenReward(supabase,user,pets||[])'),'hidden reward must reuse already loaded pet list');
 assert.ok(v7.includes('},60000)'),'passive progression polling should be 60s');
-assert.ok(health.includes("version: '7.3.3'")&&health.includes('process.env.VERCEL_REGION'),'health must expose release and runtime region');
+assert.ok(/version:\s*'7\\.3\\.[0-9]+'/.test(health)&&health.includes('process.env.VERCEL_REGION'),'health must expose release and runtime region');
 assert.ok(migration.includes('mofumori_friend_requests_pending_sender_recipient_idx'));
 assert.ok(migration.includes('mofumori_visits_active_host_expires_idx'));
 console.log('v7.3.x server latency guards: Tokyo region, request serialization, fewer DB roundtrips, indexes OK');
