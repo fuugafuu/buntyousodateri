@@ -615,3 +615,4 @@ module.exports = async function handler(req, res) {
     return json(res, error.status || 400, { ok: false, message: error.message || 'オンライン機能の処理に失敗しました。' });
   }
 };
+module.exports._internal={resolveBreedingAndLifecycle};
