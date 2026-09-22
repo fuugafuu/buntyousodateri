@@ -2,7 +2,8 @@
 const $=(q,r=document)=>r.querySelector(q);
 const S={busy:false,lastSync:0};
 
-function supported(){return 'serviceWorker'in navigator&&'PushManager'in window&&'Notification'in window}\nfunction currentUser(){try{return typeof identityUser!=='undefined'?identityUser:null}catch{return null}}
+function supported(){return 'serviceWorker'in navigator&&'PushManager'in window&&'Notification'in window}
+function currentUser(){try{return typeof identityUser!=='undefined'?identityUser:null}catch{return null}}
 function standalone(){return window.matchMedia?.('(display-mode: standalone)')?.matches||window.navigator.standalone===true}
 function ios(){return /iPhone|iPad|iPod/i.test(navigator.userAgent)}
 function shell(){
