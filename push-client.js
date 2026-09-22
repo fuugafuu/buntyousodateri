@@ -2,7 +2,7 @@
 const $=(q,r=document)=>r.querySelector(q);
 const S={busy:false,lastSync:0};
 
-function supported(){return 'serviceWorker'in navigator&&'PushManager'in window&&'Notification'in window}
+function supported(){return 'serviceWorker'in navigator&&'PushManager'in window&&'Notification'in window}\nfunction currentUser(){try{return typeof identityUser!=='undefined'?identityUser:null}catch{return null}}
 function standalone(){return window.matchMedia?.('(display-mode: standalone)')?.matches||window.navigator.standalone===true}
 function ios(){return /iPhone|iPad|iPod/i.test(navigator.userAgent)}
 function shell(){
@@ -30,7 +30,7 @@ async function config(){
 async function registration(){return navigator.serviceWorker.ready}
 async function currentSubscription(){if(!supported())return null;return(await registration()).pushManager.getSubscription()}
 async function syncSubscription(createIfMissing=false){
-  if(!supported()||Notification.permission!=='granted'||!window.identityUser)return null;
+  if(!supported()||Notification.permission!=='granted'||!currentUser())return null;
   const reg=await registration();let sub=await reg.pushManager.getSubscription();
   if(!sub&&createIfMissing){
     const cfg=await config();
@@ -49,7 +49,7 @@ async function render(){
   if(!supported()){
     title.textContent='通知は利用できません';state.textContent='このブラウザはWeb Pushに対応していません。';main.disabled=true;main.textContent='非対応';test.hidden=true;return;
   }
-  if(!window.identityUser){
+  if(!currentUser()){
     title.textContent='バックグラウンド通知';state.textContent='ログインすると、アプリを閉じていても通知できます。';main.disabled=true;main.textContent='ログイン後に設定';test.hidden=true;return;
   }
   if(ios()&&!standalone()){
@@ -76,7 +76,7 @@ async function mainAction(){
       if(sub){await server('unsubscribe',{endpoint:sub.endpoint});await sub.unsubscribe()}
       window.showToast?.('🔕 通知をオフにしました','');return;
     }
-    if(!window.identityUser)throw new Error('ログインしてから通知を設定してください。');
+    if(!currentUser())throw new Error('ログインしてから通知を設定してください。');
     let permission=Notification.permission;
     if(permission==='default')permission=await Notification.requestPermission();
     if(permission!=='granted')throw new Error('通知が許可されませんでした。');
@@ -98,7 +98,7 @@ async function testPush(){
 }
 async function autoSync(){
   shell();await render().catch(()=>{});
-  if(!window.identityUser||!supported()||Notification.permission!=='granted')return;
+  if(!currentUser()||!supported()||Notification.permission!=='granted')return;
   if(Date.now()-S.lastSync<10*60*1000)return;
   try{await syncSubscription(true)}catch(e){}
   await render().catch(()=>{});
@@ -114,6 +114,12 @@ function handleRoute(){
     u.searchParams.delete('push');u.searchParams.delete('pet');history.replaceState(null,'',u.pathname+u.search+u.hash);
   },700);
 }
+window.mofumoriPushBeforeLogout=async()=>{
+  try{
+    const sub=await currentSubscription();
+    if(sub&&currentUser())await server('unsubscribe',{endpoint:sub.endpoint});
+  }catch{}
+};
 window.mofumoriPushRender=()=>autoSync();
 window.mofumoriEnablePush=mainAction;
 window.mofumoriTestPush=testPush;
