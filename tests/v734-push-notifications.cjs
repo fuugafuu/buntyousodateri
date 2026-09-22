@@ -6,11 +6,11 @@ const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
 const html=fs.readFileSync('index.html','utf8');
 const sw=fs.readFileSync('sw.js','utf8');
 const client=fs.readFileSync('push-client.js','utf8');
-const api=fs.readFileSync('api/push.js','utf8');
+const api=fs.readFileSync('server/push-api.cjs','utf8');
 const migration=fs.readFileSync('supabase/mofumori_v7_3_4_push_notifications.sql','utf8');
 
 assert.equal(pkg.version,'7.3.4');
-assert.ok(pkg.scripts.check.includes('node --check api/push.js'));
+assert.ok(pkg.scripts.check.includes('node --check server/push-api.cjs'));
 assert.ok(pkg.scripts.check.includes('node --check push-client.js'));
 assert.ok(html.includes('push-client.js?v=7.3.4'));
 assert.ok(!html.includes('regs.map(reg=>reg.unregister())'),'app updates must preserve push subscriptions');
@@ -35,7 +35,7 @@ assert.ok(migration.includes('alter table public.mofumori_push_subscriptions ena
 assert.ok(migration.includes('revoke all on table public.mofumori_push_subscriptions from anon, authenticated'));
 assert.ok(migration.includes('grant execute on function public.mofumori_push_secret(text) to service_role'));
 
-const push=require('../api/push.js');
+const push=require('../server/push-api.cjs');
 assert.ok(push._internal?.encryptPushPayload&&push._internal?.makeVapidJwt);
 const receiver=crypto.createECDH('prime256v1');receiver.generateKeys();
 const auth=crypto.randomBytes(16).toString('base64url');
