@@ -49,7 +49,8 @@ function renderAuth(){
   const logout=$('#googleLogoutBtn');if(logout&&identityUser)logout.textContent='ログアウト';
   window.mofumoriPushRender?.();
 }
-window.renderV7Auth=renderAuth;\nconst _renderAuthPush=renderAuth;\n
+window.renderV7Auth=renderAuth;
+
 
 function progressShell(){
   if($('#v7Journey'))return;
