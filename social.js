@@ -175,6 +175,7 @@ async function handleGoogleCredential(response){
   }
 }
 async function logoutGoogle(){
+  await window.mofumoriPushBeforeLogout?.();
   cloudSyncSuspended=true;cancelQueuedCloudSave();
   if(identityUser&&activeSaveUserId){
     await save();await pendingSave.catch(()=>{});
