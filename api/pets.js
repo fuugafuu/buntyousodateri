@@ -267,28 +267,19 @@ async function ensureLegacyPets(supabase, user, profile=null) {
     .update({ pets_migrated_at: new Date().toISOString() }).eq('user_key', user.id);
   if (migratedError) throw migratedError;
 }
-async function ensureHiddenReward(supabase, user) {
-  const { data: existing, error: existingError } = await supabase.from('mofumori_pets')
-    .select('id').eq('owner_key', user.id).eq('species', 'fuga').limit(1);
-  if (existingError) throw existingError;
-  if (existing?.length) return false;
-
-  const { data: owned, error: ownedError } = await supabase.from('mofumori_pets')
-    .select('species').eq('owner_key', user.id);
-  if (ownedError) throw ownedError;
-  const ownedSpecies = new Set((owned || []).map(row => row.species));
-  if (![...GACHA_SPECIES].every(species => ownedSpecies.has(species))) return false;
-
-  const { error } = await supabase.from('mofumori_pets').upsert({
-    owner_key: user.id,
-    species: 'fuga',
-    rarity: 'UR',
-    rank: 5,
-    name: SPECIES_META.fuga[0],
-    source: 'reward',
-    migration_key: 'reward:fuga'
-  }, { onConflict: 'owner_key,migration_key', ignoreDuplicates: true });
-  if (error) throw error;
+async function ensureHiddenReward(supabase, user, ownedRows=null) {
+  let owned=Array.isArray(ownedRows)?ownedRows:null;
+  if(!owned){
+    const {data,error}=await supabase.from('mofumori_pets').select('species').eq('owner_key',user.id);
+    if(error)throw error;owned=data||[];
+  }
+  const ownedSpecies=new Set(owned.map(row=>row.species));
+  if(ownedSpecies.has('fuga'))return false;
+  if(![...GACHA_SPECIES].every(species=>ownedSpecies.has(species)))return false;
+  const {error}=await supabase.from('mofumori_pets').upsert({
+    owner_key:user.id,species:'fuga',rarity:'UR',rank:5,name:SPECIES_META.fuga[0],source:'reward',migration_key:'reward:fuga'
+  },{onConflict:'owner_key,migration_key',ignoreDuplicates:true});
+  if(error)throw error;
   return true;
 }
 
@@ -342,7 +333,7 @@ async function ackLifecycleEvent(supabase,user,rawEvent){
 }
 async function loadDashboard(supabase, user, ensuredProfile=null) {
   await ensureLegacyPets(supabase, user, ensuredProfile);
-  const hiddenUnlocked = await ensureHiddenReward(supabase, user);
+  let hiddenUnlocked=false;
   await resolveBreedingAndLifecycle(supabase,user);
   const now = new Date().toISOString();
   const [{ data: pets, error: petError }, { data: links, error: linkError }, { data: requests, error: requestError }, { data: visits, error: visitError }] = await Promise.all([
@@ -358,6 +349,12 @@ async function loadDashboard(supabase, user, ensuredProfile=null) {
   if (linkError) throw linkError;
   if (requestError) throw requestError;
   if (visitError) throw visitError;
+  hiddenUnlocked=await ensureHiddenReward(supabase,user,pets||[]);
+  if(hiddenUnlocked){
+    const {data:rewardPet,error:rewardError}=await supabase.from('mofumori_pets').select('*').eq('owner_key',user.id).eq('species','fuga').maybeSingle();
+    if(rewardError)throw rewardError;
+    if(rewardPet&&!pets.some(p=>p.id===rewardPet.id))pets.push(rewardPet);
+  }
 
   const friendKeys = (links || []).map(row => row.friend_key);
   const requestKeys = (requests || []).flatMap(row => [row.sender_key, row.recipient_key]);
