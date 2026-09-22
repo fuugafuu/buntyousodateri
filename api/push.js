@@ -239,3 +239,5 @@ module.exports=async function handler(req,res){
     return json(res,error.status||500,{ok:false,message:error.message||'通知処理に失敗しました。'});
   }
 };
+
+module.exports._internal={encryptPushPayload,makeVapidJwt,validSubscription};
