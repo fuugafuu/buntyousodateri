@@ -152,9 +152,13 @@ function normalizeGachaConfig(raw){
   const banners=Array.isArray(cfg.banners)&&cfg.banners.length?cfg.banners:DEFAULT_GACHA_CONFIG.banners;
   return {activeBanner:String(cfg.activeBanner||banners[0].id),banners};
 }
-async function loadGachaConfig(supabase){
+let gachaConfigCache=null,gachaConfigCacheAt=0;
+async function loadGachaConfig(supabase,{fresh=false}={}){
+  if(!fresh&&gachaConfigCache&&Date.now()-gachaConfigCacheAt<30000)return gachaConfigCache;
   const {data,error}=await supabase.from('mofumori_game_config').select('value').eq('key','gacha').maybeSingle();
-  if(error)throw error;return normalizeGachaConfig(data?.value);
+  if(error)throw error;
+  gachaConfigCache=normalizeGachaConfig(data?.value);gachaConfigCacheAt=Date.now();
+  return gachaConfigCache;
 }
 function selectBanner(config,rawId){
   const enabled=(config.banners||[]).filter(b=>b&&b.enabled!==false);
@@ -218,7 +222,7 @@ async function takeLimit(supabase, userKey, action, windowSeconds, limit) {
 }
 async function ensureProfile(supabase, user) {
   const { data: existing, error: existingError } = await supabase.from('mofumori_profiles')
-    .select('user_key,player_id,display_name,score,character,active_pet_id').eq('user_key', user.id).maybeSingle();
+    .select('user_key,player_id,display_name,score,character,active_pet_id,pets_migrated_at').eq('user_key', user.id).maybeSingle();
   if (existingError) throw existingError;
   if (existing) return existing;
   const { data: saveRow, error: saveError } = await supabase.from('mofumori_saves').select('state').eq('user_key', user.id).maybeSingle();
@@ -231,15 +235,17 @@ async function ensureProfile(supabase, user) {
     score: 0, character: { name: text(game.name, 12, meta[0]), species, speciesName: meta[0], icon: meta[1], level, bond: Number(game.social?.bond || 0) }
   };
   const { data, error } = await supabase.from('mofumori_profiles').insert(record)
-    .select('user_key,player_id,display_name,score,character,active_pet_id').single();
+    .select('user_key,player_id,display_name,score,character,active_pet_id,pets_migrated_at').single();
   if (error) throw error;
   return data;
 }
-async function ensureLegacyPets(supabase, user) {
-  const { data: profile, error: profileError } = await supabase.from('mofumori_profiles')
-    .select('pets_migrated_at').eq('user_key', user.id).single();
-  if (profileError) throw profileError;
-  if (profile?.pets_migrated_at) return;
+async function ensureLegacyPets(supabase, user, profile=null) {
+  if(profile?.pets_migrated_at)return;
+  if(!profile){
+    const { data, error } = await supabase.from('mofumori_profiles').select('pets_migrated_at').eq('user_key', user.id).single();
+    if(error)throw error;profile=data;
+    if(profile?.pets_migrated_at)return;
+  }
 
   const { data: saveRow, error: saveError } = await supabase.from('mofumori_saves').select('state').eq('user_key', user.id).maybeSingle();
   if (saveError) throw saveError;
@@ -334,8 +340,8 @@ async function ackLifecycleEvent(supabase,user,rawEvent){
   const {error}=await supabase.rpc('mofumori_ack_lifecycle_event',{p_owner:user.id,p_event:eventId});
   if(error)throw error;return true;
 }
-async function loadDashboard(supabase, user) {
-  await ensureLegacyPets(supabase, user);
+async function loadDashboard(supabase, user, ensuredProfile=null) {
+  await ensureLegacyPets(supabase, user, ensuredProfile);
   const hiddenUnlocked = await ensureHiddenReward(supabase, user);
   await resolveBreedingAndLifecycle(supabase,user);
   const now = new Date().toISOString();
@@ -374,7 +380,7 @@ async function loadDashboard(supabase, user) {
     visitPets = data || [];
   }
   const visitPetMap = new Map(visitPets.map(row => [row.id, row]));
-  const ownProfile = profileMap.get(user.id) || await ensureProfile(supabase, user);
+  const ownProfile = profileMap.get(user.id) || ensuredProfile || await ensureProfile(supabase, user);
 
   const [{data:breedingJobs,error:breedingError},{data:lifecycleEvents,error:eventError}]=await Promise.all([
     supabase.from('mofumori_breeding_jobs').select('id,male_pet_id,female_pet_id,status,started_at,completes_at,egg_pet_id,completed_at').eq('owner_key',user.id).eq('status','running').order('started_at',{ascending:false}).limit(20),
@@ -590,7 +596,7 @@ module.exports = async function handler(req, res) {
     if (!body || typeof body !== 'object') throw Object.assign(new Error('リクエストが不正です。'), { status: 400 });
     const action = text(body.action, 40, 'dashboard'), payload = body.payload && typeof body.payload === 'object' ? body.payload : {};
     const supabase = getSupabase();
-    await ensureProfile(supabase, user);
+    const ensuredProfile=await ensureProfile(supabase, user);
     let extra = {};
     if (action === 'gacha') extra = await gacha(supabase,user,Number(payload.count)===10?10:1,payload.bannerId);
     else if (action === 'sendFriendRequest') extra = await sendFriendRequest(supabase, user, payload.playerId);
@@ -607,7 +613,7 @@ module.exports = async function handler(req, res) {
     else if (action === 'interactVisit') extra.interaction = await interactVisit(supabase, user, payload.visitId, payload.interaction);
     else if (action === 'careVisit') extra.visitCare = await careVisit(supabase,user,payload.visitId,payload.care);
     else if (action !== 'dashboard') throw Object.assign(new Error('未対応の操作です。'), { status: 400 });
-    return json(res, 200, { ok: true, configured: true, data: await loadDashboard(supabase, user), ...extra });
+    return json(res, 200, { ok: true, configured: true, data: await loadDashboard(supabase, user, ensuredProfile), ...extra });
   } catch (error) {
     return json(res, error.status || 400, { ok: false, message: error.message || 'オンライン機能の処理に失敗しました。' });
   }
