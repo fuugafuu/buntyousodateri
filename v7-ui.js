@@ -47,8 +47,9 @@ function renderAuth(){
   const name=$('#identityName');
   if(name&&identityUser?.provider==='mofumori')name.textContent=identityUser.name+' ・ Mofumori';
   const logout=$('#googleLogoutBtn');if(logout&&identityUser)logout.textContent='ログアウト';
+  window.mofumoriPushRender?.();
 }
-window.renderV7Auth=renderAuth;
+window.renderV7Auth=renderAuth;\nconst _renderAuthPush=renderAuth;\n
 
 function progressShell(){
   if($('#v7Journey'))return;
