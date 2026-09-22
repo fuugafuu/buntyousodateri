@@ -1992,7 +1992,7 @@ async function init(){
   });
   const overlay=document.getElementById('loadingOverlay');
   if(overlay){setTimeout(()=>overlay.classList.add('hide'),950);}
-  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js?v=7.3.2',{updateViaCache:'none'}).catch(error=>console.warn('Offline cache registration skipped',error));
+  if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js?v=7.3.4',{updateViaCache:'none'}).catch(error=>console.warn('Offline cache registration skipped',error));
 }
 function saveName(){const n=document.getElementById('nameInput').value.trim();if(n){setCurrentBirdName(n);playBirdSound('feed');setMsg(`名前が「${n}」になった！`);save();updateUI()}hideModal('nameModal')}
 init();
