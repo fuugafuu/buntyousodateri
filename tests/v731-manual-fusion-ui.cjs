@@ -8,8 +8,8 @@ const profile=fs.readFileSync('v6-ui.js','utf8');
 const main=fs.readFileSync('main.js','utf8');
 const css=fs.readFileSync('pet-system.css','utf8');
 
-assert.equal(pkg.version,'7.3.2');
-assert.ok(html.includes("window.MOFUMORI_BUILD='7.3.2'"));
+assert.equal(pkg.version,'7.3.3');
+assert.ok(html.includes("window.MOFUMORI_BUILD='7.3.3'"));
 
 assert.ok(ui.includes("manual.textContent='🧬 手動合成'"),'manual fusion button missing');
 assert.ok(ui.includes("auto.textContent='✨ 自動合成'"),'auto fusion button missing');
@@ -35,4 +35,4 @@ assert.ok(ui.includes('visit-birds-row')&&ui.includes('visit-bird-render'),'side
 assert.ok(ui.includes('incoming.slice(0,3)'),'multiple visitors should render together');
 assert.ok(css.includes('.visit-birds-row')&&css.includes('.visit-bird-unit')&&css.includes('.visit-bird-render svg'),'visitor layout CSS missing');
 
-console.log('v7.3.2 guards: manual+auto fusion, renamed targets, egg secrecy, exact gacha identity, rendered visitors OK');
+console.log('v7.3.3 guards: manual+auto fusion, renamed targets, egg secrecy, exact gacha identity, rendered visitors OK');
